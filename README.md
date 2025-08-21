@@ -32,13 +32,13 @@ The Kubernetes cluster must comply with the following requirements:
 Airlock IAM is a very powerful authentication engine, supporting many different use cases - [click for details](https://www.airlock.com/secure-access-hub/komponenten/iam). It consists of multiple web applications, uses a database, and can make use of Redis. Consequently, there are different ways to deploy it.
 
 <p align="left">
-  <img src="media/shared.png" alt="shared deployment" height="250">
+  <img src="media/shared_white.png" alt="shared deployment" height="250">
 </p>
 
 Foremost, the web applications can either be kept together, as a single deployment, or they can all be managed as their individual (sandboxed) deployment, and anything in between. The advantage of the former option is its ease of use and administration. Upon activation, configuration changes are automatically distributed to all components which take it up immediately. iOn the other hand, it is impossible to individually scale independent web applications. Therefore, the combined, or shared, deployment layout is geared towards test environments and proof-of-concepts.
 
 <p align="left">
-  <img src="media/sandboxed.png" alt="sandboxed deployment" height="400">
+  <img src="media/sandboxed_white.png" alt="sandboxed deployment" height="400">
 </p>
 
 For a production environment, it is paramount to be able to freely scale the customer-facing loginapp and transaction approval while, for example, there always must only be one replica of the service container.
