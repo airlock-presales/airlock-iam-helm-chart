@@ -83,6 +83,13 @@ spec:
               value: "8080"
             - name: IAM_WEB_SERVER_HTTPS_PORT
               value: "8443"
+            {{- if eq $instanceProp.logging.level "" }}
+            - name: IAM_LOG_LEVEL
+              value: INFO
+            {{- else if ne $instanceProp.logging.level "" }}
+            - name: IAM_LOG_LEVEL
+              value: {{ $instanceProp.logging.level }}
+            {{- end }}
             {{- if $instanceProp.logging.local.enable }}
             {{-   if $instanceProp.logging.local.structured }}
             - name: IAM_LOG_STRUCTURED_FILE_ENABLED
