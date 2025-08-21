@@ -49,7 +49,7 @@ iam:
       sandbox:
         ## Enable sandbox
         ## - if set to false, the loginapp is deployed as part of a shared deployment, together with other applications
-        enable: true
+        enable: false
 
         ## Naming suffix
         ## - allows to append a special tag to the name to differentiate from other deployments
@@ -57,7 +57,7 @@ iam:
         suffix: ""
 
         ## Number of replicas to schedule
-        replicas: 2
+        replicas: 1
 
         ## Each instance requires some settings to define its logging, Java options and other os-level integrations
         ## These settings are defined in their own section, under iam.instanceProperties (see further down).
@@ -71,7 +71,7 @@ iam:
           ## Volume for instance configuration
           config:
             ## Enable, if the loginapp requires its individual instance directory.
-            enable: true
+            enable: false
 
             ## Volume type
             ## - request: a PersistentVolumeClaim manifest is created to request storage
@@ -322,6 +322,7 @@ iam:
       logging:
         ## Log level
         ## - valid values: TRACE, DEBUG, INFO, WARN, ERROR
+        ## - default is INFO
         level: ""
 
         ## Local logging to files
@@ -339,7 +340,7 @@ iam:
         ## Send structured logs to Elasticsearch
         ## - define REST API URL of server, e.g. http://elasticsearch.example.com:9200/
         ## - if defined, local.structured (above) is forced to true
-          ## - files are written to instance's logs/ directory and used as buffer
+        ## - files are written to instance's logs/ directory and used as buffer
         elasticsearchUrl: ""
 
         ## Log webserver access logs to (instance) local files
