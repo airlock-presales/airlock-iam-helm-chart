@@ -29,6 +29,7 @@ kind: HTTPRoute
 metadata:
   name: {{ $the_name }}
   labels:
+    app.kubernetes.io/name: {{ $the_name }}
     {{- if $suffix }}
     app.kubernetes.io/component: {{ $suffix }}
     {{- end }}

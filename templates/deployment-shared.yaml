@@ -16,10 +16,12 @@ apiVersion: v1
 kind: Deployment
 metadata:
   name: {{ $the_name }}
-  {{- if $suffix }}
   labels:
+    app.kubernetes.io/name: {{ $the_name }}
+    {{- if $suffix }}
     app.kubernetes.io/component: {{ $suffix }}
-  {{- end }}
+    {{- end }}
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
 spec:
   replicas: 1
   strategy:
@@ -28,14 +30,19 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ $the_name }}
+      {{- if $suffix }}
       app.kubernetes.io/component: {{ $suffix }}
+      {{- end }}
+      {{- include "airlock-iam.selectorLabels" $ | nindent 6 }}
   {{- end }}
   template:
     metadata:
-      {{- if $suffix }}
       labels:
+        app.kubernetes.io/name: {{ $the_name }}
+        {{- if $suffix }}
         app.kubernetes.io/component: {{ $suffix }}
-      {{- end }}
+        {{- end }}
+        {{- include "airlock-iam.labels" $ | nindent 8 }}
     spec:
       serviceAccountName: {{ $fullName }}
       automateServiceAccountToken: true
