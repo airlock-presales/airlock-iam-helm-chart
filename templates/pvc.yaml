@@ -1,0 +1,30 @@
+{{- $fullName := include "airlock-iam.fullname" . -}}
+{{- $base_name := $fullName -}}
+{{- $p_values := "" -}}
+{{- $lstApps := keys .Values.iam.apps -}}
+{{- $lstApps = prepend $lstApps "" -}}
+{{- range $app := $lstApps -}}
+{{-   if eq $app "" -}}
+{{-     $p_values = $.Values.persistence -}}
+{{-   else -}}
+{{-     $app_values := get $.Values.iam.apps $app -}}
+{{-     $p_values = $app_values.sandbox.persistence -}}
+{{-     $base_name = print $fullName "-" $app -}}
+{{-   end -}}
+{{-   range $key, $vol := $p_values -}}
+{{-     if and $vol.enable (eq $vol.type "request") }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ print $base_name "-" (ternary $vol.claim $key (ne $vol.claim "")) }}
+spec:
+  accessModes:
+  - {{ ternary $vol.accessMode "ReadWriteOnce" (ne $vol.accessMode "") }}
+  storageClassName: {{ $vol.storageClass }}
+  resources:
+    requests:
+      storage: {{ $vol.size }}
+{{-     end }}
+{{-   end }}
+{{- end }}

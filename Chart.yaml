@@ -1,0 +1,22 @@
+apiVersion: v2
+appVersion: "8.4"
+description: Helm chart for Airlock IAM - provided by Airlock pre-sales team.
+home: https://www.airlock.com/
+keywords:
+  - Airlock IAM
+  - Ergon Informatik AG
+  - security
+  - identity and access management
+  - Airlock Microgateway
+maintainers:
+  - name: Airlock Pre-Sales
+    url: https://github.com/airlock-presales/
+name: iam
+sources:
+  - https://github.com/airlock-presales/the-iam-helm-chart
+version: 0.0.1
+dependencies:
+  - name: redis
+    version: 19.6.4
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enable

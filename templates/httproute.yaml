@@ -1,0 +1,71 @@
+{{- if eq .Values.ingress.type "gatewayAPI" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   $the_name := $fullName -}}
+{{-   $hasSandbox := include "airlock-iam.hasSandbox" . -}}
+{{-   $sharedDone := false -}}
+{{-   $createShared := false -}}
+{{-   $svc := .Values.service -}}
+{{-   range $app, $app_values := .Values.iam.apps -}}
+{{-     if $app_values.enable -}}
+{{-       $suffix := "" -}}
+{{-       if $app_values.sandbox.enable -}}
+{{-         $suffix = $app_values.sandbox.suffix | default $app -}}
+{{-         $the_name = print $fullName "-" $suffix -}}
+{{-         $createShared = false -}}
+{{-       else -}}
+{{-         if $hasSandbox -}}
+{{-           $suffix = "shared" -}}
+{{-         end -}}
+{{-         if $suffix -}}
+{{-           $the_name = print $fullName "-" $suffix -}}
+{{-         end -}}
+{{-         $createShared = true -}}
+{{-       end -}}
+{{-       if or (not $createShared) (not $sharedDone) -}}
+{{-         $label_name := $fullName }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $the_name }}
+  labels:
+    {{- if $suffix }}
+    app.kubernetes.io/component: {{ $suffix }}
+    {{- end }}
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+  {{- with $.Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+  {{- if contains "/" $.Values.ingress.gatewayAPI.gateway }}
+    - name: {{ $.Values.ingress.gatewayAPI.gateway | split "/" | index 1 }}
+    - namespace: {{ $.Values.ingress.gatewayAPI.gateway | split "/" | first }}
+  {{- else }}
+    - name: {{ $.Values.ingress.gatewayAPI.gateway }}
+    {{- if ne $.Values.ingress.gatewayAPI.namespace "" }}
+    - namespace: {{ $.Values.ingress.gatewayAPI.namespace }}
+    {{- end }}
+  {{- end }}
+  hostnames:
+    - {{ $.Values.ingress.dns.hostname }}
+  rules:
+    - backendRefs:
+        - name: {{ $the_name }}
+          port: 80
+      matches:
+        - path:
+            value: {{ ternary "/" (print "/" $.Values.iam.instanceName "-" $app) $createShared }}
+            type: PathPrefix
+      {{- if ne $.Values.ingress.timeout "" }}
+      timeouts:
+        backendRequest: {{ $.Values.ingress.timeout }}
+      {{- end }}
+{{-       end }}
+{{-       if $createShared -}}
+{{-         $sharedDone = true -}}
+{{-       end }}
+{{-     end }}
+{{-   end }}
+{{- end -}}

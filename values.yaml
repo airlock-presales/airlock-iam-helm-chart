@@ -1,0 +1,522 @@
+# Airlock IAM - application setup
+#
+# Define how the deployment will look like, what applications are activated and how they behave.
+# Knowledge of Airlock IAM terms and concepts is not absolutely required but probably very helpful.
+
+iam:
+  ## Name of the Airlock IAM configuration instance
+  ## - default is 'auth'
+  ## - needs to match the folder name of the instance on the config volume
+  instanceName: "auth"
+
+  ## Format of the configuration file
+  ## - valid values: yaml, xml
+  ## - it is very strongly recommended to use the yaml format unless you have existing tooling
+  ##   which modifies the file medusa-configuration.xml
+  configFormat: "yaml"
+
+  ## Active configuration environment
+  ## - must match an environment identifier in the configuration file
+  environmentId: ""
+
+  ## License
+  ## - Airlock IAM requires a valid license to run
+  ## - Create secret: kubectl create secret generic <name> --from-file=license.txt=<filename>
+  ## -  or configmap: kubectl create configmap <name> --from-file=license.txt=<filename>
+  license:
+    name: "airlock-iam-license"
+    type: "cm"
+
+  ## IAM web applications
+  ## - for tests, all applications can be part of one deployment
+  ## - for production, production-like test environments, it is recommended to split the applications
+  ##   into separate deployments with individual settings, e.g. number of replicas
+  apps:
+    ## Loginapp
+    ## - only the settings for the loginapp are documented in detail
+    ## - the other applications provide the same properties
+    loginapp:
+      ## URL path to the loginapp
+      ## - default is /<instanceName>-login
+      path: ""
+
+      ## Activation
+      ## - activate only those applications which are required for your use case
+      ## - see also sandbox.enable (further down)
+      enable: true
+
+      ## Settings for a "sandboxed" (individual) deployment of loginapp
+      sandbox:
+        ## Enable sandbox
+        ## - if set to false, the loginapp is deployed as part of a shared deployment, together with other applications
+        enable: true
+
+        ## Naming suffix
+        ## - allows to append a special tag to the name to differentiate from other deployments
+        ## - by default, set to name of application, e.g. loginapp
+        suffix: ""
+
+        ## Number of replicas to schedule
+        replicas: 1
+
+        ## Each instance requires some settings to define its logging, Java options and other os-level integrations
+        ## These settings are defined in their own section, under iam.instanceProperties (see further down).
+        ## Each set of settings has a name which can be referenced here.
+        ## If name is not set here, the first item in iam.instanceProperties is used.
+        propertiesName: ""
+
+        ## Airlock IAM uses an instance directory from which it reads the configuration and other resources.
+        ## Applications can share the same volume or use individual ones.
+        persistence:
+          ## Volume for instance configuration
+          config:
+            ## Enable, if the loginapp requires its individual instance directory.
+            enable: true
+
+            ## Volume type
+            ## - request: a PersistentVolumeClaim manifest is created to request storage
+            ## - existing: an existing PersistentVolumeClaim is used for storage
+            ## - remote: storage from a remote server is mounted as volume
+            ## - subpath: the storage refers to a (sub)path on an already existing volume
+            type: "request"
+
+            ## The storage class to use for the PVC
+            ## - for type 'existing'
+            storageClass: ""
+
+            ## Volume access restrictions
+            ## - valid values: ReadWriteOnce, ReadWriteMany, ReadWriteOncePod
+            ## - for types 'request,existing,remote'
+            accessMode: "ReadWriteOnce"
+
+            ## Name of existing PVC
+            ## - for type 'existing'
+            claim: ""
+
+            ## Name of already existing volume and (sub)path to storage
+            ## - for type 'volume'
+            volumeName: ""
+            subPath: ""
+
+            ## Allocated size
+            ## - for types 'request,existing,remote'
+            size: ""
+
+            ## Specify the mount
+            ## - for type 'remote'
+            remote:
+              ## Network file system type
+              ## - many possible values, e.g. nfs
+              type: ""
+
+              ## server and path of mount
+              server: ""
+              path: ""
+          ## Volume for log files
+          ## - by default, logs are written to stdout
+          ## - historically, Airlock IAM has written its log to files - which may be preferred by some administrators
+          ##   as they are used to the format
+          ## - if enabled, log files are usually written to the instance directory
+          ## - specify logs volume to write logs somewhere else
+          ## - properties are the same as documented for config (above)
+          logs:
+            enable: false
+            type: "request"
+            storageClass: ""
+            accessMode: "ReadWriteOnce"
+            claim: ""
+            volumeName: ""
+            subPath: ""
+            size: ""
+            remote:
+              tpye: ""
+              server: ""
+              path: ""
+        ## Environment variables for loginapp
+        ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
+        ##   with punctuation such as "-" and "." replaced with "_". E.g. IAM_LOGINAPP_REST_UI_CUSTOMIZATIONS=instances/auth/designs/ui.zip
+        ## - defined as a map, e.g. "varname: value"
+        ## - these settings take precedence over environment variable settings for instanceProperties and global env
+        env: {}
+    adminapp:
+      path: ""
+      enable: true
+      sandbox:
+        enable: false
+        suffix: ""
+        replicas: 1
+        propertiesName: ""
+        persistence:
+          config:
+            enable: false
+            type: "request"
+            storageClass: ""
+            accessMode: "ReadWriteOnce"
+            claim: ""
+            volumeName: ""
+            subPath: ""
+            size: ""
+            remote:
+              type: ""
+              server: ""
+              path: ""
+          logs:
+            enable: false
+            type: "request"
+            storageClass: ""
+            accessMode: "ReadWriteOnce"
+            claim: ""
+            volumeName: ""
+            subPath: ""
+            size: ""
+            remote:
+              tpye: ""
+              server: ""
+              path: ""
+        env: {}
+    transactionApproval:
+      path: ""
+      enable: false
+      sandbox:
+        enable: false
+        suffix: ""
+        replicas: 1
+        propertiesName: ""
+        persistence:
+          config:
+            enable: false
+            type: "request"
+            storageClass: ""
+            accessMode: "ReadWriteOnce"
+            claim: ""
+            volumeName: ""
+            subPath: ""
+            size: ""
+            remote:
+              type: ""
+              server: ""
+              path: ""
+          logs:
+            enable: false
+            type: "request"
+            storageClass: ""
+            accessMode: "ReadWriteOnce"
+            claim: ""
+            volumeName: ""
+            subPath: ""
+            size: ""
+            remote:
+              tpye: ""
+              server: ""
+              path: ""
+        env: {}
+    serviceContainer:
+      path: ""
+      enable: true
+      sandbox:
+        enable: false
+        suffix: ""
+        replicas: 1
+        propertiesName: ""
+        persistence:
+          config:
+            enable: false
+            type: "request"
+            storageClass: ""
+            accessMode: "ReadWriteOnce"
+            claim: ""
+            volumeName: ""
+            subPath: ""
+            size: ""
+            remote:
+              type: ""
+              server: ""
+              path: ""
+          logs:
+            enable: false
+            type: "request"
+            storageClass: ""
+            accessMode: "ReadWriteOnce"
+            claim: ""
+            volumeName: ""
+            subPath: ""
+            size: ""
+            remote:
+              tpye: ""
+              server: ""
+              path: ""
+        env: {}
+    apiPolicyService:
+      path: ""
+      enable: false
+      sandbox:
+        enable: false
+        suffix: ""
+        replicas: 1
+        propertiesName: ""
+        persistence:
+          config:
+            enable: false
+            type: "request"
+            storageClass: ""
+            accessMode: "ReadWriteOnce"
+            claim: ""
+            volumeName: ""
+            subPath: ""
+            size: ""
+            remote:
+              type: ""
+              server: ""
+              path: ""
+          logs:
+            enable: false
+            type: "request"
+            storageClass: ""
+            accessMode: "ReadWriteOnce"
+            claim: ""
+            volumeName: ""
+            subPath: ""
+            size: ""
+            remote:
+              tpye: ""
+              server: ""
+              path: ""
+        env: {}
+  ## Settings for shared deployment of multiple applications
+  shared:
+    ## Number of replicas to schedule
+    replicas: 1
+
+    ## Each instance requires some settings to define its logging, Java options and other os-level integrations
+    ## These settings are defined in their own section, under iam.instanceProperties (see further down).
+    ## Each set of settings has a name which can be referenced here.
+    ## If name is not set here, the first item in iam.instanceProperties is used.
+    propertiesName: ""
+
+    ## Environment variables for shared deployment
+    ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
+    ##   with punctuation such as "-" and "." replaced with "_". E.g. IAM_LOGINAPP_REST_UI_CUSTOMIZATIONS=instances/auth/designs/ui.zip
+    ## - defined as a map, e.g. "varname: value"
+    ## - these settings take precedence over environment variable settings for instanceProperties and global env
+    env: {}
+
+  ## List of instance properties settings
+  ## - some commonly used instance.properties settings can be defined here directly
+  ## - for others, use environment variables
+  instanceProperties:
+      ## Instance properties settings collection name
+      ## - reference as propertiesName by the applications
+    - name: ""
+
+      ## Define logging
+      logging:
+        ## Log level
+        ## - valid values: TRACE, DEBUG, INFO, WARN, ERROR
+        level: ""
+
+        ## Local logging to files
+        ## - same as for SCA (self-contained application, not container)
+        ## - by default, disabled as logs are written to stdout
+        local:
+          ## Enable traditional, unstructed logging to (instance) local files
+          ## - files are written to instance's logs/ directory
+          enable: false
+
+          ## Enable logging of structured log messages to files in "JSON Lines" format
+          ## - files are written to instance's logs/ directory
+          structured: true
+
+        ## Send structured logs to Elasticsearch
+        ## - define REST API URL of server, e.g. http://elasticsearch.example.com:9200/
+        ## - if defined, local.structured (above) is forced to true
+          ## - files are written to instance's logs/ directory and used as buffer
+        elasticsearchUrl: ""
+
+        ## Log webserver access logs to (instance) local files
+        webserver: false
+
+      ## Metrics endpoint port
+      ## - if defined, metrics endpoint is exposed on this port
+      metrics: ""
+
+      ## JAVA_OPTS settings
+      java:
+        ## Override the default Java heapsize of 50% available RAM
+        ## - must be specified as a percentage number, e.g. 60
+        ## - does not support absolute values
+        heapSize: ""
+
+        ## Other java options
+        opts:
+          - key: ""
+            value: ""
+
+      ## Environment variables
+      ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
+      ##   with punctuation such as "-" and "." replaced with "_". E.g. IAM_LOGINAPP_REST_UI_CUSTOMIZATIONS=instances/auth/designs/ui.zip
+      ## - defined as a map, e.g. "varname: value"
+      ## - these settings take precedence over environment variable settings from global env
+      env: {}
+
+## Network service
+## These settings will be used for each service for Each deployment
+## - Container and service ports are fixed - do not change them using environment variables
+service:
+  ## It is strongly recommended to not change the service type
+  ## Communication to Airlock IAM should be routed over ingress and/or Airlock Microgateway
+  type: "ClusterIP"
+
+  ## 
+  externalTrafficPolicy: false
+
+  ## Service-specific annotations
+  ## - sometimes required for DNS settings et al.
+  annotations: { }
+
+## Data communications ingress
+## - make Airlock IAM accessible from the outside
+ingress:
+  ## Type of ingress
+  ## - valid values: microgateway, gatewayAPI, ingress, httpproxy
+  ## - it is strongly recommended to use either microgateway or gatewayAPI
+  type: "gatewayAPI"
+
+  ## Airlock Microgateway
+  microgateway:
+    ## Version of the Microgateway
+    ## - selects correct protection template
+    version: "4.6"
+
+  ## Kubernetes Gateway API
+  ## - used for types: microgateway, gatewayAPI
+  gatewayAPI:
+    ## Which Gateway to use
+    gateway: ""
+
+    ## Namespace of Gateway
+    namespace: ""
+
+  ## Ingress settings
+  ingress:
+    ## The Ingress API is provided by multiple implementations
+    ## - select desired implementation using className
+    className: ""
+
+  ## Response timeout
+  ## - specified as, e.g., "60s"
+  ## - usually not needed
+  timeout: ""
+
+  ## 
+  dns:
+    ## FQDN to access Airlock IAM
+    hostname: "example.com"
+
+    ## dnsConfig option
+    ndots: 2
+
+  ## TLS settings
+  tls:
+    ## Secret containing TLS certificate
+    secretName: ""
+
+  ## Ingress-specific annotations
+  ## - used to be required for older versions of Ingress API
+  annotations: {}
+
+## Airlock IAM uses an instance directory from which it reads the configuration and other resources.
+## Applications can share the same volume or use individual ones.
+## Here, you define the shared volumes.
+## - properties are the same as documented for iam.apps.loginapp.sandbox.persistence.config (above)
+persistence:
+  config:
+    enable: true
+    type: "request"
+    storageClass: ""
+    accessMode: "ReadWriteMany"
+    claim: ""
+    volumeName: ""
+    subPath: ""
+    size: ""
+    remote:
+      type: ""
+      server: ""
+      path: ""
+  logs:
+    enable: false
+    type: "request"
+    storageClass: ""
+    accessMode: "ReadWriteMany"
+    claim: ""
+    volumeName: ""
+    subPath: ""
+    size: ""
+    remote:
+      tpye: ""
+      server: ""
+      path: ""
+
+## Authentication and self-service processes usually require multiple data exchanges between client and server.
+## For security reasons, corresponding state information is not exposed to the client but retained on the server.
+## To allow for Kubernetes scheduling, with pods started or terminated according to load, state must stored
+## where it can be reloaded by any replica.
+## For this, a Redis server is used.
+## If replica is set to any number greater than 1, it is strongly recommended to enable Redis - and change
+## the IAM configuration, accordingly.
+redis:
+  enable: false
+  replica:
+    replicaCount: 2
+  sentinel:
+    enabled: true
+
+## Almost all functionality in Airlock IAM requires a database (users, groups, authentication devices etc.)
+## The database used is defined in the configuration and not as part of the deployment.
+## It is very common to make us of an existing database cluster, potentially operated outside of the Kubernetes cluster.
+## For in-cluster database setups, this Helm chart relies on database operators.
+## Consequently, it does not try to manage a full db setup but creates appropriate manifests:
+## - PostgresSQL: https://cloudnative-pg.io
+## - MariaDB: https://github.com/mariadb-operator/mariadb-operato
+database:
+  postgres:
+    enable: false
+  mariadb:
+    enable: false
+
+## Image Options
+image:
+  ## Repository to retrieve the Airlock IAM image from.
+  repository: "quay.io/airlock/iam"
+
+  ## Tag that uniquely identifies the image.
+  tag: "8.4"
+
+  ## When to pull the image.
+  pullPolicy: "IfNotPresent"
+
+  ## Name of secret for protected images
+  ## - required to pull Airlock IAM from the Airlock-maintained repository at quay.io
+  ## - if you don't want to maintain pull secrets, you must provide your own, internal-access-only repository
+  pullSecret: ""
+
+## Environment variables for shared deployment
+## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
+##   with punctuation such as "-" and "." replaced with "_". E.g. IAM_LOGINAPP_REST_UI_CUSTOMIZATIONS=instances/auth/designs/ui.zip
+## - defined as a map, e.g. "varname: value"
+## - these settings take precedence over environment variable settings for instanceProperties and global env
+env: {}
+
+## @section Kubernetes Parameters
+
+## Annotations that are added to the Airlock IAM Pod.
+annotations: { }
+
+## CPU and Memory request and limit for the IAM pod.
+resourceOptions: { }
+
+## Restart policy for the Airlock IAM deployment.
+restartPolicy: "Always"
+
+global:
+  timezone: "Europe/Zurich"
+

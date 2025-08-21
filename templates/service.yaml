@@ -1,0 +1,61 @@
+{{- $fullName := include "airlock-iam.fullname" . -}}
+{{- $the_name := $fullName -}}
+{{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
+{{- $sharedServiceDone := false -}}
+{{- $createSharedService := false -}}
+{{- $svc := .Values.service -}}
+{{- range $app, $app_values := .Values.iam.apps -}}
+{{-   if $app_values.enable -}}
+{{-     $suffix := "" -}}
+{{-     if $app_values.sandbox.enable -}}
+{{-       $suffix = $app_values.sandbox.suffix | default $app -}}
+{{-       $the_name = print $fullName "-" $suffix -}}
+{{-       $createSharedService = false -}}
+{{-     else -}}
+{{-       if $hasSandbox -}}
+{{-         $suffix = "shared" -}}
+{{-       end -}}
+{{-       if $suffix -}}
+{{-         $the_name = print $fullName "-" $suffix -}}
+{{-       end -}}
+{{-       $createSharedService = true -}}
+{{-     end -}}
+{{-     if or (not $createSharedService) (not $sharedServiceDone) -}}
+{{/*
+{{-       $svcIdx := index $.Values.service include "airlock-iam.findService" dict "values" $.Values "suffix" $suffix -}}
+{{-       if ne $svcIdx -1 -}}
+{{-         $svc := index $.Values.service $svcIdx -}}
+*/}}
+{{-         $label_name := $fullName }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $the_name }}
+  {{- if $suffix }}
+  labels:
+    app.kubernetes.io/component: {{ $suffix }}
+  {{- end }}
+spec:
+  selector:
+    app.kubernetes.io/name: airlock-iam
+    app.kubernetes.io/instance: {{ $fullName }}
+    {{- if $suffix }}
+    app.kubernetes.io/component: {{ $suffix }}
+    {{- end }}
+  type: {{ $svc.type }}
+{{- if $svc.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ quote $svc.externalTrafficPolicy }}
+{{- end }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+{{-     end }}
+{{-     if $createSharedService -}}
+{{-       $sharedServiceDone = true -}}
+{{-     end }}
+{{-   end }}
+{{- end }}
+
