@@ -21,7 +21,7 @@ metadata:
     app.kubernetes.io/component: {{ $suffix }}
   {{- end }}
 spec:
-  replicas: {{ .Values.iam.shared.replicas }}
+  replicas: 1
   strategy:
     type: Recreate
   {{- if $suffix }}

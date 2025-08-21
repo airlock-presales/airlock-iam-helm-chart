@@ -57,7 +57,7 @@ iam:
         suffix: ""
 
         ## Number of replicas to schedule
-        replicas: 1
+        replicas: 2
 
         ## Each instance requires some settings to define its logging, Java options and other os-level integrations
         ## These settings are defined in their own section, under iam.instanceProperties (see further down).
@@ -85,7 +85,7 @@ iam:
             storageClass: ""
 
             ## Volume access restrictions
-            ## - valid values: ReadWriteOnce, ReadWriteMany, ReadWriteOncePod
+            ## - valid values: ReadWriteOnce, ReadWriteMany, ReadWriteOncePod, ReadOnlyMany
             ## - for types 'request,existing,remote'
             accessMode: "ReadWriteOnce"
 
@@ -100,7 +100,7 @@ iam:
 
             ## Allocated size
             ## - for types 'request,existing,remote'
-            size: ""
+            size: "10M"
 
             ## Specify the mount
             ## - for type 'remote'
@@ -118,16 +118,24 @@ iam:
           ##   as they are used to the format
           ## - if enabled, log files are usually written to the instance directory
           ## - specify logs volume to write logs somewhere else
-          ## - properties are the same as documented for config (above)
+          ## - properties are the same as documented for config (above), except where noted
           logs:
             enable: false
             type: "request"
             storageClass: ""
             accessMode: "ReadWriteOnce"
+
+            ## With replicas>1, StatefulSets are used instead of Deployments causing a PVC to be created per replica.
+            ## The retention policy defines what to do when replicas are scaled down or the StatefulSet is deleted.
+            ## - valid values: Delete, Retain
+            ## - with Retain, manual cleanup is required
+            ## - as volume contains only log data which should have been forwarded to Elasticsearch, anyway,
+            ##   it should be quite safe to just remove
+            replicaRetentionPolicy: "Delete"
             claim: ""
             volumeName: ""
             subPath: ""
-            size: ""
+            size: "100M"
             remote:
               tpye: ""
               server: ""
@@ -155,7 +163,7 @@ iam:
             claim: ""
             volumeName: ""
             subPath: ""
-            size: ""
+            size: "10M"
             remote:
               type: ""
               server: ""
@@ -164,11 +172,12 @@ iam:
             enable: false
             type: "request"
             storageClass: ""
+            replicaRetentionPolicy: "Delete"
             accessMode: "ReadWriteOnce"
             claim: ""
             volumeName: ""
             subPath: ""
-            size: ""
+            size: "100M"
             remote:
               tpye: ""
               server: ""
@@ -191,7 +200,7 @@ iam:
             claim: ""
             volumeName: ""
             subPath: ""
-            size: ""
+            size: "10M"
             remote:
               type: ""
               server: ""
@@ -200,11 +209,12 @@ iam:
             enable: false
             type: "request"
             storageClass: ""
+            replicaRetentionPolicy: "Delete"
             accessMode: "ReadWriteOnce"
             claim: ""
             volumeName: ""
             subPath: ""
-            size: ""
+            size: "100M"
             remote:
               tpye: ""
               server: ""
@@ -227,7 +237,7 @@ iam:
             claim: ""
             volumeName: ""
             subPath: ""
-            size: ""
+            size: "10M"
             remote:
               type: ""
               server: ""
@@ -236,11 +246,12 @@ iam:
             enable: false
             type: "request"
             storageClass: ""
+            replicaRetentionPolicy: "Delete"
             accessMode: "ReadWriteOnce"
             claim: ""
             volumeName: ""
             subPath: ""
-            size: ""
+            size: "100M"
             remote:
               tpye: ""
               server: ""
@@ -263,7 +274,7 @@ iam:
             claim: ""
             volumeName: ""
             subPath: ""
-            size: ""
+            size: "10M"
             remote:
               type: ""
               server: ""
@@ -272,21 +283,20 @@ iam:
             enable: false
             type: "request"
             storageClass: ""
+            replicaRetentionPolicy: "Delete"
             accessMode: "ReadWriteOnce"
             claim: ""
             volumeName: ""
             subPath: ""
-            size: ""
+            size: "100M"
             remote:
               tpye: ""
               server: ""
               path: ""
         env: {}
   ## Settings for shared deployment of multiple applications
+  ## - forced to replicas: 1
   shared:
-    ## Number of replicas to schedule
-    replicas: 1
-
     ## Each instance requires some settings to define its logging, Java options and other os-level integrations
     ## These settings are defined in their own section, under iam.instanceProperties (see further down).
     ## Each set of settings has a name which can be referenced here.
@@ -437,7 +447,7 @@ persistence:
     claim: ""
     volumeName: ""
     subPath: ""
-    size: ""
+    size: "10M"
     remote:
       type: ""
       server: ""
@@ -446,11 +456,12 @@ persistence:
     enable: false
     type: "request"
     storageClass: ""
+    replicaRetentionPolicy: "Delete"
     accessMode: "ReadWriteMany"
     claim: ""
     volumeName: ""
     subPath: ""
-    size: ""
+    size: "100M"
     remote:
       tpye: ""
       server: ""

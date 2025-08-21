@@ -3,22 +3,23 @@
 {{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
 {{- if $hasSandbox -}}
 {{-   range $app, $app_values := .Values.iam.apps -}}
-{{-     if and (and $app_values.enable $app_values.sandbox.enable) (eq (int $app_values.sandbox.replicas) 1) -}}
+{{-     if and (and $app_values.enable $app_values.sandbox.enable) (gt (int $app_values.sandbox.replicas) 1) -}}
 {{-       $suffix := ternary $app_values.sandbox.suffix $app (ne $app_values.sandbox.suffix "") -}}
 {{-       $the_name = print $fullName "-" $suffix -}}
 {{-       $propIdx := include "airlock-iam.findProperties" $app_values.sandbox.propertiesName -}}
 {{-       $instanceProp := index $.Values.iam.instanceProperties (int $propIdx) -}}
 ---
-apiVersion: v1
-kind: Deployment
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   name: {{ $the_name }}
   labels:
     app.kubernetes.io/component: {{ $suffix }}
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
 spec:
   replicas: {{ $app_values.sandbox.replicas }}
-  strategy:
-    type: Recreate
+  updateStrategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ $the_name }}
@@ -119,10 +120,8 @@ spec:
             - mountPath: /home/airlock/instances
               name: config
             {{- end }}
-            {{- if or $app_values.sandbox.persistence.logs.enable $.Values.persistence.logs.enable }}
             - mountPath: {{ print "/home/airlock/instances/" $.Values.iam.instanceName "/logs" }}
-              name: logs
-            {{- end }}
+              name: {{ print $fullName "-" $app "-" (ternary $app_values.sandbox.persistence.logs.claim "logs" (ne $app_values.sandbox.persistence.logs.claim "")) }}
             - mountPath: /home/airlock/license.txt
               name: license
               subPath: license.txt
@@ -161,37 +160,6 @@ spec:
           emptyDir: {}
           {{- end }}
         {{- end }}
-        {{- if $app_values.sandbox.persistence.logs.enable }}
-        - name: logs
-          {{- if eq $app_values.sandbox.persistence.logs.type "request" }}
-          persistentVolumeClaim:
-            claimName: {{ print $fullName "-" $app "-" (ternary $app_values.sandbox.persistence.logs.claim "logs" (ne $app_values.sandbox.persistence.logs.claim "")) }}
-          {{- else if eq $app_values.sandbox.persistence.logs.type "existing" }}
-          persistentVolumeClaim:
-            claimName: {{ $app_values.sandbox.persistence.logs.claim }}
-          {{- else if eq $app_values.sandbox.persistence.logs.type "remote" }}
-          {{ $app_values.sandbox.persistence.logs.remote.type }}:
-            server: {{ $app_values.sandbox.persistence.logs.remote.server }}
-            path: {{ $app_values.sandbox.persistence.logs.remote.path }}
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
-        {{- else if $.Values.persistence.logs.enable }}
-        - name: logs
-          {{- if eq $.Values.persistence.logs.type "request" }}
-          persistentVolumeClaim:
-            claimName: {{ print $fullName "-" (ternary $.Values.persistence.logs.claim "logs" (ne $.Values.persistence.logs.claim "")) }}
-          {{- else if eq $.Values.persistence.logs.type "existing" }}
-          persistentVolumeClaim:
-            claimName: {{ $.Values.persistence.logs.claim }}
-          {{- else if eq $.Values.persistence.logs.type "remote" }}
-          {{ $.Values.persistence.logs.remote.type }}:
-            server: {{ $.Values.persistence.logs.remote.server }}
-            path: {{ $.Values.persistence.logs.remote.path }}
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
-        {{- end }}
         - name: license
           {{- if has (lower $.Values.iam.license.type) (list "cm" "configmap") }}
           configMap:
@@ -202,6 +170,19 @@ spec:
           {{- end }}
         - name: work
           emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ print $fullName "-" $app "-" (ternary $app_values.sandbox.persistence.logs.claim "logs" (ne $app_values.sandbox.persistence.logs.claim "")) }}
+      spec:
+        storageClassName: {{ ternary $app_values.sandbox.persistence.logs.storageClass $.Values.persistence.logs.storageClass (ne $app_values.sandbox.persistence.logs.storageClass "") }}
+        accessModes:
+          - {{ ternary $app_values.sandbox.persistence.logs.accessMode (ternary $.Values.persistence.logs.accessMode "ReadWriteOnce" (ne $.Values.persistence.logs.accessMode "")) (ne $app_values.sandbox.persistence.logs.accessMode "") }}
+        resources:
+          requests:
+            storage: {{ ternary $app_values.sandbox.persistence.logs.size $.Values.persistence.logs.size (ne $app_values.sandbox.persistence.logs.size "") }}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: {{ ternary $app_values.sandbox.persistence.logs.replicaRetentionPolicy $.Values.persistence.logs.replicaRetentionPolicy (ne $app_values.sandbox.persistence.logs.replicaRetentionPolicy "") }}
+    whenScaled: {{ ternary $app_values.sandbox.persistence.logs.replicaRetentionPolicy $.Values.persistence.logs.replicaRetentionPolicy (ne $app_values.sandbox.persistence.logs.replicaRetentionPolicy "") }}
 {{-     end -}}
 {{-   end -}}
 {{- end -}}
