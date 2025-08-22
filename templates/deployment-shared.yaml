@@ -5,7 +5,7 @@
 {{- if eq $hasShared "true" -}}
 {{-   $suffix := "" -}}
 {{-   if eq $hasSandbox "true" -}}
-{{-     $suffix = "shared" -}}
+{{-     $suffix = ternary .Values.iam.shared.suffix "shared" (ne .Values.iam.shared.suffix "") -}}
 {{-   end -}}
 {{-   if $suffix -}}
 {{-     $the_name = print $fullName "-" $suffix -}}

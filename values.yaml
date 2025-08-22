@@ -315,6 +315,10 @@ iam:
   ## Settings for shared deployment of multiple applications
   ## - forced to replicas: 1
   shared:
+    ## Suffix for the shared deployment
+    ## - default is 'shared'
+    suffix: ""
+
     ## Each instance requires some settings to define its logging, Java options and other os-level integrations
     ## These settings are defined in their own section, under iam.instanceProperties (see further down).
     ## Each set of settings has a name which can be referenced here.
