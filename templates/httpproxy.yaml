@@ -29,6 +29,7 @@ apiVersion: projectcontour.io/v1
 kind: HTTPProxy
 metadata:
   name: {{ $the_name }}
+  namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
   {{- with $.Values.ingress.annotations }}

@@ -21,6 +21,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $the_name }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
 spec:
