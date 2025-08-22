@@ -19,6 +19,7 @@ metadata:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
 spec:
   replicas: {{ $app_values.sandbox.replicas }}
+  revisionHistoryLimit: {{ $.Values.deployment.revisionHistoryLimit }}
   strategy:
     type: Recreate
   selector:
@@ -124,14 +125,14 @@ spec:
     {{- end }}
           volumeMounts:
             {{- if or $app_values.sandbox.persistence.config.enable $.Values.persistence.config.enable }}
-            - mountPath: /home/airlock/instances
+            - mountPath: /home/airlock/iam/instances
               name: config
             {{- end }}
             {{- if or $app_values.sandbox.persistence.logs.enable $.Values.persistence.logs.enable }}
-            - mountPath: {{ print "/home/airlock/instances/" $.Values.iam.instanceName "/logs" }}
+            - mountPath: {{ print "/home/airlock/iam/instances/" $.Values.iam.instanceName "/logs" }}
               name: logs
             {{- end }}
-            - mountPath: /home/airlock/license.txt
+            - mountPath: /home/airlock/iam/license.txt
               name: license
               subPath: license.txt
             - mountPath: /home/airlock/work

@@ -547,6 +547,11 @@ env: {}
 ## Annotations that are added to the Airlock IAM Pod.
 annotations: { }
 
+## Deployment settings
+deployment:
+  ## Maximum number of old ReplicaSets kept in history of Deployment
+  revisionHistoryLimit: 3
+
 ## CPU and Memory request and limit for the IAM pod.
 resourceOptions: { }
 
