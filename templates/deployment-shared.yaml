@@ -75,6 +75,8 @@ spec:
             {{- end }}
             - name: IAM_MODULES
               value: {{ include "airlock-iam.listModulesShared" . }}
+            - name: IAM_WEB_SERVER_CONNECTORS
+              value: "http,https"
             - name: IAM_WEB_SERVER_HTTP_PORT
               value: "8080"
             - name: IAM_WEB_SERVER_HTTPS_PORT
@@ -122,6 +124,8 @@ spec:
           ports:
             - containerPort: 8080
               name: http
+            - containerPort: 8081
+              name: health
     {{- if .Values.resourceOptions }}
           resources:
     {{ toYaml .Values.resourceOptions | indent 8 }}
