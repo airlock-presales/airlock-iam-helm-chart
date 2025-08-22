@@ -7,7 +7,7 @@
 {{-       $suffix := ternary $app_values.sandbox.suffix $app (ne $app_values.sandbox.suffix "") -}}
 {{-       $the_name = print $fullName "-" $suffix -}}
 {{-       $instanceProp := deepCopy $.Values.iam.instanceProperties.default -}}
-{{-       $nameProp := $app_values.sandbox.propertiesName -}}
+{{-       $nameProp := $app_values.sandbox.propertiesName | default "default" -}}
 {{-       if hasKey $.Values.iam.instanceProperties $nameProp -}}
 {{-         $instanceProp = mergeOverwrite $instanceProp (get $.Values.iam.instanceProperties $nameProp) -}}
 {{-       end -}}
@@ -34,8 +34,8 @@ spec:
         {{- include "airlock-iam.labels" $ | nindent 8 }}
     spec:
       serviceAccountName: {{ $fullName }}
-      automateServiceAccountToken: true
-      dnsPolicy: clusterFirst
+      automountServiceAccountToken: true
+      dnsPolicy: ClusterFirst
       enableServiceLinks: true
       {{- if $.Values.image.pullSecret }}
       imagePullSecrets:

@@ -11,13 +11,13 @@
 {{-     $the_name = print $fullName "-" $suffix -}}
 {{-   end -}}
 {{-   $instanceProp := deepCopy .Values.iam.instanceProperties.default -}}
-{{-   $nameProp := .Values.iam.shared.propertiesName -}}
+{{-   $nameProp := .Values.iam.shared.propertiesName | default "default" -}}
 {{-   if hasKey $.Values.iam.instanceProperties $nameProp -}}
 {{-     $instanceProp = mergeOverwrite $instanceProp (get .Values.iam.instanceProperties $nameProp) -}}
 {{-   end -}}
 {{-   $_ := set . "IAM_the_name" $the_name -}}
 {{-   $_ := set . "IAM_suffix" $suffix -}}
-apiVersion: v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $the_name }}
@@ -37,8 +37,8 @@ spec:
         {{- include "airlock-iam.labels" $ | nindent 8 }}
     spec:
       serviceAccountName: {{ $fullName }}
-      automateServiceAccountToken: true
-      dnsPolicy: clusterFirst
+      automountServiceAccountToken: true
+      dnsPolicy: ClusterFirst
       enableServiceLinks: true
       {{- if .Values.image.pullSecret }}
       imagePullSecrets:
