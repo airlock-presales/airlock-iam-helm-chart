@@ -6,8 +6,11 @@
 {{-     if and (and $app_values.enable $app_values.sandbox.enable) (eq (int $app_values.sandbox.replicas) 1) -}}
 {{-       $suffix := ternary $app_values.sandbox.suffix $app (ne $app_values.sandbox.suffix "") -}}
 {{-       $the_name = print $fullName "-" $suffix -}}
-{{-       $propIdx := include "airlock-iam.findProperties" $app_values.sandbox.propertiesName -}}
-{{-       $instanceProp := index $.Values.iam.instanceProperties (int $propIdx) -}}
+{{-       $instanceProp := deepCopy $.Values.iam.instanceProperties.default -}}
+{{-       $nameProp := $app_values.sandbox.propertiesName -}}
+{{-       if hasKey $.Values.iam.instanceProperties $nameProp -}}
+{{-         $instanceProp = mergeOverwrite $instanceProp (get $.Values.iam.instanceProperties $nameProp) -}}
+{{-       end -}}
 {{-       $_ := set $ "IAM_the_name" $the_name -}}
 {{-       $_ := set $ "IAM_suffix" $suffix }}
 ---

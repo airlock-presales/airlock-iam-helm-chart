@@ -155,25 +155,3 @@ Find service for app
 {{- end -}}
 {{- end -}}
 
-{{/*
-Find instanceProperties settings
-*/}}
-{{- define "airlock-iam.findProperties" -}}
-{{- $name := . -}}
-{{- $idxProp := -1 -}}
-{{- $idx := -1 -}}
-{{- if ne $name "" -}}
-{{-   range $prop := $.Values.iam.instanceProperties -}}
-{{-     $idx = $idx +1 -}}
-{{-     if eq $prop.name $name -}}
-{{-       $idxProp = $idx -}}
-{{-     end -}}
-{{-   end -}}
-{{- end -}}
-{{- if ne $idxProp -1 -}}
-{{ $idxProp }}
-{{- else -}}
-0
-{{- end -}}
-{{- end -}}
-

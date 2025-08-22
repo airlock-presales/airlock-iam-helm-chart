@@ -10,8 +10,11 @@
 {{-   if $suffix -}}
 {{-     $the_name = print $fullName "-" $suffix -}}
 {{-   end -}}
-{{-   $propIdx := include "airlock-iam.findProperties" .Values.iam.shared.propertiesName -}}
-{{-   $instanceProp := index .Values.iam.instanceProperties (int $propIdx) -}}
+{{-   $instanceProp := deepCopy .Values.iam.instanceProperties.default -}}
+{{-   $nameProp := .Values.iam.shared.propertiesName -}}
+{{-   if hasKey $.Values.iam.instanceProperties $nameProp -}}
+{{-     $instanceProp = mergeOverwrite $instanceProp (get .Values.iam.instanceProperties $nameProp) -}}
+{{-   end -}}
 {{-   $_ := set . "IAM_the_name" $the_name -}}
 {{-   $_ := set . "IAM_suffix" $suffix -}}
 apiVersion: v1

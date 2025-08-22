@@ -336,9 +336,11 @@ iam:
   ## - some commonly used instance.properties settings can be defined here directly
   ## - for others, use environment variables
   instanceProperties:
-      ## Instance properties settings collection name
-      ## - reference as propertiesName by the applications
-    - name: ""
+    ## Instance properties settings collection
+    ## - reference key as propertiesName by the applications
+    ## - you should probably not overwrite the 'default' dict but create a custom dict
+    ## - missing information in a custom dict is back-filled with settings from 'default'
+    default:
 
       ## Define logging
       logging:
