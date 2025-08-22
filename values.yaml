@@ -29,7 +29,7 @@ iam:
 
   ## IAM web applications
   ## - for tests, all applications can be part of one deployment
-  ## - for production, production-like test environments, it is recommended to split the applications
+  ## - for production and production-like test environments, it is recommended to split the applications
   ##   into separate deployments with individual settings, e.g. number of replicas
   apps:
     ## Loginapp
@@ -78,6 +78,7 @@ iam:
             ## - existing: an existing PersistentVolumeClaim is used for storage
             ## - remote: storage from a remote server is mounted as volume
             ## - subpath: the storage refers to a (sub)path on an already existing volume
+            ## - hostpath: the storage refers to a directory on the Kubernetes node
             type: "request"
 
             ## The storage class to use for the PVC
@@ -112,6 +113,14 @@ iam:
               ## server and path of mount
               server: ""
               path: ""
+
+            ## Hostpath mount
+            ## - do not use unless you know what you are doing
+            ## - only for test environments or local administration setups
+            ## - never use for production or production-like test environments - you have been warned
+            ## - on Rancher Desktop, use a value like "/mnt/c/Users/<user>/Documents/Airlock/IAM"
+            hostPath: ""
+
           ## Volume for log files
           ## - by default, logs are written to stdout
           ## - historically, Airlock IAM has written its log to files - which may be preferred by some administrators
@@ -137,9 +146,10 @@ iam:
             subPath: ""
             size: "100M"
             remote:
-              tpye: ""
+              type: ""
               server: ""
               path: ""
+            hostPath: ""
         ## Environment variables for loginapp
         ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
         ##   with punctuation such as "-" and "." replaced with "_". E.g. IAM_LOGINAPP_REST_UI_CUSTOMIZATIONS=instances/auth/designs/ui.zip
@@ -168,6 +178,7 @@ iam:
               type: ""
               server: ""
               path: ""
+            hostPath: ""
           logs:
             enable: false
             type: "request"
@@ -179,9 +190,10 @@ iam:
             subPath: ""
             size: "100M"
             remote:
-              tpye: ""
+              type: ""
               server: ""
               path: ""
+            hostPath: ""
         env: {}
     transactionApproval:
       path: ""
@@ -205,6 +217,7 @@ iam:
               type: ""
               server: ""
               path: ""
+            hostPath: ""
           logs:
             enable: false
             type: "request"
@@ -216,9 +229,10 @@ iam:
             subPath: ""
             size: "100M"
             remote:
-              tpye: ""
+              type: ""
               server: ""
               path: ""
+            hostPath: ""
         env: {}
     serviceContainer:
       path: ""
@@ -242,6 +256,7 @@ iam:
               type: ""
               server: ""
               path: ""
+            hostPath: ""
           logs:
             enable: false
             type: "request"
@@ -253,9 +268,10 @@ iam:
             subPath: ""
             size: "100M"
             remote:
-              tpye: ""
+              type: ""
               server: ""
               path: ""
+            hostPath: ""
         env: {}
     apiPolicyService:
       path: ""
@@ -279,6 +295,7 @@ iam:
               type: ""
               server: ""
               path: ""
+            hostPath: ""
           logs:
             enable: false
             type: "request"
@@ -290,9 +307,10 @@ iam:
             subPath: ""
             size: "100M"
             remote:
-              tpye: ""
+              type: ""
               server: ""
               path: ""
+            hostPath: ""
         env: {}
   ## Settings for shared deployment of multiple applications
   ## - forced to replicas: 1
@@ -453,6 +471,7 @@ persistence:
       type: ""
       server: ""
       path: ""
+    hostPath: ""
   logs:
     enable: false
     type: "request"
@@ -464,9 +483,10 @@ persistence:
     subPath: ""
     size: "100M"
     remote:
-      tpye: ""
+      type: ""
       server: ""
       path: ""
+    hostPath: ""
 
 ## Authentication and self-service processes usually require multiple data exchanges between client and server.
 ## For security reasons, corresponding state information is not exposed to the client but retained on the server.

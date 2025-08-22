@@ -165,6 +165,10 @@ spec:
           {{ .Values.persistence.config.remote.type }}:
             server: {{ .Values.persistence.config.remote.server }}
             path: {{ .Values.persistence.config.remote.path }}
+          {{- else if eq .Values.persistence.config.type "hostpath" }}
+          hostPath:
+            path: {{ .Values.persistence.config.hostPath.path }}
+            type: Directory
           {{- else }}
           emptyDir: {}
           {{- end }}
@@ -181,6 +185,10 @@ spec:
           {{ .Values.persistence.logs.remote.type }}:
             server: {{ .Values.persistence.logs.remote.server }}
             path: {{ .Values.persistence.logs.remote.path }}
+          {{- else if eq .Values.persistence.logs.type "hostpath" }}
+          hostPath:
+            path: {{ .Values.persistence.logs.hostPath.path }}
+            type: Directory
           {{- else }}
           emptyDir: {}
           {{- end }}
