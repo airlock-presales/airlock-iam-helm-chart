@@ -129,6 +129,55 @@ spec:
               name: http
             - containerPort: 8081
               name: health
+          {{- if .Values.iam.shared.healthChecks.liveness.enable }}
+          livenessProbe:
+            periodSeconds: {{ .Values.iam.shared.healthChecks.liveness.period }}
+            timeoutSeconds: {{ .Values.iam.shared.healthChecks.liveness.timeout }}
+            failureThreshold: {{ .Values.iam.shared.healthChecks.liveness.failures }}
+            initialDelaySeconds: {{ .Values.iam.shared.healthChecks.liveness.initialDelay }}
+            httpGet:
+              path: /health/ready
+              port: health
+          {{- end }}
+          {{- if .Values.iam.shared.healthChecks.readiness.enable }}
+          readinessProbe:
+            periodSeconds: {{ .Values.iam.shared.healthChecks.readiness.period }}
+            timeoutSeconds: {{ .Values.iam.shared.healthChecks.readiness.timeout }}
+            failureThreshold: {{ .Values.iam.shared.healthChecks.readiness.failures }}
+            initialDelaySeconds: {{ .Values.iam.shared.healthChecks.readiness.initialDelay }}
+            httpGet:
+              path: /health/live
+              port: health
+          {{- end }}
+          {{- if .Values.iam.shared.healthChecks.startup.enable }}
+          startupProbe:
+            periodSeconds: {{ .Values.iam.shared.healthChecks.startup.period }}
+            timeoutSeconds: {{ .Values.iam.shared.healthChecks.startup.timeout }}
+            failureThreshold: {{ .Values.iam.shared.healthChecks.startup.failures }}
+            initialDelaySeconds: {{ .Values.iam.shared.healthChecks.startup.initialDelay }}
+            httpGet:
+              path: /health/ready
+              port: health
+          {{- end }}
+          resources:
+            {{- if or (ne .Values.iam.shared.resources.requests.cpu "") (ne .Values.iam.shared.resources.requests.ram "") }}
+            requests:
+              {{- if or (ne .Values.iam.shared.resources.requests.cpu "") }}
+              cpu: {{ .Values.iam.shared.resources.requests.cpu }}
+              {{- end }}
+              {{- if or (ne .Values.iam.shared.resources.requests.ram "") }}
+              memory: {{ .Values.iam.shared.resources.requests.ram }}
+              {{- end }}
+            {{- end }}
+            {{- if or (ne .Values.iam.shared.resources.limits.cpu "") (ne .Values.iam.shared.resources.limits.ram "") }}
+            limits:
+              {{- if or (ne .Values.iam.shared.resources.limits.cpu "") }}
+              cpu: {{ .Values.iam.shared.resources.limits.cpu }}
+              {{- end }}
+              {{- if or (ne .Values.iam.shared.resources.limits.ram "") }}
+              memory: {{ .Values.iam.shared.resources.limits.ram }}
+              {{- end }}
+            {{- end }}
     {{- if .Values.resourceOptions }}
           resources:
     {{ toYaml .Values.resourceOptions | indent 8 }}

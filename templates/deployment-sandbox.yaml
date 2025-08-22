@@ -126,6 +126,55 @@ spec:
               name: http
             - containerPort: 8081
               name: health
+          {{- if $app_values.sandbox.healthChecks.liveness.enable }}
+          livenessProbe:
+            periodSeconds: {{ $app_values.sandbox.healthChecks.liveness.period }}
+            timeoutSeconds: {{ $app_values.sandbox.healthChecks.liveness.timeout }}
+            failureThreshold: {{ $app_values.sandbox.healthChecks.liveness.failures }}
+            initialDelaySeconds: {{ $app_values.sandbox.healthChecks.liveness.initialDelay }}
+            httpGet:
+              path: /health/ready
+              port: health
+          {{- end }}
+          {{- if $app_values.sandbox.healthChecks.readiness.enable }}
+          readinessProbe:
+            periodSeconds: {{ $app_values.sandbox.healthChecks.readiness.period }}
+            timeoutSeconds: {{ $app_values.sandbox.healthChecks.readiness.timeout }}
+            failureThreshold: {{ $app_values.sandbox.healthChecks.readiness.failures }}
+            initialDelaySeconds: {{ $app_values.sandbox.healthChecks.readiness.initialDelay }}
+            httpGet:
+              path: /health/live
+              port: health
+          {{- end }}
+          {{- if $app_values.sandbox.healthChecks.startup.enable }}
+          startupProbe:
+            periodSeconds: {{ $app_values.sandbox.healthChecks.startup.period }}
+            timeoutSeconds: {{ $app_values.sandbox.healthChecks.startup.timeout }}
+            failureThreshold: {{ $app_values.sandbox.healthChecks.startup.failures }}
+            initialDelaySeconds: {{ $app_values.sandbox.healthChecks.startup.initialDelay }}
+            httpGet:
+              path: /health/ready
+              port: health
+          {{- end }}
+          resources:
+            {{- if or (ne $app_values.sandbox.resources.requests.cpu "") (ne $app_values.sandbox.resources.requests.ram "") }}
+            requests:
+              {{- if or (ne $app_values.sandbox.resources.requests.cpu "") }}
+              cpu: {{ $app_values.sandbox.resources.requests.cpu }}
+              {{- end }}
+              {{- if or (ne $app_values.sandbox.resources.requests.ram "") }}
+              memory: {{ $app_values.sandbox.resources.requests.ram }}
+              {{- end }}
+            {{- end }}
+            {{- if or (ne $app_values.sandbox.resources.limits.cpu "") (ne $app_values.sandbox.resources.limits.ram "") }}
+            limits:
+              {{- if or (ne $app_values.sandbox.resources.limits.cpu "") }}
+              cpu: {{ $app_values.sandbox.resources.limits.cpu }}
+              {{- end }}
+              {{- if or (ne $app_values.sandbox.resources.limits.ram "") }}
+              memory: {{ $app_values.sandbox.resources.limits.ram }}
+              {{- end }}
+            {{- end }}
     {{- if $.Values.resourceOptions }}
           resources:
     {{ toYaml $.Values.resourceOptions | indent 8 }}

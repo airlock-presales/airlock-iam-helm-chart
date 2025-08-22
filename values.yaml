@@ -150,6 +150,38 @@ iam:
               server: ""
               path: ""
             hostPath: ""
+
+        ## Health checks
+        ## - if defined, metrics endpoint is exposed on this port
+        healthChecks:
+          liveness:
+            enable: true
+            period: 10
+            timeout: 1
+            failures: 3
+            initialDelay: 5
+          readiness:
+            enable: true
+            period: 5
+            timeout: 1
+            failures: 3
+            initialDelay: 6
+          startup:
+            enable: true
+            period: 2
+            timeout: 1
+            failures: 150
+            initialDelay: 10
+
+        ## CPU & memory resource limits and requests
+        resources:
+          requests:
+            cpu: ""
+            ram: ""
+          limits:
+            cpu: ""
+            ram: ""
+
         ## Environment variables for loginapp
         ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
         ##   with punctuation such as "-" and "." replaced with "_". E.g. IAM_LOGINAPP_REST_UI_CUSTOMIZATIONS=instances/auth/designs/ui.zip
@@ -194,6 +226,32 @@ iam:
               server: ""
               path: ""
             hostPath: ""
+        healthChecks:
+          liveness:
+            enable: true
+            period: 10
+            timeout: 1
+            failures: 3
+            initialDelay: 5
+          readiness:
+            enable: true
+            period: 5
+            timeout: 1
+            failures: 3
+            initialDelay: 6
+          startup:
+            enable: true
+            period: 2
+            timeout: 1
+            failures: 150
+            initialDelay: 10
+        resources:
+          requests:
+            cpu: ""
+            ram: ""
+          limits:
+            cpu: ""
+            ram: ""
         env: {}
     transactionApproval:
       path: ""
@@ -233,6 +291,32 @@ iam:
               server: ""
               path: ""
             hostPath: ""
+        healthChecks:
+          liveness:
+            enable: true
+            period: 10
+            timeout: 1
+            failures: 3
+            initialDelay: 5
+          readiness:
+            enable: true
+            period: 5
+            timeout: 1
+            failures: 3
+            initialDelay: 6
+          startup:
+            enable: true
+            period: 2
+            timeout: 1
+            failures: 150
+            initialDelay: 10
+        resources:
+          requests:
+            cpu: ""
+            ram: ""
+          limits:
+            cpu: ""
+            ram: ""
         env: {}
     serviceContainer:
       path: ""
@@ -272,6 +356,32 @@ iam:
               server: ""
               path: ""
             hostPath: ""
+        healthChecks:
+          liveness:
+            enable: true
+            period: 10
+            timeout: 1
+            failures: 3
+            initialDelay: 5
+          readiness:
+            enable: true
+            period: 5
+            timeout: 1
+            failures: 3
+            initialDelay: 6
+          startup:
+            enable: true
+            period: 2
+            timeout: 1
+            failures: 150
+            initialDelay: 10
+        resources:
+          requests:
+            cpu: ""
+            ram: ""
+          limits:
+            cpu: ""
+            ram: ""
         env: {}
     apiPolicyService:
       path: ""
@@ -311,6 +421,32 @@ iam:
               server: ""
               path: ""
             hostPath: ""
+        healthChecks:
+          liveness:
+            enable: true
+            period: 10
+            timeout: 1
+            failures: 3
+            initialDelay: 5
+          readiness:
+            enable: true
+            period: 5
+            timeout: 1
+            failures: 3
+            initialDelay: 6
+          startup:
+            enable: true
+            period: 2
+            timeout: 1
+            failures: 150
+            initialDelay: 10
+        resources:
+          requests:
+            cpu: ""
+            ram: ""
+          limits:
+            cpu: ""
+            ram: ""
         env: {}
   ## Settings for shared deployment of multiple applications
   ## - forced to replicas: 1
@@ -324,6 +460,37 @@ iam:
     ## Each set of settings has a name which can be referenced here.
     ## If name is not set here, the first item in iam.instanceProperties is used.
     propertiesName: ""
+
+    ## Health checks
+    ## - if defined, metrics endpoint is exposed on this port
+    healthChecks:
+      liveness:
+        enable: true
+        period: 10
+        timeout: 1
+        failures: 3
+        initialDelay: 5
+      readiness:
+        enable: true
+        period: 5
+        timeout: 1
+        failures: 3
+        initialDelay: 6
+      startup:
+        enable: true
+        period: 2
+        timeout: 1
+        failures: 150
+        initialDelay: 10
+
+    ## CPU & memory resource limits and requests
+    resources:
+      requests:
+        cpu: ""
+        ram: ""
+      limits:
+        cpu: ""
+        ram: ""
 
     ## Environment variables for shared deployment
     ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
