@@ -727,6 +727,9 @@ resourceOptions: { }
 ## Restart policy for the Airlock IAM deployment.
 restartPolicy: "Always"
 
+## Where the Helm chart originates
+chartSource: "https://github.com/airlock-presales/airlock-iam-helm-chart"
+
 global:
   timezone: "Europe/Zurich"
 

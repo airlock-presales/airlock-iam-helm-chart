@@ -32,10 +32,11 @@ metadata:
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
-  {{- with $.Values.ingress.annotations }}
   annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+    {{- with $.Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 spec:
   virtualhost:
     fqdn: {{ $.Values.ingress.dns.hostname }}

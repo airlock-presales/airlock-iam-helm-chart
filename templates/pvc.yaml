@@ -21,6 +21,8 @@ metadata:
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
 spec:
   accessModes:
   - {{ ternary $vol.accessMode "ReadWriteOnce" (ne $vol.accessMode "") }}

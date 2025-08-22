@@ -21,6 +21,8 @@ metadata:
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
 spec:
   replicas: {{ $app_values.sandbox.replicas }}
   revisionHistoryLimit: {{ $.Values.deployment.revisionHistoryLimit }}
@@ -33,6 +35,8 @@ spec:
     metadata:
       labels:
         {{- include "airlock-iam.labels" $ | nindent 8 }}
+      annotations:
+        {{- include "airlock-iam.annotations" $ | nindent 8 }}
     spec:
       serviceAccountName: {{ $fullName }}
       automountServiceAccountToken: true

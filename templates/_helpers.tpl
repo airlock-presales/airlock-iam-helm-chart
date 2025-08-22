@@ -32,6 +32,13 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
+Common annotations
+*/}}
+{{- define "airlock-iam.annotations" -}}
+source.info.io/chart: {{ .Values.chartSource }}
+{{- end }}
+
+{{/*
 Common labels
 */}}
 {{- define "airlock-iam.labels" -}}

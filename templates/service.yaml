@@ -31,6 +31,8 @@ metadata:
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
 spec:
   selector:
     {{- include "airlock-iam.selectorLabels" $ | nindent 4 }}
