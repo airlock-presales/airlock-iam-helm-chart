@@ -19,7 +19,6 @@ kind: PersistentVolumeClaim
 metadata:
   name: {{ print $base_name "-" (ternary $vol.claim $key (ne $vol.claim "")) }}
   labels:
-    app.kubernetes.io/name: {{ $base_name }}
     {{- include "airlock-iam.labels" $ | nindent 4 }}
 spec:
   accessModes:

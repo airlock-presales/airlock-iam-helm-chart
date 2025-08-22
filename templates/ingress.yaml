@@ -13,7 +13,7 @@
 {{-         $the_name = print $fullName "-" $suffix -}}
 {{-         $createShared = false -}}
 {{-       else -}}
-{{-         if $hasSandbox -}}
+{{-         if eq $hasSandbox "true" -}}
 {{-           $suffix = "shared" -}}
 {{-         end -}}
 {{-         if $suffix -}}
@@ -21,18 +21,15 @@
 {{-         end -}}
 {{-         $createShared = true -}}
 {{-       end -}}
-{{-       if or (not $createShared) (not $sharedDone) -}}
-{{-         $label_name := $fullName }}
+{{-       if or (not $createShared) (not $sharedDone) }}
+{{-         $_ := set $ "IAM_the_name" $the_name }}
+{{-         $_ := set $ "IAM_suffix" $suffix }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ $the_name }}
   labels:
-    app.kubernetes.io/name: {{ $the_name }}
-    {{- if $suffix }}
-    app.kubernetes.io/component: {{ $suffix }}
-    {{- end }}
     {{- include "airlock-iam.labels" $ | nindent 4 }}
   {{- with $.Values.ingress.annotations }}
   annotations:

@@ -1,21 +1,21 @@
 {{- $fullName := include "airlock-iam.fullname" . -}}
 {{- $the_name := $fullName -}}
 {{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
-{{- if $hasSandbox -}}
+{{- if eq $hasSandbox "true" -}}
 {{-   range $app, $app_values := .Values.iam.apps -}}
 {{-     if and (and $app_values.enable $app_values.sandbox.enable) (eq (int $app_values.sandbox.replicas) 1) -}}
 {{-       $suffix := ternary $app_values.sandbox.suffix $app (ne $app_values.sandbox.suffix "") -}}
 {{-       $the_name = print $fullName "-" $suffix -}}
 {{-       $propIdx := include "airlock-iam.findProperties" $app_values.sandbox.propertiesName -}}
 {{-       $instanceProp := index $.Values.iam.instanceProperties (int $propIdx) -}}
+{{-       $_ := set $ "IAM_the_name" $the_name -}}
+{{-       $_ := set $ "IAM_suffix" $suffix }}
 ---
 apiVersion: v1
 kind: Deployment
 metadata:
   name: {{ $the_name }}
   labels:
-    app.kubernetes.io/name: {{ $the_name }}
-    app.kubernetes.io/component: {{ $suffix }}
     {{- include "airlock-iam.labels" $ | nindent 4 }}
 spec:
   replicas: {{ $app_values.sandbox.replicas }}
@@ -23,14 +23,10 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ $the_name }}
-      app.kubernetes.io/component: {{ $suffix }}
       {{- include "airlock-iam.selectorLabels" $ | nindent 6 }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ $the_name }}
-        app.kubernetes.io/component: {{ $suffix }}
         {{- include "airlock-iam.labels" $ | nindent 8 }}
     spec:
       serviceAccountName: {{ $fullName }}
@@ -156,7 +152,7 @@ spec:
             path: {{ $app_values.sandbox.persistence.config.remote.path }}
           {{- else if eq $app_values.sandbox.persistence.config.type "hostpath" }}
           hostPath:
-            path: {{ $app_values.sandbox.persistence.config.remote.path }}
+            path: {{ $app_values.sandbox.persistence.config.hostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}
@@ -173,9 +169,9 @@ spec:
           {{ $.Values.persistence.config.remote.type }}:
             server: {{ $.Values.persistence.config.remote.server }}
             path: {{ $.Values.persistence.config.remote.path }}
-          {{- else if eq .Values.persistence.config.type "hostpath" }}
+          {{- else if eq $.Values.persistence.config.type "hostpath" }}
           hostPath:
-            path: {{ .Values.persistence.config.hostPath.path }}
+            path: {{ $.Values.persistence.config.hostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}
@@ -195,7 +191,7 @@ spec:
             path: {{ $app_values.sandbox.persistence.logs.remote.path }}
           {{- else if eq $app_values.sandbox.persistence.logs.type "hostpath" }}
           hostPath:
-            path: {{ $app_values.sandbox.persistence.logs.remote.path }}
+            path: {{ $app_values.sandbox.persistence.logs.hostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}
@@ -212,9 +208,9 @@ spec:
           {{ $.Values.persistence.logs.remote.type }}:
             server: {{ $.Values.persistence.logs.remote.server }}
             path: {{ $.Values.persistence.logs.remote.path }}
-          {{- else if eq .Values.persistence.logs.type "hostpath" }}
+          {{- else if eq $.Values.persistence.logs.type "hostpath" }}
           hostPath:
-            path: {{ .Values.persistence.logs.hostPath.path }}
+            path: {{ $.Values.persistence.logs.hostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}

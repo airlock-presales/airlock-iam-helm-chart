@@ -47,7 +47,14 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Common Selector labels
 */}}
 {{- define "airlock-iam.selectorLabels" -}}
+app.kubernetes.io/name: {{ default .IAM_the_name (include "airlock-iam.fullname" .) }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+{{- if .IAM_suffix }}
+app.kubernetes.io/component: {{ .IAM_suffix }}
+{{- end }}
+{{- if and .Values.iam.environmentId (ne .Values.iam.environmentId "") }}
+iam.airlock.com/environment: {{ .Values.iam.environmentId }}
+{{- end }}
 {{- end }}
 
 {{/*

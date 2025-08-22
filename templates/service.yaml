@@ -1,18 +1,18 @@
 {{- $fullName := include "airlock-iam.fullname" . -}}
 {{- $the_name := $fullName -}}
+{{- $suffix := "" -}}
 {{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
 {{- $sharedServiceDone := false -}}
 {{- $createSharedService := false -}}
 {{- $svc := .Values.service -}}
 {{- range $app, $app_values := .Values.iam.apps -}}
 {{-   if $app_values.enable -}}
-{{-     $suffix := "" -}}
 {{-     if $app_values.sandbox.enable -}}
 {{-       $suffix = $app_values.sandbox.suffix | default $app -}}
 {{-       $the_name = print $fullName "-" $suffix -}}
 {{-       $createSharedService = false -}}
 {{-     else -}}
-{{-       if $hasSandbox -}}
+{{-       if eq $hasSandbox "true" -}}
 {{-         $suffix = "shared" -}}
 {{-       end -}}
 {{-       if $suffix -}}
@@ -20,31 +20,19 @@
 {{-       end -}}
 {{-       $createSharedService = true -}}
 {{-     end -}}
-{{-     if or (not $createSharedService) (not $sharedServiceDone) -}}
-{{/*
-{{-       $svcIdx := index $.Values.service include "airlock-iam.findService" dict "values" $.Values "suffix" $suffix -}}
-{{-       if ne $svcIdx -1 -}}
-{{-         $svc := index $.Values.service $svcIdx -}}
-*/}}
-{{-         $label_name := $fullName }}
+{{-     if or (not $createSharedService) (not $sharedServiceDone) }}
+{{-         $_ := set $ "IAM_the_name" $the_name }}
+{{-         $_ := set $ "IAM_suffix" $suffix }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ $the_name }}
   labels:
-    app.kubernetes.io/name: {{ $the_name }}
-    {{- if $suffix }}
-    app.kubernetes.io/component: {{ $suffix }}
-    {{- end }}
     {{- include "airlock-iam.labels" $ | nindent 4 }}
 spec:
   selector:
-    app.kubernetes.io/name: {{ $the_name }}
-    app.kubernetes.io/instance: {{ $fullName }}
-    {{- if $suffix }}
-    app.kubernetes.io/component: {{ $suffix }}
-    {{- end }}
+    {{- include "airlock-iam.selectorLabels" $ | nindent 4 }}
   type: {{ $svc.type }}
 {{- if $svc.externalTrafficPolicy }}
   externalTrafficPolicy: {{ quote $svc.externalTrafficPolicy }}
@@ -55,8 +43,8 @@ spec:
       targetPort: http
       protocol: TCP
 {{-     end }}
-{{-     if $createSharedService -}}
-{{-       $sharedServiceDone = true -}}
+{{-     if $createSharedService }}
+{{-       $sharedServiceDone = true }}
 {{-     end }}
 {{-   end }}
 {{- end }}

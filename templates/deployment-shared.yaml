@@ -2,9 +2,9 @@
 {{- $the_name := $fullName -}}
 {{- $hasShared := include "airlock-iam.hasShared" . -}}
 {{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
-{{- if $hasShared -}}
+{{- if eq $hasShared "true" -}}
 {{-   $suffix := "" -}}
-{{-   if $hasSandbox -}}
+{{-   if eq $hasSandbox "true" -}}
 {{-     $suffix = "shared" -}}
 {{-   end -}}
 {{-   if $suffix -}}
@@ -12,36 +12,24 @@
 {{-   end -}}
 {{-   $propIdx := include "airlock-iam.findProperties" .Values.iam.shared.propertiesName -}}
 {{-   $instanceProp := index .Values.iam.instanceProperties (int $propIdx) -}}
+{{-   $_ := set . "IAM_the_name" $the_name -}}
+{{-   $_ := set . "IAM_suffix" $suffix -}}
 apiVersion: v1
 kind: Deployment
 metadata:
   name: {{ $the_name }}
   labels:
-    app.kubernetes.io/name: {{ $the_name }}
-    {{- if $suffix }}
-    app.kubernetes.io/component: {{ $suffix }}
-    {{- end }}
     {{- include "airlock-iam.labels" $ | nindent 4 }}
 spec:
   replicas: 1
   strategy:
     type: Recreate
-  {{- if $suffix }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ $the_name }}
-      {{- if $suffix }}
-      app.kubernetes.io/component: {{ $suffix }}
-      {{- end }}
       {{- include "airlock-iam.selectorLabels" $ | nindent 6 }}
-  {{- end }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ $the_name }}
-        {{- if $suffix }}
-        app.kubernetes.io/component: {{ $suffix }}
-        {{- end }}
         {{- include "airlock-iam.labels" $ | nindent 8 }}
     spec:
       serviceAccountName: {{ $fullName }}
@@ -167,7 +155,7 @@ spec:
             path: {{ .Values.persistence.config.remote.path }}
           {{- else if eq .Values.persistence.config.type "hostpath" }}
           hostPath:
-            path: {{ .Values.persistence.config.hostPath.path }}
+            path: {{ .Values.persistence.config.hostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}
@@ -187,7 +175,7 @@ spec:
             path: {{ .Values.persistence.logs.remote.path }}
           {{- else if eq .Values.persistence.logs.type "hostpath" }}
           hostPath:
-            path: {{ .Values.persistence.logs.hostPath.path }}
+            path: {{ .Values.persistence.logs.hostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}
