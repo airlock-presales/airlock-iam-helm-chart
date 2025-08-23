@@ -683,10 +683,173 @@ redis:
 ## - PostgresSQL: https://cloudnative-pg.io
 ## - MariaDB: https://github.com/mariadb-operator/mariadb-operato
 database:
-  postgres:
+  ## How is database engine deployed
+  ## - valid values are 'none', 'external', 'mariadb', 'postgresql'
+  ## - external: use if you already have a database server deployed, in or out of cluster
+  ## - mariadb / postgresql: causes Heöm chart to deploy a dedicated instance, see respective keys below for configuration
+  ## - none: no database-relevant settings are defined
+  deploymentType: "mariadb"
+
+  ## Configure the external database
+  external:
+    ## Activation
+    ## - enable to use an external database
+    ## - conflicts with database.mariadb.enable and database.postgresql.enable
+    ## - only one of these may be set to true
     enable: false
+
+    ## Database engine
+    ## - the type of the  external database
+    ## - valid values: mysql, mariadb, postgresql, mssql, oracle
+    type: "mariadb"
+
+    ## Database host
+    ## - append port, if required, separated by colon, e.g. 'myhost:1234'
+    host: "db.example.com"
+
+    ## Database name
+    database: "airlock_iam"
+
+    ## Database access credentials
+    ## - specify username & password to access database
+    ## - preferably, use pre-existing secret
+    ## - if secretName is defined, it is expected to contain the specified key
+    credentials:
+      ## The datrabase account (and its password) to access the Airlock IAM database
+      user:
+        ## Username to access database
+        ## - ignored if existingSecret is set
+        value: "airlock_iam"
+  
+        ## Name of existing secret containing username
+        ## - overrides username setting
+        existingSecret: ""
+  
+        ## Key for username in existing secret
+        key: "db_user"
+  
+      password:
+        ## Password to access database
+        ## - ignored if existingSecret is set
+        value: "a very hush and absolutely not well known secret"
+  
+        ## Name of existing secret containing password
+        ## - overrides password setting
+        existingSecret: ""
+  
+        ## Key for password in existing secret
+        key: "db_password"
+  
+      ## A privileged datrabase account (and its password) authorized to create databases and define tables
+      ## - only required if database.initialisation.schema.operation=init
+      ## - properties are the same as documented for database.external.credentials.user & password (just above)
+      rootUser:
+        value: "root"
+        existingSecret: ""
+        key: "root_user"
+      rootPassword:
+        value: ""
+        existingSecret: "airlock-iam"
+        key: "root_password"
+  
+  ## Configure MariaDB deployed from this chart
+  ## - ref: https://github.com/bitnami/charts/tree/main/bitnami/mariadb
   mariadb:
+    ## Activation
+    ## - enable to use an external database
+    ## - conflicts with database.external.enable and database.postgresql.enable
+    ## - only one of these may be set to true
     enable: false
+
+    ## Rest of MariaDB configuration
+    ## Unfortunately, Helm is pretty limited when it comes to pass values from a parent to a child chart
+    ## Such values must be defined in the parent values.yaml (this file) under the key '<name-of-subchart>'
+    ## In the case of MariaDB, look for a top-level key 'mariadb' towards the end of the file.
+  
+  ## Configure PostgreSQL deployed from this chart
+  ## - see https://github.com/bitnami/charts/tree/main/bitnami/postgresql
+  postgresql:
+    ## Activation
+    ## - enable to use an external database
+    ## - conflicts with database.external.enable and database.mariadb.enable
+    ## - only one of these may be set to true
+    enable: true
+
+    ## Rest of PostgreSQL configuration
+    ## Unfortunately, Helm is pretty limited when it comes to pass values from a parent to a child chart
+    ## Such values must be defined in the parent values.yaml (this file) under the key '<name-of-subchart>'
+    ## In the case of PostgreSQL, look for a top-level key 'postgresql' towards the end of the file.
+  
+  ## Initialisation
+  initialisation:
+    ## Java database connector
+    ## - Airlock IAM requires a Java database connector which is not part of the container image (for legal reasons)
+    ## - can be provided as part of the instance directory (see 'persistence'), usually in directory <instanceName>/libs or common/libs
+    ## - chart can launch a job which downloads connector to instance directory
+    connector:
+      ## Enable automatic download
+      download: true
+  
+      ## Select relevant connector
+      mariaddb:
+        ## Version of connector to download
+        ## - selects newest version if unset
+        version: ""
+  
+        ## Package mirror to download from
+        ## - default is 'MvA Internet Services GmbH, Zurich'
+        mirrorHost: "https://mirror.mva-n.net"
+        driverDownloadURL: "https://mirror.mva-n.net/mariadb///connector-java-3.5.5/mariadb-connector-j-3.5.5.tar.gz"
+  
+      postgresql:
+        ## Version of connector to download
+        ## - selects newest version if unset
+        version: ""
+  
+        ## Package mirror to download from
+        ## - default is 'MvA Internet Services GmbH, Zurich'
+        mirrorHost: "https://jdbc.postgresql.org"
+        driverDownloadURL: "https://jdbc.postgresql.org/download/postgresql-42.7.7.jar"
+
+    ## Schema
+    ## - create or upgrade database schema
+    ## - uses the schema scripts as published on the documentation site, see https://docs.airlock.com/iam/latest/index/1579527945303.html
+    schema:
+      ## Define the applied operation
+      ## - valid values: none, init, upgrade
+      ## - init: remove existing database
+      ## - upgrade: equivalent to init if database does not already exist
+      ## - will use root user credentials to connect, see below
+      operation: "none"
+
+      ## Upgrade from version
+      ## - for operation 'upgrade'
+      ## - currently, the Airlock IAM database schema does not contain a version marker
+      ## - you need to define the current schema version for the upgrade to work correctly
+      version: ""
+
+      ## Adminapp administrator
+      ## - only relevant for operation 'init'
+      administrator:
+        ## Automatically create the administrator account for adminapp
+        create: true
+
+        ## Credentials
+        ## - specify username & password for admin account
+        ## - only relevant for database.initialisation.schema.operation=init and database.initialisation.schema.createAdministrator=true
+        ## - preferably, use pre-existing secret
+        ## - if secretName is defined, it is expected to contain the specified key
+        ## - properties are the same as documented for database.external.credentials.user & password
+        credentials:
+          name:
+            value: "admin"
+            existingSecret: ""
+            key: "admin_user"
+          password:
+            value: ""
+            existingSecret: "airlock-iam"
+            key: "admin_password"
+      
 
 ## Image Options
 image:
@@ -708,8 +871,92 @@ image:
 ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
 ##   with punctuation such as "-" and "." replaced with "_". E.g. IAM_LOGINAPP_REST_UI_CUSTOMIZATIONS=instances/auth/designs/ui.zip
 ## - defined as a map, e.g. "varname: value"
-## - these settings take precedence over environment variable settings for instanceProperties and global env
+## - these settings are overwritten by environment variable settings for iam.instanceProperties.env, iam.shared.env, and iam.apps.<app>.sandbox.env
 env: {}
+
+
+## Sub-chart configurations
+
+## Definition of MariaDB settings have to be at top-level, due to Helm limitations
+##
+mariadb:
+  ## Source for deployment
+  ## - valid values: chart, operator
+  ## - chart: use the chart dependency - see https://github.com/bitnami/charts/tree/main/bitnami/mariadb#global-parameters
+  ## - operator: prepare manifests for MariaDB Operator - see https://github.com/mariadb-operator/mariadb-operator/
+  source: "chart"
+
+  auth:
+    ## Database name
+    database: "airlock-iam"
+
+    ## Username to connect to database
+    username: "airlock-iam"
+
+    ## Use existing secret for credentials
+    ## - you must create this secret before installing the Helm chart
+    ## - it must contain the keys mariadb-password, mariadb-root-password, and mariadb-replication-password
+    ## - pay special consideration to have different secret names for different instantiations of this Helm chart
+    ##   (different runs of helm install)
+    ## - if you set database.deploymentType=mariadb and database.mariadb.source=chart, you almost always will have to also
+    ##   specify this property in your "custom.yaml"
+    existingSecret: "airlock-iam-db"
+
+  architecture: "standalone"
+
+  ## Enable persistence using Persistent Volume Claims
+  primary:
+    persistence:
+      enabled: true
+      existingClaim: "iam-db-storage"
+      storageClass: ""
+      accessMode: "ReadWriteOnce"
+      size: "8Gi"
+
+## Definition of PostgreSQL settings have to be at top-level, due to Helm limitations
+##
+postgresql:
+  global:
+    ## Overwrites database.mariadb.primary.persistence.storageClass
+    defaultStorageClass: ""
+
+    ## Source for deployment
+  ## - valid values: chart, operator
+  ## - chart: use the chart dependency
+  ## - operator: prepare manifests for CloudNativePG - see https://github.com/cloudnative-pg/cloudnative-pg
+  source: "chart"
+
+  global:
+    postgresql:
+      # global.postgresql.auth overrides postgresql.auth
+      auth:
+        ## Database name
+        database: "airlock-iam"
+
+        ## Username to connect to database
+        username: "airlock-iam"
+
+        ## Use secret created by this Helm chart
+        ## - you must create this secret before installing the Helm chart
+        ## - it must contain the keys as secified below (database.postgresql.global.postgresql.auth.secretKeys)
+        ## - pay special consideration to have different secret names for different instantiations of this Helm chart
+        ##   (different runs of helm install)
+        ## - if you set database.deploymentType=mariadb and database.mariadb.source=chart, you almost always will have to also
+        ##   specify this property in your "custom.yaml"
+        existingSecret: "airlock-iam-db"
+
+        ## Names of keys in existing secret to use for PostgreSQL credentials
+        secretKeys:
+          adminPasswordKey: "postgresql-root-password"
+          userPasswordKey: "postgresql-password"
+          replicationPasswordKey: "postgresql-replication-password"
+
+  ## Enable persistence using Persistent Volume Claims
+  primary:
+    persistence:
+      enabled: false
+      existingClaim: ""
+      storageClass: ""
 
 ## @section Kubernetes Parameters
 

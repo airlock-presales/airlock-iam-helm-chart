@@ -1,5 +1,6 @@
 {{- $fullName := include "airlock-iam.fullname" . -}}
 {{- $the_name := $fullName -}}
+{{- $deploymentType := include "airlock-iam.deploymentType" . -}}
 {{- $hasShared := include "airlock-iam.hasShared" . -}}
 {{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
 {{- if eq $hasShared "true" -}}
@@ -12,7 +13,7 @@
 {{-   end -}}
 {{-   $instanceProp := deepCopy .Values.iam.instanceProperties.default -}}
 {{-   $nameProp := .Values.iam.shared.propertiesName | default "default" -}}
-{{-   if hasKey $.Values.iam.instanceProperties $nameProp -}}
+{{-   if hasKey .Values.iam.instanceProperties $nameProp -}}
 {{-     $instanceProp = mergeOverwrite $instanceProp (get .Values.iam.instanceProperties $nameProp) -}}
 {{-   end -}}
 {{-   $_ := set . "IAM_the_name" $the_name -}}
@@ -53,14 +54,14 @@ spec:
         - name: {{ $the_name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ quote .Values.image.pullPolicy }}
-          args: ["run", "-i", {{ quote $.Values.iam.instanceName }}]
+          args: ["run", "-i", {{ quote .Values.iam.instanceName }}]
           env:
-            {{- if $.Values.iam.environmentId }}
+            {{- if .Values.iam.environmentId }}
             - name: IAM_ENVIRONMENT_ID
-              value: {{ $.Values.iam.environmentId }}
+              value: {{ .Values.iam.environmentId }}
             {{- end }}
             - name: IAM_CONFIG_FORMAT
-              value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.configFormat) "xml") }}
+              value: {{ ternary "xml" "yaml" (eq (lower .Values.iam.configFormat) "xml") }}
             {{- if .Values.iam.apps.adminapp.path }}
             - name: IAM_ADMINAPP_URL_PATH
               value: {{ .Values.iam.apps.adminapp.path }}
@@ -117,18 +118,78 @@ spec:
             - name: IAM_WEB_SERVER_ACCESS_LOG_FILE_ENABLED
               value: "true"
             {{- end }}
+            {{- if and (ne $deploymentType "none") (ne $deploymentType "") }}
+            - name: IAM_CFG_DB_DRIVER_CLASS
+            {{-   if or (eq $deploymentType "mariadb") (and (eq $deploymentType "external") (eq .Values.database.external.type "mariadb")) }}
+              value: "org.mariadb.jdbc.Driver"
+            {{-   else if or (eq $deploymentType "postgresql") (and (eq $deploymentType "external") (eq .Values.database.external.type "postgresql")) }}
+              value: "org.postgresql.Driver"
+            {{-   else if and (eq $deploymentType "external") (eq .Values.database.external.type "mysql") }}
+              value: "com.mysql.cj.jdbc.Driver"
+            {{-   else if and (eq $deploymentType "external") (eq .Values.database.external.type "oracle") }}
+              value: "oracle.jdbc.OracleDriver"
+            {{-   else if and (eq $deploymentType "external") (eq .Values.database.external.type "mssql") }}
+              value: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+            {{-   end }}
+            - name: IAM_CFG_DB_URL
+            {{-   if eq $deploymentType "external" }}
+              value: {{ print "jdbc:" .Values.database.external.type "://" .Values.database.external.host "/" .Values.database.external.database }}
+            {{-   else if eq $deploymentType "mariadb" }}
+              value: {{ print "jdbc:mariadb://" $fullName "-mariadb/" .Values.mariadb.auth.database }}
+            {{-   else if eq $deploymentType "postgresql" }}
+              value: {{ print "jdbc:mariadb://" $fullName "-postgresql/" .Values.postgresql.global.postgresql.auth.database }}
+            {{-   end }}
+            - name: IAM_CFG_DB_USERNAME
+            {{-   if eq $deploymentType "external" }}
+              {{- if ne .Values.database.external.credentials.user.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.external.credentials.user.existingSecret }}
+                  key: {{ .Values.database.external.credentials.user.key }}
+              {{- else }}
+              value: {{ .Values.database.external.credentials.user.value }}
+              {{- end }}
+            {{-   else if eq $deploymentType "mariadb" }}
+              value: {{ .Values.mariadb.auth.username }}
+            {{-   else if eq $deploymentType "postgresql" }}
+              value: {{ .Values.postgresql.global.postgresql.auth.username }}
+            {{-   end }}
+            - name: IAM_CFG_DB_PASSWORD
+            {{-   if eq $deploymentType "external" }}
+              {{- if ne .Values.database.external.credentials.password.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.external.credentials.password.existingSecret }}
+                  key: {{ .Values.database.external.credentials.password.key }}
+              {{- else }}
+              value: {{ .Values.database.external.credentials.password.value }}
+              {{- end }}
+            {{-   else if eq $deploymentType "mariadb" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mariadb.auth.existingSecret }}
+                  key: "mariadb-password"
+            {{-   else if eq $deploymentType "postgresql" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.global.postgresql.auth.existingSecret }}
+                  key: {{ .Values.postgresql.global.postgresql.auth.secretKeys.userPasswordKey }}
+            {{-   end }}
+            {{- end }}
             {{- if $instanceProp.metrics }}
             - name: IAM_METRICS_PORT
               value: {{ quote $instanceProp.metrics }}
             {{- end }}
             - name: IAM_HEALTH_PORT
               value: "8081"
-            {{- range $name, $value := mergeOverwrite $.Values.env $instanceProp.env .Values.iam.shared.env }}
+            {{- range $name, $value := mergeOverwrite .Values.env $instanceProp.env .Values.iam.shared.env }}
             - name: {{ quote $name }}
               value: {{ quote $value }}
             {{- end }}
             - name: TZ
               value: {{ .Values.global.timezone }}
+            - name: DEBUG
+              value: {{ $deploymentType }}
           ports:
             - containerPort: 8080
               name: http
@@ -244,12 +305,12 @@ spec:
           {{- end }}
         {{- end }}
         - name: license
-          {{- if has (lower $.Values.iam.license.type) (list "cm" "configmap") }}
+          {{- if has (lower .Values.iam.license.type) (list "cm" "configmap") }}
           configMap:
-            name: {{ $.Values.iam.license.name }}
+            name: {{ .Values.iam.license.name }}
           {{- else }}
           secret:
-            secretName: {{ $.Values.iam.license.name }}
+            secretName: {{ .Values.iam.license.name }}
           {{- end }}
         - name: work
           emptyDir: {}

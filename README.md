@@ -26,6 +26,8 @@ The Kubernetes cluster must comply with the following requirements:
   * Ingress
   * Project Contour HttpProxy
 
+# Designing an Airlock IAM deployment
+
 ## Deployment layout
 
 ### Overview
@@ -97,6 +99,45 @@ For many settings in <code>instance.properties</code>, the Helm chart provides e
 * Hostname and TLS certificate in <code>ingress.dns.hostname</code> and <code>ingress.tls.secretName</code>, respectively.
 * The required version of Airlock in in <code>image.tag</code>
 
+## Database setup
+
+With the exception of a few specific use cases, Airlock IAM requires a SQL database. The Helm chart supports embedded provisioning of two different database engines, MariaDB and PostgreSQL. In addition, it can interface with exisiting, previously deployed database systems. In this case, MySQL, MS SQL and Oracle are also supported.
+
+How Airlock IAM accesses this database is defined in the application configuration. By default, this configuraion is maintained with the built-in Config Editor. However, using environment variables, the Helm chart can provide the necessary configuration information form its database setup to Airlock IAM.
+
+The Helm chart sets the following environment variables:
+
+* IAM_CFG_DB_DRIVER_CLASS
+* IAM_CFG_DB_URL
+* IAM_CFG_DB_USERNAME
+* IAM_CFG_DB_PASSWORD
+
+To ensure Airlock IAM respects these variables, search for the key sqlDataSource in the configuration file <code>iam-config.yaml</code> and adapt according to the following:
+
+    sqlDataSource:
+      type: com.airlock.iam.core.misc.impl.persistency.db.JdbcConnectionPool
+      displayName: Env-var-controlled Database Connection
+      properties:
+        driverClass:
+        - value: org.mariadb.jdbc.Driver
+          var:
+            name: IAM_CFG_DB_DRIVER_CLASS
+        password:
+        - value: password
+          var:
+            name: IAM_CFG_DB_PASSWORD
+            sensitive: true
+        url:
+        - value: jdbc:mariadb://localhost:3306/iam73
+          var:
+            name: IAM_CFG_DB_URL
+        user:
+        - value: airlock_iam
+          var:
+            name: IAM_CFG_DB_USERNAME
+
+# Installaing Airlock IAM
+
 ## Preparations
 
 * Create the pull secret as Airlock IAM images are not publicly available on Quay.io using these [instructions](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/).
@@ -109,4 +150,12 @@ For many settings in <code>instance.properties</code>, the Helm chart provides e
 ```
     cp values.yaml custom.yaml
     vi custom.yaml
+```
+
+## Installation
+
+Run Helm to create the Airlock IAM deployment:
+
+```
+    helm install airlock-iam . -f custom.yaml --namespace airlock-iam --create-namespace
 ```

@@ -162,3 +162,24 @@ Find service for app
 {{- end -}}
 {{- end -}}
 
+{{/*
+Get deployment type
+*/}}
+{{- define "airlock-iam.deploymentType" -}}
+{{- $cnt := 0 }}
+{{- if .Values.database.external.enable }}
+{{-   $cnt = add $cnt 1 -}}
+external
+{{- end }}
+{{- if .Values.database.mariadb.enable }}
+{{-   $cnt = add $cnt 1 -}}
+mariadb
+{{- end }}
+{{- if .Values.database.postgresql.enable }}
+{{-   $cnt = add $cnt 1 -}}
+postgresql
+{{- end }}
+{{- if gt $cnt 1 }}
+{{-   fail "Only enable one database type (external, mariadb, postgresql)" }}
+{{- end }}
+{{- end }}

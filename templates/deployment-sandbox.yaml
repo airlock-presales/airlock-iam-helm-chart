@@ -1,5 +1,6 @@
 {{- $fullName := include "airlock-iam.fullname" . -}}
 {{- $the_name := $fullName -}}
+{{- $deploymentType := include "airlock-iam.deploymentType" . -}}
 {{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
 {{- if eq $hasSandbox "true" -}}
 {{-   range $app, $app_values := .Values.iam.apps -}}
@@ -113,6 +114,64 @@ spec:
             {{- if $instanceProp.logging.webserver }}
             - name: IAM_WEB_SERVER_ACCESS_LOG_FILE_ENABLED
               value: "true"
+            {{- end }}
+            {{- if and (ne $deploymentType "none") (ne $deploymentType "") }}
+            - name: IAM_CFG_DB_DRIVER_CLASS
+            {{-   if or (eq $deploymentType "mariadb") (and (eq $deploymentType "external") (eq $.Values.database.external.type "mariadb")) }}
+              value: "org.mariadb.jdbc.Driver"
+            {{-   else if or (eq $deploymentType "postgresql") (and (eq $deploymentType "external") (eq $.Values.database.external.type "postgresql")) }}
+              value: "org.postgresql.Driver"
+            {{-   else if and (eq $deploymentType "external") (eq $.Values.database.external.type "mysql") }}
+              value: "com.mysql.cj.jdbc.Driver"
+            {{-   else if and (eq $deploymentType "external") (eq $.Values.database.external.type "oracle") }}
+              value: "oracle.jdbc.OracleDriver"
+            {{-   else if and (eq $deploymentType "external") (eq $.Values.database.external.type "mssql") }}
+              value: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+            {{-   end }}
+            - name: IAM_CFG_DB_URL
+            {{-   if eq $deploymentType "external" }}
+              value: {{ print "jdbc:" $.Values.database.external.type "://" $.Values.database.external.host "/" $.Values.database.external.database }}
+            {{-   else if eq $deploymentType "mariadb" }}
+              value: {{ print "jdbc:mariadb://" $fullName "-mariadb/" $.Values.mariadb.auth.database }}
+            {{-   else if eq $deploymentType "postgresql" }}
+              value: {{ print "jdbc:mariadb://" $fullName "-postgresql/" $.Values.postgresql.global.postgresql.auth.database }}
+            {{-   end }}
+            - name: IAM_CFG_DB_USERNAME
+            {{-   if eq $deploymentType "external" }}
+              {{- if ne .Values.database.external.credentials.user.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.external.credentials.user.existingSecret }}
+                  key: {{ .Values.database.external.credentials.user.key }}
+              {{- else }}
+              value: {{ .Values.database.external.credentials.user.value }}
+              {{- end }}
+            {{-   else if eq $deploymentType "mariadb" }}
+              value: {{ .Values.mariadb.auth.username }}
+            {{-   else if eq $deploymentType "postgresql" }}
+              value: {{ .Values.postgresql.global.postgresql.auth.username }}
+            {{-   end }}
+            - name: IAM_CFG_DB_PASSWORD
+            {{-   if eq $deploymentType "external" }}
+              {{- if ne .Values.database.external.credentials.password.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.external.credentials.password.existingSecret }}
+                  key: {{ .Values.database.external.credentials.password.key }}
+              {{- else }}
+              value: {{ .Values.database.external.credentials.password.value }}
+              {{- end }}
+            {{-   else if eq $deploymentType "mariadb" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.mariadb.auth.existingSecret }}
+                  key: "mariadb-password"
+            {{-   else if eq $deploymentType "postgresql" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.postgresql.global.postgresql.auth.existingSecret }}
+                  key: {{ $.Values.postgresql.global.postgresql.auth.secretKeys.userPasswordKey }}
+            {{-   end }}
             {{- end }}
             {{- if $instanceProp.metrics }}
             - name: IAM_METRICS_PORT
