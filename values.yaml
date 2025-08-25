@@ -155,19 +155,19 @@ iam:
         ## - if defined, metrics endpoint is exposed on this port
         healthChecks:
           liveness:
-            enable: true
+            enable: false
             period: 10
             timeout: 1
             failures: 3
             initialDelay: 5
           readiness:
-            enable: true
+            enable: false
             period: 5
             timeout: 1
             failures: 3
             initialDelay: 6
           startup:
-            enable: true
+            enable: false
             period: 2
             timeout: 1
             failures: 150
@@ -228,19 +228,19 @@ iam:
             hostPath: ""
         healthChecks:
           liveness:
-            enable: true
+            enable: false
             period: 10
             timeout: 1
             failures: 3
             initialDelay: 5
           readiness:
-            enable: true
+            enable: false
             period: 5
             timeout: 1
             failures: 3
             initialDelay: 6
           startup:
-            enable: true
+            enable: false
             period: 2
             timeout: 1
             failures: 150
@@ -293,19 +293,19 @@ iam:
             hostPath: ""
         healthChecks:
           liveness:
-            enable: true
+            enable: false
             period: 10
             timeout: 1
             failures: 3
             initialDelay: 5
           readiness:
-            enable: true
+            enable: false
             period: 5
             timeout: 1
             failures: 3
             initialDelay: 6
           startup:
-            enable: true
+            enable: false
             period: 2
             timeout: 1
             failures: 150
@@ -358,19 +358,19 @@ iam:
             hostPath: ""
         healthChecks:
           liveness:
-            enable: true
+            enable: false
             period: 10
             timeout: 1
             failures: 3
             initialDelay: 5
           readiness:
-            enable: true
+            enable: false
             period: 5
             timeout: 1
             failures: 3
             initialDelay: 6
           startup:
-            enable: true
+            enable: false
             period: 2
             timeout: 1
             failures: 150
@@ -423,19 +423,19 @@ iam:
             hostPath: ""
         healthChecks:
           liveness:
-            enable: true
+            enable: false
             period: 10
             timeout: 1
             failures: 3
             initialDelay: 5
           readiness:
-            enable: true
+            enable: false
             period: 5
             timeout: 1
             failures: 3
             initialDelay: 6
           startup:
-            enable: true
+            enable: false
             period: 2
             timeout: 1
             failures: 150
@@ -465,19 +465,19 @@ iam:
     ## - if defined, metrics endpoint is exposed on this port
     healthChecks:
       liveness:
-        enable: true
+        enable: false
         period: 10
         timeout: 1
         failures: 3
         initialDelay: 5
       readiness:
-        enable: true
+        enable: false
         period: 5
         timeout: 1
         failures: 3
         initialDelay: 6
       startup:
-        enable: true
+        enable: false
         period: 2
         timeout: 1
         failures: 150
