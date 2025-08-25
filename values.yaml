@@ -808,9 +808,9 @@ database:
     schema:
       ## Define the applied operation
       ## - valid values: none, init, upgrade
-      ## - init: remove existing database
-      ## - upgrade: equivalent to init if database does not already exist
-      ## - will use root user credentials to connect, see below
+      ## - init: create database if it does not yet exist
+      ## - upgrade: apply schema upgrade scripts from https://docs.airlock.com when upgrading Airlock IAM
+      ## - schema initialisation will use root user credentials to connect, see below
       operation: "none"
 
     ## Adminapp administrator

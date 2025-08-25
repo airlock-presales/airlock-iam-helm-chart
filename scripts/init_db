@@ -36,11 +36,15 @@ cmd_mariadb() {
 }
 
 cmd_pg() {
-    psql -h=${INIT_DB_HOST} -U=${INIT_DB_USERNAME} --password=${INIT_DB_PASSWORD} ${INIT_DB_DATABASE} --execute="$@"
+    db=""
+    [[ $# -gt 1 ]] && { db="$1"; shift 1; }
+    psql -h=${INIT_DB_HOST} -U=${INIT_DB_USERNAME} -d ${db} --command "$@"
 }
 
 cmd_mysql() {
-    mysql --host=${INIT_DB_HOST} --user=${INIT_DB_USERNAME} --password=${INIT_DB_PASSWORD} ${INIT_DB_DATABASE} --batch --silent --execute="$@"
+    db=""
+    [[ $# -gt 1 ]] && { db="$1"; shift 1; }
+    mysql --host=${INIT_DB_HOST} --user=${INIT_DB_USERNAME} --password=${INIT_DB_PASSWORD} ${db} --batch --silent --execute="$@"
 }
 
 cmd_sql() {
@@ -49,9 +53,9 @@ cmd_sql() {
             cmd_mariadb "${INIT_DB_DATABASE}" "$@"
             ;;
         postgresql)
-            cmd_pg "$@"
+            cmd_pg "${INIT_DB_DATABASE}" "$@"
             ;;
-        mariadb)
+        mysql)
             cmd_mysql "${INIT_DB_DATABASE}" "$@"
             ;;
     esac
@@ -62,7 +66,6 @@ cmd_sql() {
 # Download connector
 # ###########
 
-# download jdbc connector
 if [[ "${INIT_DL}" == "true" ]]; then
     case "${INIT_TYPE}" in
         mariadb)
@@ -81,6 +84,9 @@ if [[ "${INIT_DL}" == "true" ]]; then
                 curl -s -L "${url}" --output "${instance_libs}/${url##*/}"
             fi
             ;;
+        mysql)
+            die "Automated download of Java Connector for MySQL is not supported"
+            ;;
     esac
     echo "Connector version ${INIT_DL_VERSION} downloaded from ${mirror}"
 fi
@@ -98,10 +104,11 @@ do
             state=$?
             ;;
         postgresql)
+            export PGPASSWORD="${INIT_DB_PASSWORD}"
             pg_isready -h ${INIT_DB_HOST} -U ${INIT_DB_USERNAME}
             state=$?
             ;;
-        mariadb)
+        mysql)
             cmd_mysql "SELECT 1;" > /dev/null
             state=$?
             ;;
@@ -125,16 +132,21 @@ if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
     # drop and recreate database and tables
     case "${INIT_TYPE}" in
         mariadb)
-            cmd_mariadb "DROP DATABASE IF EXISTS ${INIT_DB_DATABASE}" || die "Failed to drop old database"
-            cmd_mariadb "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
-            cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+            r="$(cmd_mariadb "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${INIT_DB_DATABASE}'")" || die "Failed to check for database"
+            if [[ -z "$r" ]]; then
+                cmd_mariadb "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
+                cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+	    fi
             ;;
         postgresql)
+            die "DB initialisation not yet supported for PostgreSQL"
             ;;
         mysql)
-            cmd_mysql "DROP DATABASE IF EXISTS ${INIT_DB_DATABASE}" || die "Failed to drop old database"
-            cmd_mysql "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
-            cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+            r="$(cmd_mysql "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${INIT_DB_DATABASE}'")" || die "Failed to check for database"
+            if [[ -z "$r" ]]; then
+                cmd_mysql "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
+                cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+	    fi
             ;;
     esac
 
@@ -167,7 +179,7 @@ if [[ "${INIT_DB_SCHEMA}" == "upgrade" ]]; then
             try=1
             while true
             do
-                url="https://docs.airlock.com/iam/${v_tgt}/sql-scripts/changelog/mariadb/iam-schema-migration-${v_cur/./_}-${v_next/./_}.sql"
+                url="https://docs.airlock.com/iam/${v_tgt}/sql-scripts/changelog/${INIT_TYPE}/iam-schema-migration-${v_cur/./_}-${v_next/./_}.sql"
                 r="$(curl -s -L "${url}" --output "/var/tmp/${url##*/}" -w '%{http_code}')"
                 [[ "$r" == "200" ]] && break
                 rm "/var/tmp/${url##*/}"
@@ -182,7 +194,17 @@ if [[ "${INIT_DB_SCHEMA}" == "upgrade" ]]; then
         # run upgrade scripts
         for f in /var/tmp/iam-schema-migration-*
         do
-            cmd_sql "source $f" || die "Failed to upgrade database: script $f"
+            case "${INIT_TYPE}" in
+                mariadb)
+                    cmd_sql "source $f" || die "Failed to upgrade database: script $f"
+                    ;;
+                postgresql)
+                    cmd_sql "\i $f" || die "Failed to upgrade database: script $f"
+                    ;;
+                mysql)
+                    cmd_sql "source $f" || die "Failed to upgrade database: script $f"
+                    ;;
+            esac
         done
         
         # update metadata version number
@@ -200,9 +222,13 @@ fi
 
 if [[ "${INIT_ADMIN_CREATE}" == "true" ]]; then
     [[ "${INIT_ADMIN_CHANGE}" == "true" ]] && force="1" || force="0"
-    cmd_sql "DELETE FROM medusa_admin WHERE username = 'admin';"
-    cmd_sql "INSERT INTO medusa_admin (username, givenname, surname, roles, pwd_hash, pwd_chg_enf) VALUES ('${INIT_ADMIN_USERNAME}', 'IAM', 'Administrator', 'superadmin', '${INIT_ADMIN_PWD_HASH}', ${force});"
-    echo "Administrator created: ${INIT_ADMIN_USERNAME}"
+    v="$(cmd_sql "SELECT username FROM medusa_admin WHERE username='${INIT_ADMIN_USERNAME}'")"
+    if [[ "${v}" != "${INIT_ADMIN_USERNAME}" ]]; then
+        cmd_sql "INSERT INTO medusa_admin (username, givenname, surname, roles, pwd_hash, pwd_chg_enf) VALUES ('${INIT_ADMIN_USERNAME}', 'IAM', 'Administrator', 'superadmin', '${INIT_ADMIN_PWD_HASH}', ${force});"
+        echo "Administrator created: ${INIT_ADMIN_USERNAME}"
+    else
+        echo "Administrator ${INIT_ADMIN_USERNAME} already exists in database - leaving unchanged"
+    fi
 fi
 
 #
