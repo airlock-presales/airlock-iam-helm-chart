@@ -129,13 +129,15 @@ if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
     url="https://docs.airlock.com/iam/${schema_version}/sql-scripts/schema/${INIT_TYPE}/create-medusa-schema.sql"
     curl -s -L "${url}" --output "/var/tmp/create-medusa-schema.sql" || die "Failed to download schema creation script"
 
-    # drop and recreate database and tables
+    # create database and tables
+    created=0
     case "${INIT_TYPE}" in
         mariadb)
             r="$(cmd_mariadb "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${INIT_DB_DATABASE}'")" || die "Failed to check for database"
             if [[ -z "$r" ]]; then
                 cmd_mariadb "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
                 cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+                created=1
 	    fi
             ;;
         postgresql)
@@ -146,14 +148,19 @@ if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
             if [[ -z "$r" ]]; then
                 cmd_mysql "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
                 cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+                created=1
 	    fi
             ;;
     esac
 
     # add metadata table and version number
-    cmd_sql "CREATE TABLE metadata(name VARCHAR(32) NOT NULL, value VARCHAR(32)) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_nopad_ci;"
-    cmd_sql "INSERT INTO metadata(name,value) VALUES ('schema_version', '${schema_version}');"
-    echo "Database ${INIT_DB_DATABASE}, version ${schema_version}, created on ${INIT_DB_HOST}"
+    if [[ ${created} -eq 1 ]]; then
+        cmd_sql "CREATE TABLE metadata(name VARCHAR(32) NOT NULL, value VARCHAR(32)) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_nopad_ci;"
+        cmd_sql "INSERT INTO metadata(name,value) VALUES ('schema_version', '${schema_version}');"
+        echo "Database ${INIT_DB_DATABASE}, version ${schema_version}, created on ${INIT_DB_HOST}"
+    else
+        echo "Database ${INIT_DB_DATABASE} already existing on ${INIT_DB_HOST} - leaving unchanged"
+    fi
 fi
 
 
