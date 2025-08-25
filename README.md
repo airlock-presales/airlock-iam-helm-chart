@@ -136,7 +136,7 @@ To ensure Airlock IAM respects these variables, search for the key sqlDataSource
           var:
             name: IAM_CFG_DB_USERNAME
 
-# Installaing Airlock IAM
+# Installing Airlock IAM
 
 ## Preparations
 
