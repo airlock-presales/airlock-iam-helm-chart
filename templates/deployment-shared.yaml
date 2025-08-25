@@ -13,9 +13,19 @@
 {{-     $the_name = print $fullName "-" $suffix -}}
 {{-   end -}}
 {{-   $instanceProp := deepCopy .Values.iam.instanceProperties.default -}}
-{{-   $nameProp := .Values.iam.shared.propertiesName | default "default" -}}
-{{-   if hasKey .Values.iam.instanceProperties $nameProp -}}
-{{-     $instanceProp = mergeOverwrite $instanceProp (get .Values.iam.instanceProperties $nameProp) -}}
+{{-   $reference := .Values.iam.shared.instancePropertiesRef | default "default" -}}
+{{-   if hasKey .Values.iam.instanceProperties $reference -}}
+{{-     $instanceProp = mergeOverwrite $instanceProp (get .Values.iam.instanceProperties $reference) -}}
+{{-   end -}}
+{{-   $persistenceProp := deepCopy .Values.persistence.default -}}
+{{-   $reference = .Values.iam.shared.persistenceRef | default "default" -}}
+{{-   if hasKey .Values.persistence $reference -}}
+{{-     $persistenceProp = mergeOverwrite $persistenceProp (get .Values.persistence $reference) -}}
+{{-   end -}}
+{{-   $healthCheckProp := deepCopy .Values.healthChecks.default -}}
+{{-   $reference = .Values.iam.shared.healthChecksRef | default "default" -}}
+{{-   if hasKey .Values.healthChecks $reference -}}
+{{-     $healthCheckProp = mergeOverwrite $healthCheckProp (get .Values.healthChecks $reference) -}}
 {{-   end -}}
 {{-   $_ := set . "IAM_the_name" $the_name -}}
 {{-   $_ := set . "IAM_suffix" $suffix -}}
@@ -166,7 +176,7 @@ spec:
                   key: {{ $.Values.database.initialisation.administrator.credentials.pwd_hash.key }}
               {{- end }}
           volumeMounts:
-            {{- if .Values.persistence.config.enable }}
+            {{- if $persistenceProp.config.enable }}
             - mountPath: /home/airlock/iam/instances
               name: config
             {{- end }}
@@ -322,32 +332,32 @@ spec:
               name: http
             - containerPort: 8081
               name: health
-          {{- if .Values.iam.shared.healthChecks.liveness.enable }}
+          {{- if $healthCheckProp.liveness.enable }}
           livenessProbe:
-            periodSeconds: {{ .Values.iam.shared.healthChecks.liveness.period }}
-            timeoutSeconds: {{ .Values.iam.shared.healthChecks.liveness.timeout }}
-            failureThreshold: {{ .Values.iam.shared.healthChecks.liveness.failures }}
-            initialDelaySeconds: {{ .Values.iam.shared.healthChecks.liveness.initialDelay }}
+            periodSeconds: {{ $healthCheckProp.liveness.period }}
+            timeoutSeconds: {{ $healthCheckProp.liveness.timeout }}
+            failureThreshold: {{ $healthCheckProp.liveness.failures }}
+            initialDelaySeconds: {{ $healthCheckProp.liveness.initialDelay }}
             httpGet:
               path: /health/live
               port: health
           {{- end }}
-          {{- if .Values.iam.shared.healthChecks.readiness.enable }}
+          {{- if $healthCheckProp.readiness.enable }}
           readinessProbe:
-            periodSeconds: {{ .Values.iam.shared.healthChecks.readiness.period }}
-            timeoutSeconds: {{ .Values.iam.shared.healthChecks.readiness.timeout }}
-            failureThreshold: {{ .Values.iam.shared.healthChecks.readiness.failures }}
-            initialDelaySeconds: {{ .Values.iam.shared.healthChecks.readiness.initialDelay }}
+            periodSeconds: {{ $healthCheckProp.readiness.period }}
+            timeoutSeconds: {{ $healthCheckProp.readiness.timeout }}
+            failureThreshold: {{ $healthCheckProp.readiness.failures }}
+            initialDelaySeconds: {{ $healthCheckProp.readiness.initialDelay }}
             httpGet:
               path: /health/ready
               port: health
           {{- end }}
-          {{- if .Values.iam.shared.healthChecks.startup.enable }}
+          {{- if $healthCheckProp.startup.enable }}
           startupProbe:
-            periodSeconds: {{ .Values.iam.shared.healthChecks.startup.period }}
-            timeoutSeconds: {{ .Values.iam.shared.healthChecks.startup.timeout }}
-            failureThreshold: {{ .Values.iam.shared.healthChecks.startup.failures }}
-            initialDelaySeconds: {{ .Values.iam.shared.healthChecks.startup.initialDelay }}
+            periodSeconds: {{ $healthCheckProp.startup.period }}
+            timeoutSeconds: {{ $healthCheckProp.startup.timeout }}
+            failureThreshold: {{ $healthCheckProp.startup.failures }}
+            initialDelaySeconds: {{ $healthCheckProp.startup.initialDelay }}
             httpGet:
               path: /health/ready
               port: health
@@ -376,11 +386,11 @@ spec:
     {{ toYaml .Values.resourceOptions | indent 8 }}
     {{- end }}
           volumeMounts:
-            {{- if .Values.persistence.config.enable }}
+            {{- if $persistenceProp.config.enable }}
             - mountPath: /home/airlock/iam/instances
               name: config
             {{- end }}
-            {{- if .Values.persistence.logs.enable }}
+            {{- if $persistenceProp.logs.enable }}
             - mountPath: {{ print "/home/airlock/iam/instances/" .Values.iam.instanceName "/logs" }}
               name: logs
             {{- end }}
@@ -391,41 +401,41 @@ spec:
               name: work
       restartPolicy: {{ quote .Values.restartPolicy }}
       volumes:
-        {{- if .Values.persistence.config.enable }}
+        {{- if $persistenceProp.config.enable }}
         - name: config
-          {{- if eq .Values.persistence.config.type "request" }}
+          {{- if eq $persistenceProp.config.type "request" }}
           persistentVolumeClaim:
-            claimName: {{ print $fullName "-" (ternary .Values.persistence.config.claim "config" (ne .Values.persistence.config.claim "")) }}
-          {{- else if eq .Values.persistence.config.type "existing" }}
+            claimName: {{ print $fullName "-" (ternary $persistenceProp.config.claim "config" (ne $persistenceProp.config.claim "")) }}
+          {{- else if eq $persistenceProp.config.type "existing" }}
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.config.claim }}
-          {{- else if eq .Values.persistence.config.type "remote" }}
-          {{ .Values.persistence.config.remote.type }}:
-            server: {{ .Values.persistence.config.remote.server }}
-            path: {{ .Values.persistence.config.remote.path }}
-          {{- else if eq .Values.persistence.config.type "hostpath" }}
+            claimName: {{ $persistenceProp.config.claim }}
+          {{- else if eq $persistenceProp.config.type "remote" }}
+          {{ $persistenceProp.config.remote.type }}:
+            server: {{ $persistenceProp.config.remote.server }}
+            path: {{ $persistenceProp.config.remote.path }}
+          {{- else if eq $persistenceProp.config.type "hostpath" }}
           hostPath:
-            path: {{ .Values.persistence.config.hostPath }}
+            path: {{ $persistenceProp.config.hostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}
           {{- end }}
         {{- end }}
-        {{- if .Values.persistence.logs.enable }}
+        {{- if $persistenceProp.logs.enable }}
         - name: logs
-          {{- if eq .Values.persistence.logs.type "request" }}
+          {{- if eq $persistenceProp.logs.type "request" }}
           persistentVolumeClaim:
-            claimName: {{ print $fullName "-" (ternary .Values.persistence.logs.claim "logs" (ne .Values.persistence.logs.claim "")) }}
-          {{- else if eq .Values.persistence.logs.type "existing" }}
+            claimName: {{ print $fullName "-" (ternary $persistenceProp.logs.claim "logs" (ne $persistenceProp.logs.claim "")) }}
+          {{- else if eq $persistenceProp.logs.type "existing" }}
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.logs.claim }}
-          {{- else if eq .Values.persistence.logs.type "remote" }}
-          {{ .Values.persistence.logs.remote.type }}:
-            server: {{ .Values.persistence.logs.remote.server }}
-            path: {{ .Values.persistence.logs.remote.path }}
-          {{- else if eq .Values.persistence.logs.type "hostpath" }}
+            claimName: {{ $persistenceProp.logs.claim }}
+          {{- else if eq $persistenceProp.logs.type "remote" }}
+          {{ $persistenceProp.logs.remote.type }}:
+            server: {{ $persistenceProp.logs.remote.server }}
+            path: {{ $persistenceProp.logs.remote.path }}
+          {{- else if eq $persistenceProp.logs.type "hostpath" }}
           hostPath:
-            path: {{ .Values.persistence.logs.hostPath }}
+            path: {{ $persistenceProp.logs.hostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}

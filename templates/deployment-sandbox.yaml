@@ -9,9 +9,19 @@
 {{-       $suffix := ternary $app_values.sandbox.suffix $app (ne $app_values.sandbox.suffix "") -}}
 {{-       $the_name = print $fullName "-" $suffix -}}
 {{-       $instanceProp := deepCopy $.Values.iam.instanceProperties.default -}}
-{{-       $nameProp := $app_values.sandbox.propertiesName | default "default" -}}
-{{-       if hasKey $.Values.iam.instanceProperties $nameProp -}}
-{{-         $instanceProp = mergeOverwrite $instanceProp (get $.Values.iam.instanceProperties $nameProp) -}}
+{{-       $reference := $.Values.iam.shared.instancePropertiesRef | default "default" -}}
+{{-       if hasKey $.Values.iam.instanceProperties $reference -}}
+{{-         $instanceProp = mergeOverwrite $instanceProp (get $.Values.iam.instanceProperties $reference) -}}
+{{-       end -}}
+{{-       $persistenceProp := deepCopy $.Values.persistence.default -}}
+{{-       $reference = $.Values.iam.shared.persistenceRef | default "default" -}}
+{{-       if hasKey $.Values.persistence $reference -}}
+{{-         $persistenceProp = mergeOverwrite $persistenceProp (get $.Values.persistence $reference) -}}
+{{-       end -}}
+{{-       $healthCheckProp := deepCopy $.Values.healthChecks.default -}}
+{{-       $reference = $.Values.iam.shared.healthChecksRef | default "default" -}}
+{{-       if hasKey $.Values.healthChecks $reference -}}
+{{-         $healthCheckProp = mergeOverwrite $healthCheckProp (get $.Values.healthChecks $reference) -}}
 {{-       end -}}
 {{-       $_ := set $ "IAM_the_name" $the_name -}}
 {{-       $_ := set $ "IAM_suffix" $suffix }}
@@ -73,7 +83,7 @@ spec:
             - name: INIT_INSTANCE
               value: {{ $.Values.iam.instanceName }}
             - name: INIT_DL
-              value: {{ ternary "true" "false" (and $.Values.database.initialisation.connector.download $app_values.sandbox.persistence.config.enable) | quote }}
+              value: {{ ternary "true" "false" (and $.Values.database.initialisation.connector.download $persistenceProp.config.enable) | quote }}
             - name: INIT_DL_VERSION
               value: {{ (ternary $.Values.database.initialisation.connector.mariadb.version $.Values.database.initialisation.connector.postgresql.version (eq $databaseType "mariadb")) | quote }}
             - name: INIT_DB_SCHEMA
@@ -163,7 +173,7 @@ spec:
                   key: {{ $.Values.database.initialisation.administrator.credentials.pwd_hash.key }}
               {{- end }}
           volumeMounts:
-            {{- if or $app_values.sandbox.persistence.config.enable $.Values.persistence.config.enable }}
+            {{- if $persistenceProp.config.enable }}
             - mountPath: /home/airlock/iam/instances
               name: config
             {{- end }}
@@ -317,32 +327,32 @@ spec:
               name: http
             - containerPort: 8081
               name: health
-          {{- if $app_values.sandbox.healthChecks.liveness.enable }}
+          {{- if $healthCheckProp.liveness.enable }}
           livenessProbe:
-            periodSeconds: {{ $app_values.sandbox.healthChecks.liveness.period }}
-            timeoutSeconds: {{ $app_values.sandbox.healthChecks.liveness.timeout }}
-            failureThreshold: {{ $app_values.sandbox.healthChecks.liveness.failures }}
-            initialDelaySeconds: {{ $app_values.sandbox.healthChecks.liveness.initialDelay }}
+            periodSeconds: {{ $healthCheckProp.liveness.period }}
+            timeoutSeconds: {{ $healthCheckProp.liveness.timeout }}
+            failureThreshold: {{ $healthCheckProp.liveness.failures }}
+            initialDelaySeconds: {{ $healthCheckProp.liveness.initialDelay }}
             httpGet:
               path: /health/live
               port: health
           {{- end }}
-          {{- if $app_values.sandbox.healthChecks.readiness.enable }}
+          {{- if $healthCheckProp.readiness.enable }}
           readinessProbe:
-            periodSeconds: {{ $app_values.sandbox.healthChecks.readiness.period }}
-            timeoutSeconds: {{ $app_values.sandbox.healthChecks.readiness.timeout }}
-            failureThreshold: {{ $app_values.sandbox.healthChecks.readiness.failures }}
-            initialDelaySeconds: {{ $app_values.sandbox.healthChecks.readiness.initialDelay }}
+            periodSeconds: {{ $healthCheckProp.readiness.period }}
+            timeoutSeconds: {{ $healthCheckProp.readiness.timeout }}
+            failureThreshold: {{ $healthCheckProp.readiness.failures }}
+            initialDelaySeconds: {{ $healthCheckProp.readiness.initialDelay }}
             httpGet:
               path: /health/ready
               port: health
           {{- end }}
-          {{- if $app_values.sandbox.healthChecks.startup.enable }}
+          {{- if $healthCheckProp.startup.enable }}
           startupProbe:
-            periodSeconds: {{ $app_values.sandbox.healthChecks.startup.period }}
-            timeoutSeconds: {{ $app_values.sandbox.healthChecks.startup.timeout }}
-            failureThreshold: {{ $app_values.sandbox.healthChecks.startup.failures }}
-            initialDelaySeconds: {{ $app_values.sandbox.healthChecks.startup.initialDelay }}
+            periodSeconds: {{ $healthCheckProp.startup.period }}
+            timeoutSeconds: {{ $healthCheckProp.startup.timeout }}
+            failureThreshold: {{ $healthCheckProp.startup.failures }}
+            initialDelaySeconds: {{ $healthCheckProp.startup.initialDelay }}
             httpGet:
               path: /health/ready
               port: health
@@ -371,11 +381,11 @@ spec:
     {{ toYaml $.Values.resourceOptions | indent 8 }}
     {{- end }}
           volumeMounts:
-            {{- if or $app_values.sandbox.persistence.config.enable $.Values.persistence.config.enable }}
+            {{- if $persistenceProp.config.enable }}
             - mountPath: /home/airlock/iam/instances
               name: config
             {{- end }}
-            {{- if or $app_values.sandbox.persistence.logs.enable $.Values.persistence.logs.enable }}
+            {{- if $persistenceProp.logs.enable }}
             - mountPath: {{ print "/home/airlock/iam/instances/" $.Values.iam.instanceName "/logs" }}
               name: logs
             {{- end }}
@@ -386,79 +396,41 @@ spec:
               name: work
       restartPolicy: {{ quote $.Values.restartPolicy }}
       volumes:
-        {{- if $app_values.sandbox.persistence.config.enable }}
+        {{- if $persistenceProp.config.enable }}
         - name: config
-          {{- if eq $app_values.sandbox.persistence.config.type "request" }}
+          {{- if eq $persistenceProp.config.type "request" }}
           persistentVolumeClaim:
-            claimName: {{ print $fullName "-" $app "-" (ternary $app_values.sandbox.persistence.config.claim "config" (ne $app_values.sandbox.persistence.config.claim "")) }}
-          {{- else if eq $app_values.sandbox.persistence.config.type "existing" }}
+            claimName: {{ print $fullName "-" (ternary $persistenceProp.config.claim "config" (ne $persistenceProp.config.claim "")) }}
+          {{- else if eq $persistenceProp.config.type "existing" }}
           persistentVolumeClaim:
-            claimName: {{ $app_values.sandbox.persistence.config.claim }}
-          {{- else if eq $app_values.sandbox.persistence.config.type "remote" }}
-          {{ $app_values.sandbox.persistence.config.remote.type }}:
-            server: {{ $app_values.sandbox.persistence.config.remote.server }}
-            path: {{ $app_values.sandbox.persistence.config.remote.path }}
-          {{- else if eq $app_values.sandbox.persistence.config.type "hostpath" }}
+            claimName: {{ $persistenceProp.config.claim }}
+          {{- else if eq $persistenceProp.config.type "remote" }}
+          {{ $persistenceProp.config.remote.type }}:
+            server: {{ $persistenceProp.config.remote.server }}
+            path: {{ $persistenceProp.config.remote.path }}
+          {{- else if eq $persistenceProp.config.type "hostpath" }}
           hostPath:
-            path: {{ $app_values.sandbox.persistence.config.hostPath }}
-            type: Directory
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
-        {{- else if $.Values.persistence.config.enable }}
-        - name: config
-          {{- if eq $.Values.persistence.config.type "request" }}
-          persistentVolumeClaim:
-            claimName: {{ print $fullName "-" (ternary $.Values.persistence.config.claim "config" (ne $.Values.persistence.config.claim "" )) }}
-          {{- else if eq $.Values.persistence.config.type "existing" }}
-          persistentVolumeClaim:
-            claimName: {{ $.Values.persistence.config.claim }}
-          {{- else if eq $.Values.persistence.config.type "remote" }}
-          {{ $.Values.persistence.config.remote.type }}:
-            server: {{ $.Values.persistence.config.remote.server }}
-            path: {{ $.Values.persistence.config.remote.path }}
-          {{- else if eq $.Values.persistence.config.type "hostpath" }}
-          hostPath:
-            path: {{ $.Values.persistence.config.hostPath }}
+            path: {{ $persistenceProp.config.hostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}
           {{- end }}
         {{- end }}
-        {{- if $app_values.sandbox.persistence.logs.enable }}
+        {{- if $persistenceProp.logs.enable }}
         - name: logs
-          {{- if eq $app_values.sandbox.persistence.logs.type "request" }}
+          {{- if eq $persistenceProp.logs.type "request" }}
           persistentVolumeClaim:
-            claimName: {{ print $fullName "-" $app "-" (ternary $app_values.sandbox.persistence.logs.claim "logs" (ne $app_values.sandbox.persistence.logs.claim "")) }}
-          {{- else if eq $app_values.sandbox.persistence.logs.type "existing" }}
+            claimName: {{ print $fullName "-" (ternary $persistenceProp.logs.claim "logs" (ne $persistenceProp.logs.claim "")) }}
+          {{- else if eq $persistenceProp.logs.type "existing" }}
           persistentVolumeClaim:
-            claimName: {{ $app_values.sandbox.persistence.logs.claim }}
-          {{- else if eq $app_values.sandbox.persistence.logs.type "remote" }}
-          {{ $app_values.sandbox.persistence.logs.remote.type }}:
-            server: {{ $app_values.sandbox.persistence.logs.remote.server }}
-            path: {{ $app_values.sandbox.persistence.logs.remote.path }}
-          {{- else if eq $app_values.sandbox.persistence.logs.type "hostpath" }}
+            claimName: {{ $persistenceProp.logs.claim }}
+          {{- else if eq $persistenceProp.logs.type "remote" }}
+          {{ $persistenceProp.logs.remote.type }}:
+            server: {{ $persistenceProp.logs.remote.server }}
+            path: {{ $persistenceProp.logs.remote.path }}
+          {{- else if eq $persistenceProp.logs.type "hostpath" }}
           hostPath:
-            path: {{ $app_values.sandbox.persistence.logs.hostPath }}
-            type: Directory
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
-        {{- else if $.Values.persistence.logs.enable }}
-        - name: logs
-          {{- if eq $.Values.persistence.logs.type "request" }}
-          persistentVolumeClaim:
-            claimName: {{ print $fullName "-" (ternary $.Values.persistence.logs.claim "logs" (ne $.Values.persistence.logs.claim "")) }}
-          {{- else if eq $.Values.persistence.logs.type "existing" }}
-          persistentVolumeClaim:
-            claimName: {{ $.Values.persistence.logs.claim }}
-          {{- else if eq $.Values.persistence.logs.type "remote" }}
-          {{ $.Values.persistence.logs.remote.type }}:
-            server: {{ $.Values.persistence.logs.remote.server }}
-            path: {{ $.Values.persistence.logs.remote.path }}
-          {{- else if eq $.Values.persistence.logs.type "hostpath" }}
-          hostPath:
-            path: {{ $.Values.persistence.logs.hostPath }}
+            path: {{ $persistenceProp.logs.hostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}

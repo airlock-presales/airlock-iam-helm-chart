@@ -61,117 +61,22 @@ iam:
 
         ## Each instance requires some settings to define its logging, Java options and other os-level integrations
         ## These settings are defined in their own section, under iam.instanceProperties (see further down).
-        ## Each set of settings has a name which can be referenced here.
-        ## If name is not set here, the first item in iam.instanceProperties is used.
-        propertiesName: ""
+        ## Each set of settings is combined under their own name (dict key) which can be referenced here.
+        ## If name is not set here, iam.instanceProperties.default is used.
+        instancePropertiesRef: ""
 
         ## Airlock IAM uses an instance directory from which it reads the configuration and other resources.
         ## Applications can share the same volume or use individual ones.
-        persistence:
-          ## Volume for instance configuration
-          config:
-            ## Enable, if the loginapp requires its individual instance directory.
-            enable: false
-
-            ## Volume type
-            ## - request: a PersistentVolumeClaim manifest is created to request storage
-            ## - existing: an existing PersistentVolumeClaim is used for storage
-            ## - remote: storage from a remote server is mounted as volume
-            ## - subpath: the storage refers to a (sub)path on an already existing volume
-            ## - hostpath: the storage refers to a directory on the Kubernetes node
-            type: "request"
-
-            ## The storage class to use for the PVC
-            ## - for type 'existing'
-            storageClass: ""
-
-            ## Volume access restrictions
-            ## - valid values: ReadWriteOnce, ReadWriteMany, ReadWriteOncePod, ReadOnlyMany
-            ## - for types 'request,existing,remote'
-            accessMode: "ReadWriteOnce"
-
-            ## Name of existing PVC
-            ## - for type 'existing'
-            claim: ""
-
-            ## Name of already existing volume and (sub)path to storage
-            ## - for type 'volume'
-            volumeName: ""
-            subPath: ""
-
-            ## Allocated size
-            ## - for types 'request,existing,remote'
-            size: "10M"
-
-            ## Specify the mount
-            ## - for type 'remote'
-            remote:
-              ## Network file system type
-              ## - many possible values, e.g. nfs
-              type: ""
-
-              ## server and path of mount
-              server: ""
-              path: ""
-
-            ## Hostpath mount
-            ## - do not use unless you know what you are doing
-            ## - only for test environments or local administration setups
-            ## - never use for production or production-like test environments - you have been warned
-            ## - on Rancher Desktop, use a value like "/mnt/c/Users/<user>/Documents/Airlock/IAM"
-            hostPath: ""
-
-          ## Volume for log files
-          ## - by default, logs are written to stdout
-          ## - historically, Airlock IAM has written its log to files - which may be preferred by some administrators
-          ##   as they are used to the format
-          ## - if enabled, log files are usually written to the instance directory
-          ## - specify logs volume to write logs somewhere else
-          ## - properties are the same as documented for config (above), except where noted
-          logs:
-            enable: false
-            type: "request"
-            storageClass: ""
-            accessMode: "ReadWriteOnce"
-
-            ## With replicas>1, StatefulSets are used instead of Deployments causing a PVC to be created per replica.
-            ## The retention policy defines what to do when replicas are scaled down or the StatefulSet is deleted.
-            ## - valid values: Delete, Retain
-            ## - with Retain, manual cleanup is required
-            ## - as volume contains only log data which should have been forwarded to Elasticsearch, anyway,
-            ##   it should be quite safe to just remove
-            replicaRetentionPolicy: "Delete"
-            claim: ""
-            volumeName: ""
-            subPath: ""
-            size: "100M"
-            remote:
-              type: ""
-              server: ""
-              path: ""
-            hostPath: ""
+        ## Persistence settings are defined in their own section, under persistence (see further down).
+        ## Each set of settings is combined under their own name (dict key) which can be referenced here.
+        ## If name is not set here, persistence.default is used.
+        persistenceRef: ""
 
         ## Health checks
-        ## - if defined, metrics endpoint is exposed on this port
-        healthChecks:
-          liveness:
-            enable: false
-            period: 10
-            timeout: 1
-            failures: 3
-            initialDelay: 5
-          readiness:
-            enable: false
-            period: 5
-            timeout: 1
-            failures: 3
-            initialDelay: 6
-          startup:
-            enable: false
-            period: 2
-            timeout: 1
-            failures: 150
-            initialDelay: 10
+        ## Settings are defined in their own section, under healthChecks (see further down).
+        ## Each set of settings is combined under their own name (dict key) which can be referenced here.
+        ## If name is not set here, healthChecks.default is used.
+        healthChecksRef: ""
 
         ## CPU & memory resource limits and requests
         resources:
@@ -195,56 +100,9 @@ iam:
         enable: false
         suffix: ""
         replicas: 1
-        propertiesName: ""
-        persistence:
-          config:
-            enable: false
-            type: "request"
-            storageClass: ""
-            accessMode: "ReadWriteOnce"
-            claim: ""
-            volumeName: ""
-            subPath: ""
-            size: "10M"
-            remote:
-              type: ""
-              server: ""
-              path: ""
-            hostPath: ""
-          logs:
-            enable: false
-            type: "request"
-            storageClass: ""
-            replicaRetentionPolicy: "Delete"
-            accessMode: "ReadWriteOnce"
-            claim: ""
-            volumeName: ""
-            subPath: ""
-            size: "100M"
-            remote:
-              type: ""
-              server: ""
-              path: ""
-            hostPath: ""
-        healthChecks:
-          liveness:
-            enable: false
-            period: 10
-            timeout: 1
-            failures: 3
-            initialDelay: 5
-          readiness:
-            enable: false
-            period: 5
-            timeout: 1
-            failures: 3
-            initialDelay: 6
-          startup:
-            enable: false
-            period: 2
-            timeout: 1
-            failures: 150
-            initialDelay: 100
+        instancePropertiesRef: ""
+        persistenceRef: ""
+        healthChecksRef: ""
         resources:
           requests:
             cpu: ""
@@ -260,56 +118,9 @@ iam:
         enable: false
         suffix: ""
         replicas: 1
-        propertiesName: ""
-        persistence:
-          config:
-            enable: false
-            type: "request"
-            storageClass: ""
-            accessMode: "ReadWriteOnce"
-            claim: ""
-            volumeName: ""
-            subPath: ""
-            size: "10M"
-            remote:
-              type: ""
-              server: ""
-              path: ""
-            hostPath: ""
-          logs:
-            enable: false
-            type: "request"
-            storageClass: ""
-            replicaRetentionPolicy: "Delete"
-            accessMode: "ReadWriteOnce"
-            claim: ""
-            volumeName: ""
-            subPath: ""
-            size: "100M"
-            remote:
-              type: ""
-              server: ""
-              path: ""
-            hostPath: ""
-        healthChecks:
-          liveness:
-            enable: false
-            period: 10
-            timeout: 1
-            failures: 3
-            initialDelay: 5
-          readiness:
-            enable: false
-            period: 5
-            timeout: 1
-            failures: 3
-            initialDelay: 6
-          startup:
-            enable: false
-            period: 2
-            timeout: 1
-            failures: 150
-            initialDelay: 100
+        instancePropertiesRef: ""
+        persistenceRef: ""
+        healthChecksRef: ""
         resources:
           requests:
             cpu: ""
@@ -325,56 +136,9 @@ iam:
         enable: false
         suffix: ""
         replicas: 1
-        propertiesName: ""
-        persistence:
-          config:
-            enable: false
-            type: "request"
-            storageClass: ""
-            accessMode: "ReadWriteOnce"
-            claim: ""
-            volumeName: ""
-            subPath: ""
-            size: "10M"
-            remote:
-              type: ""
-              server: ""
-              path: ""
-            hostPath: ""
-          logs:
-            enable: false
-            type: "request"
-            storageClass: ""
-            replicaRetentionPolicy: "Delete"
-            accessMode: "ReadWriteOnce"
-            claim: ""
-            volumeName: ""
-            subPath: ""
-            size: "100M"
-            remote:
-              type: ""
-              server: ""
-              path: ""
-            hostPath: ""
-        healthChecks:
-          liveness:
-            enable: false
-            period: 10
-            timeout: 1
-            failures: 3
-            initialDelay: 5
-          readiness:
-            enable: false
-            period: 5
-            timeout: 1
-            failures: 3
-            initialDelay: 6
-          startup:
-            enable: false
-            period: 2
-            timeout: 1
-            failures: 150
-            initialDelay: 100
+        instancePropertiesRef: ""
+        persistenceRef: ""
+        healthChecksRef: ""
         resources:
           requests:
             cpu: ""
@@ -390,56 +154,9 @@ iam:
         enable: false
         suffix: ""
         replicas: 1
-        propertiesName: ""
-        persistence:
-          config:
-            enable: false
-            type: "request"
-            storageClass: ""
-            accessMode: "ReadWriteOnce"
-            claim: ""
-            volumeName: ""
-            subPath: ""
-            size: "10M"
-            remote:
-              type: ""
-              server: ""
-              path: ""
-            hostPath: ""
-          logs:
-            enable: false
-            type: "request"
-            storageClass: ""
-            replicaRetentionPolicy: "Delete"
-            accessMode: "ReadWriteOnce"
-            claim: ""
-            volumeName: ""
-            subPath: ""
-            size: "100M"
-            remote:
-              type: ""
-              server: ""
-              path: ""
-            hostPath: ""
-        healthChecks:
-          liveness:
-            enable: false
-            period: 10
-            timeout: 1
-            failures: 3
-            initialDelay: 5
-          readiness:
-            enable: false
-            period: 5
-            timeout: 1
-            failures: 3
-            initialDelay: 6
-          startup:
-            enable: false
-            period: 2
-            timeout: 1
-            failures: 150
-            initialDelay: 100
+        instancePropertiesRef: ""
+        persistenceRef: ""
+        healthChecksRef: ""
         resources:
           requests:
             cpu: ""
@@ -455,33 +172,9 @@ iam:
     ## - default is 'shared'
     suffix: ""
 
-    ## Each instance requires some settings to define its logging, Java options and other os-level integrations
-    ## These settings are defined in their own section, under iam.instanceProperties (see further down).
-    ## Each set of settings has a name which can be referenced here.
-    ## If name is not set here, the first item in iam.instanceProperties is used.
-    propertiesName: ""
-
-    ## Health checks
-    ## - if defined, metrics endpoint is exposed on this port
-    healthChecks:
-      liveness:
-        enable: false
-        period: 10
-        timeout: 1
-        failures: 3
-        initialDelay: 5
-      readiness:
-        enable: false
-        period: 5
-        timeout: 1
-        failures: 3
-        initialDelay: 6
-      startup:
-        enable: false
-        period: 2
-        timeout: 1
-        failures: 150
-        initialDelay: 10
+    instancePropertiesRef: ""
+    persistenceRef: ""
+    healthChecksRef: ""
 
     ## CPU & memory resource limits and requests
     resources:
@@ -499,12 +192,12 @@ iam:
     ## - these settings take precedence over environment variable settings for instanceProperties and global env
     env: {}
 
-  ## List of instance properties settings
+  ## Map of instance properties settings
   ## - some commonly used instance.properties settings can be defined here directly
   ## - for others, use environment variables
   instanceProperties:
     ## Instance properties settings collection
-    ## - reference key as propertiesName by the applications
+    ## - key referenced by instancePropertiesRef in the application configuration, see e.g. iam.apps.loginapp.sandbox
     ## - you should probably not overwrite the 'default' dict but create a custom dict
     ## - missing information in a custom dict is back-filled with settings from 'default'
     default:
@@ -561,7 +254,7 @@ iam:
       env: {}
 
 ## Network service
-## These settings will be used for each service for Each deployment
+## These settings will be used for each service for each deployment
 ## - Container and service ports are fixed - do not change them using environment variables
 service:
   ## It is strongly recommended to not change the service type
@@ -586,7 +279,7 @@ ingress:
   ## Airlock Microgateway
   microgateway:
     ## Version of the Microgateway
-    ## - selects correct protection template
+    ## - selects correct protection templates
     version: "4.6"
 
   ## Kubernetes Gateway API
@@ -626,40 +319,121 @@ ingress:
   ## - used to be required for older versions of Ingress API
   annotations: {}
 
+## Airlock IAM features a MicroProfile-compliant endpoint for liveness, readiness and startup probes.
+## Applications can share the same settings or use individual ones.
+## Here, you set up different variants of health check configurations, referenced by the applications using healthChecksRef
+healthChecks:
+  default:
+    liveness:
+      enable: false
+      period: 10
+      timeout: 1
+      failures: 3
+      initialDelay: 5
+    readiness:
+      enable: false
+      period: 5
+      timeout: 1
+      failures: 3
+      initialDelay: 6
+    startup:
+      enable: false
+      period: 2
+      timeout: 1
+      failures: 150
+      initialDelay: 10
+
 ## Airlock IAM uses an instance directory from which it reads the configuration and other resources.
 ## Applications can share the same volume or use individual ones.
-## Here, you define the shared volumes.
-## - properties are the same as documented for iam.apps.loginapp.sandbox.persistence.config (above)
+## Here, you set up different variants of persistence configurations, referenced by the applications using persistenceRef
 persistence:
-  config:
-    enable: true
-    type: "request"
-    storageClass: ""
-    accessMode: "ReadWriteMany"
-    claim: ""
-    volumeName: ""
-    subPath: ""
-    size: "10M"
-    remote:
-      type: ""
-      server: ""
-      path: ""
-    hostPath: ""
-  logs:
-    enable: false
-    type: "request"
-    storageClass: ""
-    replicaRetentionPolicy: "Delete"
-    accessMode: "ReadWriteMany"
-    claim: ""
-    volumeName: ""
-    subPath: ""
-    size: "100M"
-    remote:
-      type: ""
-      server: ""
-      path: ""
-    hostPath: ""
+  ## Persistence properties settings collection
+  ## - key referenced by persistenceRef in the application configuration, see e.g. iam.apps.loginapp.sandbox
+  ## - you should probably not overwrite the 'default' dict but create a custom dict
+  ## - missing information in a custom dict is back-filled with settings from 'default'
+  default:
+    ## Volume for instance configuration
+    config:
+      ## Enable the config volume
+      enable: true
+
+      ## Volume type
+      ## - request: a PersistentVolumeClaim manifest is created to request storage
+      ## - existing: an existing PersistentVolumeClaim is used for storage
+      ## - remote: storage from a remote server is mounted as volume
+      ## - subpath: the storage refers to a (sub)path on an already existing volume
+      ## - hostpath: the storage refers to a directory on the Kubernetes node
+      type: "request"
+
+      ## The storage class to use for the PVC
+      ## - for type 'existing'
+      storageClass: ""
+
+      ## Volume access restrictions
+      ## - valid values: ReadWriteOnce, ReadWriteMany, ReadWriteOncePod, ReadOnlyMany
+      ## - for types 'request,existing,remote'
+      accessMode: "ReadWriteMany"
+
+      ## Name of existing PVC
+      ## - for type 'existing'
+      claim: ""
+
+      ## Name of already existing volume and (sub)path to storage
+      ## - for type 'volume'
+      volumeName: ""
+      subPath: ""
+
+      ## Allocated size
+      ## - for types 'request,existing,remote'
+      size: "10M"
+
+      ## Specify the mount
+      ## - for type 'remote'
+      remote:
+        ## Network file system type
+        ## - many possible values, e.g. nfs
+        type: ""
+
+        ## server and path of mount
+        server: ""
+        path: ""
+
+      ## Hostpath mount
+      ## - do not use unless you know what you are doing
+      ## - only for test environments or local administration setups
+      ## - never use for production or production-like test environments - you have been warned
+      ## - on Rancher Desktop, use a value like "/mnt/c/Users/<user>/Documents/Airlock/IAM"
+      hostPath: ""
+
+    ## Volume for log files
+    ## - by default, logs are written to stdout
+    ## - historically, Airlock IAM has written its log to files - which may be preferred by some administrators
+    ##   as they are used to the format
+    ## - if enabled, log files are usually written to the instance directory
+    ## - specify 'logs' volume to write logs somewhere else
+    ## - properties are the same as documented for config (above), except where noted
+    logs:
+      enable: false
+      type: "request"
+      storageClass: ""
+      accessMode: "ReadWriteOnce"
+
+      ## With replicas > 1, StatefulSets are used instead of Deployments causing a PVC to be created per replica.
+      ## The retention policy defines what to do when replicas are scaled down or the StatefulSet is deleted.
+      ## - valid values: Delete, Retain
+      ## - with Retain, manual cleanup is required
+      ## - as volume contains only log data which should have been forwarded to Elasticsearch, anyway,
+      ##   it should be quite safe to just remove
+      replicaRetentionPolicy: "Delete"
+      claim: ""
+      volumeName: ""
+      subPath: ""
+      size: "100M"
+      remote:
+        type: ""
+        server: ""
+        path: ""
+      hostPath: ""
 
 ## Authentication and self-service processes usually require multiple data exchanges between client and server.
 ## For security reasons, corresponding state information is not exposed to the client but retained on the server.
@@ -967,8 +741,6 @@ postgresql:
       existingClaim: ""
       storageClass: ""
 
-## @section Kubernetes Parameters
-
 ## Annotations that are added to the Airlock IAM Pod.
 annotations: { }
 
@@ -976,9 +748,6 @@ annotations: { }
 deployment:
   ## Maximum number of old ReplicaSets kept in history of Deployment
   revisionHistoryLimit: 3
-
-## CPU and Memory request and limit for the IAM pod.
-resourceOptions: { }
 
 ## Restart policy for the Airlock IAM deployment.
 restartPolicy: "Always"
