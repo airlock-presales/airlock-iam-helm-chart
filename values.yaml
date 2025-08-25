@@ -683,13 +683,6 @@ redis:
 ## - PostgresSQL: https://cloudnative-pg.io
 ## - MariaDB: https://github.com/mariadb-operator/mariadb-operato
 database:
-  ## How is database engine deployed
-  ## - valid values are 'none', 'external', 'mariadb', 'postgresql'
-  ## - external: use if you already have a database server deployed, in or out of cluster
-  ## - mariadb / postgresql: causes Heöm chart to deploy a dedicated instance, see respective keys below for configuration
-  ## - none: no database-relevant settings are defined
-  deploymentType: "mariadb"
-
   ## Configure the external database
   external:
     ## Activation
@@ -762,7 +755,7 @@ database:
     enable: false
 
     ## Rest of MariaDB configuration
-    ## Unfortunately, Helm is pretty limited when it comes to pass values from a parent to a child chart
+    ## Unfortunately, Helm is pretty limited when it comes to passing values from a parent to a child chart
     ## Such values must be defined in the parent values.yaml (this file) under the key '<name-of-subchart>'
     ## In the case of MariaDB, look for a top-level key 'mariadb' towards the end of the file.
   
@@ -773,10 +766,10 @@ database:
     ## - enable to use an external database
     ## - conflicts with database.external.enable and database.mariadb.enable
     ## - only one of these may be set to true
-    enable: true
+    enable: false
 
     ## Rest of PostgreSQL configuration
-    ## Unfortunately, Helm is pretty limited when it comes to pass values from a parent to a child chart
+    ## Unfortunately, Helm is pretty limited when it comes to passing values from a parent to a child chart
     ## Such values must be defined in the parent values.yaml (this file) under the key '<name-of-subchart>'
     ## In the case of PostgreSQL, look for a top-level key 'postgresql' towards the end of the file.
   
@@ -788,28 +781,26 @@ database:
     ## - chart can launch a job which downloads connector to instance directory
     connector:
       ## Enable automatic download
-      download: true
+      download: false
   
       ## Select relevant connector
-      mariaddb:
+      mariadb:
         ## Version of connector to download
-        ## - selects newest version if unset
-        version: ""
+        ## - needs to be specified
+        version: "3.5.5"
   
         ## Package mirror to download from
         ## - default is 'MvA Internet Services GmbH, Zurich'
         mirrorHost: "https://mirror.mva-n.net"
-        driverDownloadURL: "https://mirror.mva-n.net/mariadb///connector-java-3.5.5/mariadb-connector-j-3.5.5.tar.gz"
   
       postgresql:
         ## Version of connector to download
-        ## - selects newest version if unset
-        version: ""
+        ## - needs to be specified
+        version: "42.7.7"
   
         ## Package mirror to download from
         ## - default is 'MvA Internet Services GmbH, Zurich'
         mirrorHost: "https://jdbc.postgresql.org"
-        driverDownloadURL: "https://jdbc.postgresql.org/download/postgresql-42.7.7.jar"
 
     ## Schema
     ## - create or upgrade database schema
@@ -822,50 +813,68 @@ database:
       ## - will use root user credentials to connect, see below
       operation: "none"
 
-      ## Upgrade from version
-      ## - for operation 'upgrade'
-      ## - currently, the Airlock IAM database schema does not contain a version marker
-      ## - you need to define the current schema version for the upgrade to work correctly
-      version: ""
+    ## Adminapp administrator
+    ## - only relevant for operation 'init'
+    administrator:
+      ## Automatically create the administrator account for adminapp
+      create: false
 
-      ## Adminapp administrator
-      ## - only relevant for operation 'init'
-      administrator:
-        ## Automatically create the administrator account for adminapp
-        create: true
+      ## For default passwords, administrator should be forced to change password at first login
+      enforceChange: true
 
-        ## Credentials
-        ## - specify username & password for admin account
-        ## - only relevant for database.initialisation.schema.operation=init and database.initialisation.schema.createAdministrator=true
-        ## - preferably, use pre-existing secret
-        ## - if secretName is defined, it is expected to contain the specified key
-        ## - properties are the same as documented for database.external.credentials.user & password
-        credentials:
-          name:
-            value: "admin"
-            existingSecret: ""
-            key: "admin_user"
-          password:
-            value: ""
-            existingSecret: "airlock-iam"
-            key: "admin_password"
+      ## Credentials
+      ## - specify username & password for admin account
+      ## - only relevant for database.initialisation.schema.operation=init and database.initialisation.schema.createAdministrator=true
+      ## - preferably, use pre-existing secret
+      ## - if secretName is defined, it is expected to contain the specified key
+      ## - properties are the same as documented for database.external.credentials.user & password
+      credentials:
+        name:
+          value: "admin"
+          existingSecret: ""
+          key: "admin_user"
+
+        ## Hash of administrator password
+        ## - depends on Airlock IAM application configuration (which password hash?)
+        ## - cannot be calculated by Helm chart
+        ## - define the correct hash value, e.g. 'MedusaPwdHistoryAAAARjE2Mzg0fF1jjOhya0ZuJ5OrHXgSXznOBBLl6eJ70PTdFYerSYPwgrlK1uq6UCzc5cvN8t1xtgc+YBQO8UgWBYhzDgpkQGM='
+        pwd_hash:
+          value: ""
+          existingSecret: "airlock-iam"
+          key: "admin_password"
       
 
 ## Image Options
-image:
-  ## Repository to retrieve the Airlock IAM image from.
-  repository: "quay.io/airlock/iam"
+images:
+  ## Container image for Airlock IAM
+  iam:
+    ## Repository to retrieve the Airlock IAM image from.
+    repository: "quay.io/airlock/iam"
+  
+    ## Tag that uniquely identifies the image.
+    tag: "8.4"
+  
+    ## When to pull the image.
+    pullPolicy: "IfNotPresent"
+  
+    ## Name of secret for protected images
+    ## - required to pull Airlock IAM from the Airlock-maintained repository at quay.io
+    ## - if you don't want to maintain pull secrets, you must provide your own, internal-access-only repository
+    pullSecret: ""
 
-  ## Tag that uniquely identifies the image.
-  tag: "8.4"
+  ## Container image for MariaDB initialisation
+  mariadb:
+    repository: "mariadb"
+    tag: "12-ubi"
+    pullPolicy: "IfNotPresent"
+    pullSecret: ""
 
-  ## When to pull the image.
-  pullPolicy: "IfNotPresent"
-
-  ## Name of secret for protected images
-  ## - required to pull Airlock IAM from the Airlock-maintained repository at quay.io
-  ## - if you don't want to maintain pull secrets, you must provide your own, internal-access-only repository
-  pullSecret: ""
+  ## Container image for MariaDB initialisation
+  postgresql:
+    repository: "postgres"
+    tag: "17"
+    pullPolicy: "IfNotPresent"
+    pullSecret: ""
 
 ## Environment variables for shared deployment
 ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,

@@ -54,7 +54,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Common Selector labels
 */}}
 {{- define "airlock-iam.selectorLabels" -}}
-app.kubernetes.io/name: {{ default .IAM_the_name (include "airlock-iam.fullname" .) }}
+app.kubernetes.io/name: {{ default .IAM_the_name (include "airlock-iam.fullname" $) }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if .IAM_suffix }}
 app.kubernetes.io/component: {{ .IAM_suffix }}
@@ -183,3 +183,39 @@ postgresql
 {{-   fail "Only enable one database type (external, mariadb, postgresql)" }}
 {{- end }}
 {{- end }}
+
+{{/*
+Get database type
+*/}}
+{{- define "airlock-iam.databaseType" -}}
+{{- $deploymentType := include "airlock-iam.deploymentType" . -}}
+{{- if or (eq $deploymentType "mariadb") (and (eq $deploymentType "external") (eq $.Values.database.external.type "mariadb")) -}}
+mariadb
+{{- else if or (eq $deploymentType "postgresql") (and (eq $deploymentType "external") (eq $.Values.database.external.type "postgresql")) -}}
+postgresql
+{{- else if and (eq $deploymentType "external") (eq $.Values.database.external.type "mysql") -}}
+mysql
+{{- else if and (eq $deploymentType "external") (eq $.Values.database.external.type "oracle") -}}
+oracle
+{{- else if and (eq $deploymentType "external") (eq $.Values.database.external.type "mssql") -}}
+sqlserver
+{{- end }}
+{{- end }}
+
+{{/*
+Get list of modules for shared deployment
+*/}}
+{{- define "airlock-iam.listPullSecrets" -}}
+{{- $images := "" -}}
+{{- range $img, $img_values := .Values.images -}}
+{{-   if ne $img_values.pullSecret "" -}}
+{{-     if eq $images "" -}}
+{{-       $images = $img_values.pullSecret -}}
+{{-     else -}}
+{{-       $images = print $images "," $img_values.pullSecret -}}
+{{-     end -}}
+{{-   end -}}
+{{- end -}}
+{{ $images }}
+{{- end -}}
+

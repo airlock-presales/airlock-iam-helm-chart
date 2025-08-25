@@ -1,6 +1,7 @@
 {{- $fullName := include "airlock-iam.fullname" . -}}
 {{- $the_name := $fullName -}}
-{{- $deploymentType := include "airlock-iam.deploymentType" . -}}
+{{- $databaseDeployment := include "airlock-iam.deploymentType" . -}}
+{{- $databaseType := include "airlock-iam.databaseType" . -}}
 {{- $hasShared := include "airlock-iam.hasShared" . -}}
 {{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
 {{- if eq $hasShared "true" -}}
@@ -31,7 +32,7 @@ spec:
   replicas: 1
   revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
   strategy:
-    type: Recreate
+    type: RollingUpdate
   selector:
     matchLabels:
       {{- include "airlock-iam.selectorLabels" $ | nindent 6 }}
@@ -46,14 +47,136 @@ spec:
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
-      {{- if .Values.image.pullSecret }}
+      {{- $pullSecrets := include "airlock-iam.listPullSecrets" . }}
+      {{- if ne $pullSecrets "" }}
       imagePullSecrets:
-        - name: {{ .Values.image.pullSecret }}
+        {{- range (regexSplit "," $pullSecrets -1) }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
+      initContainers:
+        - name: {{ print $the_name "-init" }}
+          {{- if eq $databaseType "mariadb" }}
+          image: "{{ .Values.images.mariadb.repository }}:{{ .Values.images.mariadb.tag }}"
+          imagePullPolicy: {{ quote .Values.images.mariadb.pullPolicy }}
+          {{- else if eq $databaseType "postgresql" }}
+          image: "{{ .Values.images.postgresql.repository }}:{{ .Values.images.postgresql.tag }}"
+          imagePullPolicy: {{ quote .Values.images.postgresql.pullPolicy }}
+          {{- else if eq $databaseType "mysql" }}
+          image: "{{ .Values.images.mysql.repository }}:{{ .Values.images.mysql.tag }}"
+          imagePullPolicy: {{ quote .Values.images.mysql.pullPolicy }}
+          {{- end }}
+          args: ["/bin/bash", "/var/tmp/scripts/init_db"]
+          #args: ["/bin/bash", "-c", "while true;do sleep 10;done"]
+          env:
+            - name: INSTANCE_DIR
+              value: "/home/airlock/iam/instances"
+            - name: INIT_TYPE
+              value: {{ $databaseType | quote }}
+            - name: INIT_INSTANCE
+              value: {{ .Values.iam.instanceName }}
+            - name: INIT_DL
+              value: {{ .Values.database.initialisation.connector.download | quote }}
+            - name: INIT_DL_VERSION
+              value: {{ (ternary .Values.database.initialisation.connector.mariadb.version .Values.database.initialisation.connector.postgresql.version (eq $databaseType "mariadb")) | quote }}
+            - name: INIT_DB_SCHEMA
+              value: {{ ternary .Values.database.initialisation.schema.operation "none" (contains "adminapp" (include "airlock-iam.listModulesShared" .)) }}
+            - name: INIT_DB_HOST
+              {{- if eq $databaseDeployment "external" }}
+              value: {{ .Values.database.external.host }}
+              {{- else if eq $databaseDeployment "mariadb" }}
+              value: {{ print $fullName "-mariadb" }}
+              {{- else if eq $databaseDeployment "postgresql" }}
+              value: {{ print $fullName "-postgresql" }}
+              {{- end }}
+            - name: INIT_DB_DATABASE
+              {{- if eq $databaseDeployment "external" }}
+              value: {{ .Values.database.external.database }}
+              {{- else if eq $databaseDeployment "mariadb" }}
+              value: {{ .Values.mariadb.auth.database }}
+              {{- else if eq $databaseDeployment "postgresql" }}
+              value: {{ .Values.postgresql.global.postgresql.auth.database }}
+              {{- end }}
+            - name: INIT_DB_USERNAME
+              {{- if eq $databaseDeployment "external" }}
+              {{-   if ne .Values.database.external.credentials.rootUser.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.external.credentials.rootUser.existingSecret }}
+                  key: {{ .Values.database.external.credentials.rootUser.key }}
+              {{-   else }}
+              value: {{ .Values.database.external.credentials.rootUser.value }}
+              {{-   end }}
+              {{- else if eq $databaseDeployment "mariadb" }}
+              value: {{ .Values.mariadb.auth.username }}
+              {{- else if eq $databaseDeployment "postgresql" }}
+              value: {{ .Values.postgresql.global.postgresql.auth.username }}
+              {{- end }}
+            - name: INIT_DB_PASSWORD
+              {{- if eq $databaseDeployment "external" }}
+              {{-   if ne .Values.database.external.credentials.rootPassword.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.external.credentials.rootPassword.existingSecret }}
+                  key: {{ .Values.database.external.credentials.rootPassword.key }}
+              {{-   else }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $the_name }}
+                  key: {{ $.Values.database.external.credentials.rootPassword.key }}
+              {{-   end }}
+              {{- else if eq $databaseDeployment "mariadb" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mariadb.auth.existingSecret }}
+                  key: "mariadb-password"
+              {{- else if eq $databaseDeployment "postgresql" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.global.postgresql.auth.existingSecret }}
+                  key: {{ .Values.postgresql.global.postgresql.auth.secretKeys.userPasswordKey }}
+              {{- end }}
+            - name: INIT_DB_VERSION
+              value: {{ .Values.images.iam.tag | quote }}
+            - name: INIT_ADMIN_CREATE
+              value: {{ ternary .Values.database.initialisation.administrator.create "false" (contains "adminapp" (include "airlock-iam.listModulesShared" .)) | quote }}
+            - name: INIT_ADMIN_CHANGE
+              value: {{ .Values.database.initialisation.administrator.enforceChange | quote }}
+            - name: INIT_ADMIN_USERNAME
+              {{- if ne .Values.database.initialisation.administrator.credentials.name.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.initialisation.administrator.credentials.name.existingSecret }}
+                  key: {{ .Values.database.initialisation.administrator.credentials.name.key }}
+              {{- else }}
+              value: {{ .Values.database.initialisation.administrator.credentials.name.value }}
+              {{- end }}
+            - name: INIT_ADMIN_PWD_HASH
+              {{- if ne .Values.database.initialisation.administrator.credentials.pwd_hash.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.initialisation.administrator.credentials.pwd_hash.existingSecret }}
+                  key: {{ .Values.database.initialisation.administrator.credentials.pwd_hash.key }}
+              {{- else }}
+              #value: {{ .Values.database.initialisation.administrator.credentials.pwd_hash.value }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $the_name }}
+                  key: {{ $.Values.database.initialisation.administrator.credentials.pwd_hash.key }}
+              {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.config.enable }}
+            - mountPath: /home/airlock/iam/instances
+              name: config
+            {{- end }}
+            - mountPath: /var/tmp/scripts
+              name: init
       {{- end }}
       containers:
         - name: {{ $the_name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ quote .Values.image.pullPolicy }}
+          image: "{{ .Values.images.iam.repository }}:{{ .Values.images.iam.tag }}"
+          imagePullPolicy: {{ quote .Values.images.iam.pullPolicy }}
           args: ["run", "-i", {{ quote .Values.iam.instanceName }}]
           env:
             {{- if .Values.iam.environmentId }}
@@ -118,29 +241,31 @@ spec:
             - name: IAM_WEB_SERVER_ACCESS_LOG_FILE_ENABLED
               value: "true"
             {{- end }}
-            {{- if and (ne $deploymentType "none") (ne $deploymentType "") }}
+            {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
+            - name: IAM_CONFIG_EDITOR_SHOW_VARIABLES
+              value: "true"
             - name: IAM_CFG_DB_DRIVER_CLASS
-            {{-   if or (eq $deploymentType "mariadb") (and (eq $deploymentType "external") (eq .Values.database.external.type "mariadb")) }}
+            {{-   if (eq $databaseType "mariadb") }}
               value: "org.mariadb.jdbc.Driver"
-            {{-   else if or (eq $deploymentType "postgresql") (and (eq $deploymentType "external") (eq .Values.database.external.type "postgresql")) }}
+            {{-   else if (eq $databaseType "postgresql") }}
               value: "org.postgresql.Driver"
-            {{-   else if and (eq $deploymentType "external") (eq .Values.database.external.type "mysql") }}
+            {{-   else if (eq $databaseType "mysql") }}
               value: "com.mysql.cj.jdbc.Driver"
-            {{-   else if and (eq $deploymentType "external") (eq .Values.database.external.type "oracle") }}
+            {{-   else if (eq $databaseType "oracle") }}
               value: "oracle.jdbc.OracleDriver"
-            {{-   else if and (eq $deploymentType "external") (eq .Values.database.external.type "mssql") }}
+            {{-   else if (eq $databaseType "sqlserver") }}
               value: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
             {{-   end }}
             - name: IAM_CFG_DB_URL
-            {{-   if eq $deploymentType "external" }}
+            {{-   if eq $databaseDeployment "external" }}
               value: {{ print "jdbc:" .Values.database.external.type "://" .Values.database.external.host "/" .Values.database.external.database }}
-            {{-   else if eq $deploymentType "mariadb" }}
+            {{-   else if eq $databaseDeployment "mariadb" }}
               value: {{ print "jdbc:mariadb://" $fullName "-mariadb/" .Values.mariadb.auth.database }}
-            {{-   else if eq $deploymentType "postgresql" }}
+            {{-   else if eq $databaseDeployment "postgresql" }}
               value: {{ print "jdbc:mariadb://" $fullName "-postgresql/" .Values.postgresql.global.postgresql.auth.database }}
             {{-   end }}
             - name: IAM_CFG_DB_USERNAME
-            {{-   if eq $deploymentType "external" }}
+            {{-   if eq $databaseDeployment "external" }}
               {{- if ne .Values.database.external.credentials.user.existingSecret "" }}
               valueFrom:
                 secretKeyRef:
@@ -149,13 +274,13 @@ spec:
               {{- else }}
               value: {{ .Values.database.external.credentials.user.value }}
               {{- end }}
-            {{-   else if eq $deploymentType "mariadb" }}
+            {{-   else if eq $databaseDeployment "mariadb" }}
               value: {{ .Values.mariadb.auth.username }}
-            {{-   else if eq $deploymentType "postgresql" }}
+            {{-   else if eq $databaseDeployment "postgresql" }}
               value: {{ .Values.postgresql.global.postgresql.auth.username }}
             {{-   end }}
             - name: IAM_CFG_DB_PASSWORD
-            {{-   if eq $deploymentType "external" }}
+            {{-   if eq $databaseDeployment "external" }}
               {{- if ne .Values.database.external.credentials.password.existingSecret "" }}
               valueFrom:
                 secretKeyRef:
@@ -164,12 +289,12 @@ spec:
               {{- else }}
               value: {{ .Values.database.external.credentials.password.value }}
               {{- end }}
-            {{-   else if eq $deploymentType "mariadb" }}
+            {{-   else if eq $databaseDeployment "mariadb" }}
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.mariadb.auth.existingSecret }}
                   key: "mariadb-password"
-            {{-   else if eq $deploymentType "postgresql" }}
+            {{-   else if eq $databaseDeployment "postgresql" }}
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.postgresql.global.postgresql.auth.existingSecret }}
@@ -189,7 +314,7 @@ spec:
             - name: TZ
               value: {{ .Values.global.timezone }}
             - name: DEBUG
-              value: {{ $deploymentType }}
+              value: {{ $databaseDeployment }}
           ports:
             - containerPort: 8080
               name: http
@@ -312,6 +437,11 @@ spec:
           secret:
             secretName: {{ .Values.iam.license.name }}
           {{- end }}
+        {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
+        - name: init
+          configMap:
+            name: {{ $the_name }}
+        {{- end }}
         - name: work
           emptyDir: {}
 {{- end -}}

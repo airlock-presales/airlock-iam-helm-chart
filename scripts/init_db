@@ -1,0 +1,233 @@
+#! /bin/bash
+
+[[ -r env.init ]] && source env.init
+
+function die ()
+{
+    echo $@
+    # do not exit to indicate problem
+    while true
+    do
+        sleep 10
+    done
+}
+
+# sanity checks
+# - not checking INSTANCE_DIR, INIT_DB_MIRROR
+for f in INIT_TYPE INIT_INSTANCE INIT_DL INIT_DL_VERSION INIT_DB_SCHEMA INIT_DB_HOST INIT_DB_DATABASE INIT_DB_USERNAME INIT_DB_PASSWORD INIT_DB_VERSION INIT_ADMIN_CREATE INIT_ADMIN_USERNAME INIT_ADMIN_PWD_HASH INIT_ADMIN_CHANGE
+do
+  [[ -z "${!f}" ]] && die "${f} not set"
+done
+echo "Variables checked"
+
+instance_dir="${INSTANCE_DIR:-/home/airlock/iam/instances}/${INIT_INSTANCE}"
+instance_libs="${instance_dir}/libs"
+schema_version="$(echo ${INIT_DB_VERSION} | sed -e 's,\([0-9]*\.[0-9]*\).*,\1,')"
+
+
+# ###########
+# Functions
+# ###########
+
+cmd_mariadb() {
+    db=""
+    [[ $# -gt 1 ]] && { db="$1"; shift 1; }
+    mariadb --host=${INIT_DB_HOST} --user=${INIT_DB_USERNAME} --password=${INIT_DB_PASSWORD} ${db} --batch --silent --execute="$@"
+}
+
+cmd_pg() {
+    psql -h=${INIT_DB_HOST} -U=${INIT_DB_USERNAME} --password=${INIT_DB_PASSWORD} ${INIT_DB_DATABASE} --execute="$@"
+}
+
+cmd_mysql() {
+    mysql --host=${INIT_DB_HOST} --user=${INIT_DB_USERNAME} --password=${INIT_DB_PASSWORD} ${INIT_DB_DATABASE} --batch --silent --execute="$@"
+}
+
+cmd_sql() {
+    case "${INIT_TYPE}" in
+        mariadb)
+            cmd_mariadb "${INIT_DB_DATABASE}" "$@"
+            ;;
+        postgresql)
+            cmd_pg "$@"
+            ;;
+        mariadb)
+            cmd_mysql "${INIT_DB_DATABASE}" "$@"
+            ;;
+    esac
+}
+
+
+# ###########
+# Download connector
+# ###########
+
+# download jdbc connector
+if [[ "${INIT_DL}" == "true" ]]; then
+    case "${INIT_TYPE}" in
+        mariadb)
+            cnt=$(ls -1 "${instance_libs}"/mariadb-java-client-${INIT_DL_VERSION}.jar 2>/dev/null | wc -l)
+            if [[ ${cnt} -eq 0 ]]; then
+                mirror="${INIT_DL_MIRROR:-dlm.mariadb.com}"
+                url="$(curl -s "https://${mirror}/browse/java8_connector/${INIT_DL_VERSION}/" --output - | grep "https://" | grep '[0-9]\.jar</a>' | sed -e 's,.* href="\([^"]*\)".*,\1,')"
+                curl -s -L "${url}" --output "${instance_libs}/${url##*/}"
+            fi
+            ;;
+        postgresql)
+            cnt=$(ls -1 "${instance_libs}"/postgresql-${INIT_DL_VERSION}.jar 2>/dev/null | wc -l)
+            if [[ ${cnt} -eq 0 ]]; then
+                mirror="${INIT_DL_MIRROR:-jdbc.postgresql.org}"
+                url="https://${mirror}/download/postgresql-${INIT_DL_VERSION}.jar"
+                curl -s -L "${url}" --output "${instance_libs}/${url##*/}"
+            fi
+            ;;
+    esac
+    echo "Connector version ${INIT_DL_VERSION} downloaded from ${mirror}"
+fi
+
+
+# ###########
+# Wait database engine ready
+# ###########
+
+while true
+do
+    case "${INIT_TYPE}" in
+        mariadb)
+            cmd_mariadb "SELECT 1;" > /dev/null
+            state=$?
+            ;;
+        postgresql)
+            pg_isready -h ${INIT_DB_HOST} -U ${INIT_DB_USERNAME}
+            state=$?
+            ;;
+        mariadb)
+            cmd_mysql "SELECT 1;" > /dev/null
+            state=$?
+            ;;
+    esac
+    [[ ${state} -eq 0 ]] && break
+    echo "Waiting for ${INIT_TYPE}"
+    sleep 2
+done
+echo "Database engine on ${INIT_DB_HOST} ready"
+
+
+# ###########
+# Create database
+# ###########
+
+if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
+    # download db script
+    url="https://docs.airlock.com/iam/${schema_version}/sql-scripts/schema/${INIT_TYPE}/create-medusa-schema.sql"
+    curl -s -L "${url}" --output "/var/tmp/create-medusa-schema.sql" || die "Failed to download schema creation script"
+
+    # drop and recreate database and tables
+    case "${INIT_TYPE}" in
+        mariadb)
+            cmd_mariadb "DROP DATABASE IF EXISTS ${INIT_DB_DATABASE}" || die "Failed to drop old database"
+            cmd_mariadb "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
+            cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+            ;;
+        postgresql)
+            ;;
+        mysql)
+            cmd_mysql "DROP DATABASE IF EXISTS ${INIT_DB_DATABASE}" || die "Failed to drop old database"
+            cmd_mysql "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
+            cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+            ;;
+    esac
+
+    # add metadata table and version number
+    cmd_sql "CREATE TABLE metadata(name VARCHAR(32) NOT NULL, value VARCHAR(32)) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_nopad_ci;"
+    cmd_sql "INSERT INTO metadata(name,value) VALUES ('schema_version', '${schema_version}');"
+    echo "Database ${INIT_DB_DATABASE}, version ${schema_version}, created on ${INIT_DB_HOST}"
+fi
+
+
+# ###########
+# Upgrade database
+# ###########
+
+if [[ "${INIT_DB_SCHEMA}" == "upgrade" ]]; then
+    # target version
+    v_tgt="$(echo ${INIT_DB_VERSION} | sed -e 's,\([0-9]*\.[0-9]*\).*,\1,')"
+
+    # get current version
+    v_org="$(cmd_sql "SELECT value FROM metadata WHERE name='schema_version'")"
+    [[ -z "${v_org}" ]] && die "Database ${INIT_DB_DATABASE} not correctly created"
+
+    if [[ "${v_org}" != "${v_tgt}" ]]; then
+        # get upgrade step scripts
+        lst=()
+        v_cur="${v_org}"
+        while [[ "${v_tgt}" != "${v_cur}" ]]
+        do
+            v_next="${v_cur%.*}.$((${v_cur#*.} +1))"
+            try=1
+            while true
+            do
+                url="https://docs.airlock.com/iam/${v_tgt}/sql-scripts/changelog/mariadb/iam-schema-migration-${v_cur/./_}-${v_next/./_}.sql"
+                r="$(curl -s -L "${url}" --output "/var/tmp/${url##*/}" -w '%{http_code}')"
+                [[ "$r" == "200" ]] && break
+                rm "/var/tmp/${url##*/}"
+                [[ ${try} -ge 2 ]] && die "Missing schema upgrade step after ${v_cur}, tried ${v_cur%.*}.$((${v_cur#*.} +1)) and $((${v_cur%.*} +1)).0"
+                v_next="$((${v_cur%.*} +1)).0"
+                try=$((${try} +1))
+            done
+            echo "Found upgrade step: ${v_cur} -> ${v_next}"
+            v_cur="${v_next}"
+        done
+    
+        # run upgrade scripts
+        for f in /var/tmp/iam-schema-migration-*
+        do
+            cmd_sql "source $f" || die "Failed to upgrade database: script $f"
+        done
+        
+        # update metadata version number
+        cmd_sql "UPDATE metadata set value='${v_tgt}' WHERE name='schema_version';"
+        echo "Updated database ${INIT_DB_DATABASE} on ${INIT_DB_HOST} to version ${v_tgt}"
+    else
+        echo "Database ${INIT_DB_DATABASE} on ${INIT_DB_HOST} on version ${v_tgt}"
+    fi
+fi
+
+
+# ###########
+# Create administrator
+# ###########
+
+if [[ "${INIT_ADMIN_CREATE}" == "true" ]]; then
+    [[ "${INIT_ADMIN_CHANGE}" == "true" ]] && force="1" || force="0"
+    cmd_sql "DELETE FROM medusa_admin WHERE username = 'admin';"
+    cmd_sql "INSERT INTO medusa_admin (username, givenname, surname, roles, pwd_hash, pwd_chg_enf) VALUES ('${INIT_ADMIN_USERNAME}', 'IAM', 'Administrator', 'superadmin', '${INIT_ADMIN_PWD_HASH}', ${force});"
+    echo "Administrator created: ${INIT_ADMIN_USERNAME}"
+fi
+
+#
+# ###########
+# Wait for database to be initialised
+# ###########
+
+# needs to be done on all deployments not containing adminapp
+
+while true
+do
+    case "${INIT_TYPE}" in
+        mariadb)
+            v="$(cmd_sql "SELECT value FROM metadata WHERE name='schema_version'")"
+            ;;
+        postgresql)
+            v="$(cmd_sql "SELECT value FROM metadata WHERE name='schema_version'")"
+            ;;
+        mariadb)
+            v="$(cmd_sql "SELECT value FROM metadata WHERE name='schema_version'")"
+            ;;
+    esac
+    [[ ${v} == "${schema_version}" ]] && break
+    echo "Waiting for database initialisation to be completed"
+    sleep 5
+done
+echo "Database ready"
+
