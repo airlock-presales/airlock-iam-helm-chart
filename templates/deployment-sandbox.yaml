@@ -304,6 +304,8 @@ spec:
             {{- end }}
             - name: IAM_HEALTH_PORT
               value: "8081"
+            - name: IAM_HEALTH_ADDRESS
+              value: ".*"
             {{- range $name, $value := mergeOverwrite $.Values.env $instanceProp.env $app_values.sandbox.env }}
             - name: {{ quote $name }}
               value: {{ quote $value }}
@@ -322,7 +324,7 @@ spec:
             failureThreshold: {{ $app_values.sandbox.healthChecks.liveness.failures }}
             initialDelaySeconds: {{ $app_values.sandbox.healthChecks.liveness.initialDelay }}
             httpGet:
-              path: /health/ready
+              path: /health/live
               port: health
           {{- end }}
           {{- if $app_values.sandbox.healthChecks.readiness.enable }}
@@ -332,7 +334,7 @@ spec:
             failureThreshold: {{ $app_values.sandbox.healthChecks.readiness.failures }}
             initialDelaySeconds: {{ $app_values.sandbox.healthChecks.readiness.initialDelay }}
             httpGet:
-              path: /health/live
+              path: /health/ready
               port: health
           {{- end }}
           {{- if $app_values.sandbox.healthChecks.startup.enable }}

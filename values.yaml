@@ -244,7 +244,7 @@ iam:
             period: 2
             timeout: 1
             failures: 150
-            initialDelay: 10
+            initialDelay: 100
         resources:
           requests:
             cpu: ""
@@ -309,7 +309,7 @@ iam:
             period: 2
             timeout: 1
             failures: 150
-            initialDelay: 10
+            initialDelay: 100
         resources:
           requests:
             cpu: ""
@@ -374,7 +374,7 @@ iam:
             period: 2
             timeout: 1
             failures: 150
-            initialDelay: 10
+            initialDelay: 100
         resources:
           requests:
             cpu: ""
@@ -439,7 +439,7 @@ iam:
             period: 2
             timeout: 1
             failures: 150
-            initialDelay: 10
+            initialDelay: 100
         resources:
           requests:
             cpu: ""
