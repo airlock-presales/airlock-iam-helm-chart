@@ -16,6 +16,8 @@ In stark contrast to the "official" [charts](https://github.com/airlock/iam-helm
 
 This is not an official chart. It is maintained by the Airlock Pre-Sales team, as time permits, on a best-efforts basis. Still, we welcome bug reports (issues) and PRs.
 
+Also note, the chart is work in progress. Not all features and possible configurations have been tested and the structure of the configuration parameters may still change.
+
 ## Cluster requirements
 
 The Kubernetes cluster must comply with the following requirements:
