@@ -5,21 +5,21 @@
 {{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
 {{- if eq $hasSandbox "true" -}}
 {{-   range $app, $app_values := .Values.iam.apps -}}
-{{-     if and (and $app_values.enable $app_values.sandbox.enable) (eq (int $app_values.sandbox.replicas) 1) -}}
+{{-     if and $app_values.enable $app_values.sandbox.enable -}}
 {{-       $suffix := ternary $app_values.sandbox.suffix $app (ne $app_values.sandbox.suffix "") -}}
 {{-       $the_name = print $fullName "-" $suffix -}}
 {{-       $instanceProp := deepCopy $.Values.iam.instanceProperties.default -}}
-{{-       $reference := $.Values.iam.shared.instancePropertiesRef | default "default" -}}
+{{-       $reference := $app_values.sandbox.instancePropertiesRef | default "default" -}}
 {{-       if hasKey $.Values.iam.instanceProperties $reference -}}
 {{-         $instanceProp = mergeOverwrite $instanceProp (get $.Values.iam.instanceProperties $reference) -}}
 {{-       end -}}
 {{-       $persistenceProp := deepCopy $.Values.persistence.default -}}
-{{-       $reference = $.Values.iam.shared.persistenceRef | default "default" -}}
+{{-       $reference = $app_values.sandbox.persistenceRef | default "default" -}}
 {{-       if hasKey $.Values.persistence $reference -}}
 {{-         $persistenceProp = mergeOverwrite $persistenceProp (get $.Values.persistence $reference) -}}
 {{-       end -}}
 {{-       $healthCheckProp := deepCopy $.Values.healthChecks.default -}}
-{{-       $reference = $.Values.iam.shared.healthChecksRef | default "default" -}}
+{{-       $reference = $app_values.sandbox.healthChecksRef | default "default" -}}
 {{-       if hasKey $.Values.healthChecks $reference -}}
 {{-         $healthCheckProp = mergeOverwrite $healthCheckProp (get $.Values.healthChecks $reference) -}}
 {{-       end -}}
@@ -127,7 +127,6 @@ spec:
                   name: {{ $.Values.database.external.credentials.rootPassword.existingSecret }}
                   key: {{ $.Values.database.external.credentials.rootPassword.key }}
               {{-   else }}
-              #value: {{ $.Values.database.external.credentials.rootPassword.value }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $the_name }}
@@ -227,7 +226,8 @@ spec:
             - name: IAM_LOG_LEVEL
               value: {{ $instanceProp.logging.level }}
             {{- end }}
-            {{- if $instanceProp.logging.local.enable }}
+            #! Local logging is disabled with multiple replicas
+            {{- if and $instanceProp.logging.local.enable (eq (int $app_values.sandbox.replicas) 1) }}
             {{-   if $instanceProp.logging.local.structured }}
             - name: IAM_LOG_STRUCTURED_FILE_ENABLED
               value: "true"
@@ -385,7 +385,8 @@ spec:
             - mountPath: /home/airlock/iam/instances
               name: config
             {{- end }}
-            {{- if $persistenceProp.logs.enable }}
+            #! With multiple replicas, ensure log buffers do not collide
+            {{- if or $persistenceProp.logs.enable (gt (int $app_values.sandbox.replicas) 1) }}
             - mountPath: {{ print "/home/airlock/iam/instances/" $.Values.iam.instanceName "/logs" }}
               name: logs
             {{- end }}
@@ -416,7 +417,11 @@ spec:
           emptyDir: {}
           {{- end }}
         {{- end }}
-        {{- if $persistenceProp.logs.enable }}
+        #! With multiple replicas, ensure log buffers do not collide
+        {{- if gt (int $app_values.sandbox.replicas) 1 }}
+        - name: logs
+          emptyDir: {}
+        {{- else if $persistenceProp.logs.enable }}
         - name: logs
           {{- if eq $persistenceProp.logs.type "request" }}
           persistentVolumeClaim:

@@ -520,7 +520,6 @@ database:
         key: "root_password"
   
   ## Configure MariaDB deployed from this chart
-  ## - ref: https://github.com/bitnami/charts/tree/main/bitnami/mariadb
   mariadb:
     ## Activation
     ## - enable to use an external database
@@ -534,7 +533,6 @@ database:
     ## In the case of MariaDB, look for a top-level key 'mariadb' towards the end of the file.
   
   ## Configure PostgreSQL deployed from this chart
-  ## - see https://github.com/bitnami/charts/tree/main/bitnami/postgresql
   postgresql:
     ## Activation
     ## - enable to use an external database
@@ -665,7 +663,7 @@ env: {}
 mariadb:
   ## Source for deployment
   ## - valid values: chart, operator
-  ## - chart: use the chart dependency - see https://github.com/bitnami/charts/tree/main/bitnami/mariadb#global-parameters
+  ## - chart: use the chart dependency - see https://github.com/bitnami/charts/tree/main/bitnami/mariadb
   ## - operator: prepare manifests for MariaDB Operator - see https://github.com/mariadb-operator/mariadb-operator/
   source: "chart"
 
@@ -703,9 +701,9 @@ postgresql:
     ## Overwrites database.mariadb.primary.persistence.storageClass
     defaultStorageClass: ""
 
-    ## Source for deployment
+  ## Source for deployment
   ## - valid values: chart, operator
-  ## - chart: use the chart dependency
+  ## - chart: use the chart dependency - see https://github.com/bitnami/charts/tree/main/bitnami/postgresql
   ## - operator: prepare manifests for CloudNativePG - see https://github.com/cloudnative-pg/cloudnative-pg
   source: "chart"
 
