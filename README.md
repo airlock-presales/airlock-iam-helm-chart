@@ -75,7 +75,7 @@ Each Airlock IAM instance requires a so-called instance directory which contains
 * UI resources
 * Instance settings in <code>instance.properties</code>
 
-All applications of the same instance must have access to the same content. How you achieve that is up to you but one obvious, simple way is to mount the same volume into all deployments. This requires a type of storage supporting ReadWriteMany or ReadOnlyMany, if you have chose appDeploymentStrategy 'multi'.
+All applications of the same instance must have access to the same content. How you achieve that is up to you but one obvious, simple way is to mount the same volume into all deployments. This requires a type of storage supporting ReadWriteMany or ReadOnlyMany, if you have chosen appDeploymentStrategy 'multi'.
 
 Unfortunately, logging may make the situation a bit more complicated. If you opt to have Airlock IAM ship to an Elasticsearch server, each replica will forcibly first write the logs to files before they are forwarded. By default, these files are also in the instance directory, leading to concurrent write access on text files.
 
