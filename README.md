@@ -112,7 +112,7 @@ For many settings in <code>instance.properties</code>, the Helm chart provides e
 
 With the exception of a few specific use cases, Airlock IAM requires a SQL database. The Helm chart supports embedded provisioning of two different database engines, MariaDB and PostgreSQL. In addition, it can interface with exisiting, previously deployed database systems. In this case, MySQL, MS SQL and Oracle are also supported.
 
-How Airlock IAM accesses this database is defined in the application configuration. By default, this configuraion is maintained with the built-in Config Editor. However, using environment variables, the Helm chart can provide the necessary configuration information form its database setup to Airlock IAM.
+How Airlock IAM accesses this database is defined in the application configuration. By default, this configuraion is maintained with the built-in Config Editor. However, using environment variables, the Helm chart can provide the necessary configuration information for its database setup to Airlock IAM.
 
 The Helm chart sets the following environment variables:
 
