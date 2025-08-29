@@ -99,7 +99,7 @@ For many settings in <code>instance.properties</code>, the Helm chart provides e
   * Due to limitations in the Helm dependency condition syntax, this can unfortunately not be automated.
   * For simplification, the Helm charts sets the following environment variable:
     * IAM_CFG_REDIS_EXPERT_CONFIG
-  * In your <code>iam-config.yaml</code> make sure that the <stateRepository> config contains the following:
+  * In your <code>iam-config.yaml</code> make sure that the <code>stateRepository</code> config contains the following:
   ```
   yamlConfig:
     - value: "sentinelServersConfig: \n  connectTimeout: 10000 \n  masterName: \"mymaster\" \n  sentinelAddresses: \n  - \"redis://redis1:2812\" \n  - \"redis://redis2:2813\"  "
