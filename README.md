@@ -24,6 +24,7 @@ The Kubernetes cluster must comply with the following requirements:
 
 * At least one storage class available, potentially with support for ReadWriteMany
 * One of the following ingress solutions must be installed and configured
+  * Airlock Microgateway
   * Kubernetes Gateway API
   * Ingress
   * Project Contour HttpProxy
