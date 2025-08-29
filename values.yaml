@@ -27,6 +27,12 @@ iam:
     name: "airlock-iam-license"
     type: "cm"
 
+  ## Deployment strategy for Airlock IAM apps (loginapp, adminapp, ...)
+  ## - valid values: single, multi
+  ## - single: combine all apps into a single pod with replicas=1
+  ## - multi: separate every app into its own deployment for greater separation and control
+  appDeploymentStrategy: "single"
+
   ## IAM web applications
   ## - for tests, all applications can be part of one deployment
   ## - for production and production-like test environments, it is recommended to split the applications
@@ -42,15 +48,10 @@ iam:
 
       ## Activation
       ## - activate only those applications which are required for your use case
-      ## - see also sandbox.enable (further down)
       enable: true
 
       ## Settings for a "sandboxed" (individual) deployment of loginapp
-      sandbox:
-        ## Enable sandbox
-        ## - if set to false, the loginapp is deployed as part of a shared deployment, together with other applications
-        enable: false
-
+      dedicatedDeployment:
         ## Naming suffix
         ## - allows to append a special tag to the name to differentiate from other deployments
         ## - by default, set to name of application, e.g. loginapp
@@ -96,8 +97,7 @@ iam:
     adminapp:
       path: ""
       enable: true
-      sandbox:
-        enable: false
+      dedicatedDeployment:
         suffix: ""
         replicas: 1
         instancePropertiesRef: ""
@@ -114,8 +114,7 @@ iam:
     transactionApproval:
       path: ""
       enable: false
-      sandbox:
-        enable: false
+      dedicatedDeployment:
         suffix: ""
         replicas: 1
         instancePropertiesRef: ""
@@ -132,8 +131,7 @@ iam:
     serviceContainer:
       path: ""
       enable: true
-      sandbox:
-        enable: false
+      dedicatedDeployment:
         suffix: ""
         replicas: 1
         instancePropertiesRef: ""
@@ -150,8 +148,7 @@ iam:
     apiPolicyService:
       path: ""
       enable: false
-      sandbox:
-        enable: false
+      dedicatedDeployment:
         suffix: ""
         replicas: 1
         instancePropertiesRef: ""
@@ -165,13 +162,9 @@ iam:
             cpu: ""
             ram: ""
         env: {}
-  ## Settings for shared deployment of multiple applications
+  ## Settings for combined deployment of multiple applications
   ## - forced to replicas: 1
-  shared:
-    ## Suffix for the shared deployment
-    ## - default is 'shared'
-    suffix: ""
-
+  combined:
     instancePropertiesRef: ""
     persistenceRef: ""
     healthChecksRef: ""
@@ -185,7 +178,7 @@ iam:
         cpu: ""
         ram: ""
 
-    ## Environment variables for shared deployment
+    ## Environment variables for combined deployment
     ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
     ##   with punctuation such as "-" and "." replaced with "_". E.g. IAM_LOGINAPP_REST_UI_CUSTOMIZATIONS=instances/auth/designs/ui.zip
     ## - defined as a map, e.g. "varname: value"
@@ -197,7 +190,7 @@ iam:
   ## - for others, use environment variables
   instanceProperties:
     ## Instance properties settings collection
-    ## - key referenced by instancePropertiesRef in the application configuration, see e.g. iam.apps.loginapp.sandbox
+    ## - key referenced by instancePropertiesRef in the application configuration, see e.g. iam.apps.loginapp.dedicatedDeployment
     ## - you should probably not overwrite the 'default' dict but create a custom dict
     ## - missing information in a custom dict is back-filled with settings from 'default'
     default:
@@ -348,7 +341,7 @@ healthChecks:
 ## Here, you set up different variants of persistence configurations, referenced by the applications using persistenceRef
 persistence:
   ## Persistence properties settings collection
-  ## - key referenced by persistenceRef in the application configuration, see e.g. iam.apps.loginapp.sandbox
+  ## - key referenced by persistenceRef in the application configuration, see e.g. iam.apps.loginapp.dedicatedDeployment
   ## - you should probably not overwrite the 'default' dict but create a custom dict
   ## - missing information in a custom dict is back-filled with settings from 'default'
   default:
@@ -648,11 +641,11 @@ images:
     pullPolicy: "IfNotPresent"
     pullSecret: ""
 
-## Environment variables for shared deployment
+## Environment variables for all deployments
 ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
 ##   with punctuation such as "-" and "." replaced with "_". E.g. IAM_LOGINAPP_REST_UI_CUSTOMIZATIONS=instances/auth/designs/ui.zip
 ## - defined as a map, e.g. "varname: value"
-## - these settings are overwritten by environment variable settings for iam.instanceProperties.env, iam.shared.env, and iam.apps.<app>.sandbox.env
+## - these settings are overwritten by environment variable settings for iam.instanceProperties.env, iam.combined.env, and iam.apps.<app>.dedicatedDeployment.env
 env: {}
 
 

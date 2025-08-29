@@ -1,56 +1,60 @@
-{{- $fullName := include "airlock-iam.fullname" . -}}
-{{- $the_name := $fullName -}}
-{{- $databaseDeployment := include "airlock-iam.deploymentType" . -}}
-{{- $databaseType := include "airlock-iam.databaseType" . -}}
-{{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
-{{- if eq $hasSandbox "true" -}}
-{{-   range $app, $app_values := .Values.iam.apps -}}
-{{-     if and $app_values.enable $app_values.sandbox.enable -}}
-{{-       $suffix := ternary $app_values.sandbox.suffix $app (ne $app_values.sandbox.suffix "") -}}
-{{-       $the_name = print $fullName "-" $suffix -}}
-{{-       $instanceProp := deepCopy $.Values.iam.instanceProperties.default -}}
-{{-       $reference := $app_values.sandbox.instancePropertiesRef | default "default" -}}
-{{-       if hasKey $.Values.iam.instanceProperties $reference -}}
-{{-         $instanceProp = mergeOverwrite $instanceProp (get $.Values.iam.instanceProperties $reference) -}}
-{{-       end -}}
-{{-       $persistenceProp := deepCopy $.Values.persistence.default -}}
-{{-       $reference = $app_values.sandbox.persistenceRef | default "default" -}}
-{{-       if hasKey $.Values.persistence $reference -}}
-{{-         $persistenceProp = mergeOverwrite $persistenceProp (get $.Values.persistence $reference) -}}
-{{-       end -}}
-{{-       $healthCheckProp := deepCopy $.Values.healthChecks.default -}}
-{{-       $reference = $app_values.sandbox.healthChecksRef | default "default" -}}
-{{-       if hasKey $.Values.healthChecks $reference -}}
-{{-         $healthCheckProp = mergeOverwrite $healthCheckProp (get $.Values.healthChecks $reference) -}}
-{{-       end -}}
-{{-       $_ := set $ "IAM_the_name" $the_name -}}
-{{-       $_ := set $ "IAM_suffix" $suffix }}
----
+{{- $fullName := ternary $.IAM.fullName (print $.IAM.fullName "-" $.IAM.suffix) (eq $.Values.iam.appDeploymentStrategy "single") -}}
+{{- $databaseDeployment := include "airlock-iam.deploymentType" $ -}}
+{{- $databaseType := include "airlock-iam.databaseType" $ -}}
+{{- $instanceProp := deepCopy $.Values.iam.instanceProperties.default -}}
+{{- $reference := $.IAM.instanceRef | default "default" -}}
+{{- if hasKey $.Values.iam.instanceProperties $reference -}}
+{{-   $instanceProp = mergeOverwrite $instanceProp (get $.Values.iam.instanceProperties $reference) -}}
+{{- end -}}
+{{- $persistenceProp := deepCopy $.Values.persistence.default -}}
+{{- $reference = $.IAM.persistenceRef | default "default" -}}
+{{- if hasKey $.Values.persistence $reference -}}
+{{-   $persistenceProp = mergeOverwrite $persistenceProp (get $.Values.persistence $reference) -}}
+{{- end -}}
+{{- $healthChecksProp := deepCopy $.Values.healthChecks.default -}}
+{{- $reference = $.IAM.healthChecksRef | default "default" -}}
+{{- if hasKey $.Values.healthChecks $reference -}}
+{{-   $healthChecksProp = mergeOverwrite $healthChecksProp (get $.Values.healthChecks $reference) -}}
+{{- end -}}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $the_name }}
+  name: {{ $fullName }}
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
+    {{- if $.IAM.suffix | default "" }}
+    app.kubernetes.io/component: {{ $.IAM.module }}
+    {{- end }}
   annotations:
     {{- include "airlock-iam.annotations" $ | nindent 4 }}
 spec:
-  replicas: {{ $app_values.sandbox.replicas }}
+  {{- if eq $.Values.iam.appDeploymentStrategy "single" }}
+  replicas: 1
+  {{- else }}
+  replicas: {{ $.IAM.app_values.replicas }}
+  {{- end }}
   revisionHistoryLimit: {{ $.Values.deployment.revisionHistoryLimit }}
   strategy:
     type: RollingUpdate
   selector:
     matchLabels:
       {{- include "airlock-iam.selectorLabels" $ | nindent 6 }}
+      {{- if $.IAM.suffix | default "" }}
+      app.kubernetes.io/component: {{ $.IAM.module }}
+      {{- end }}
   template:
     metadata:
       labels:
         {{- include "airlock-iam.labels" $ | nindent 8 }}
+        {{- if $.IAM.suffix | default "" }}
+        app.kubernetes.io/component: {{ $.IAM.module }}
+        {{- end }}
       annotations:
         {{- include "airlock-iam.annotations" $ | nindent 8 }}
     spec:
-      serviceAccountName: {{ $fullName }}
+      serviceAccountName: {{ $.IAM.fullName }}
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
@@ -63,7 +67,7 @@ spec:
       {{- end }}
       {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
       initContainers:
-        - name: {{ print $the_name "-init" }}
+        - name: {{ print $fullName "-init" }}
           {{- if eq $databaseType "mariadb" }}
           image: "{{ $.Values.images.mariadb.repository }}:{{ $.Values.images.mariadb.tag }}"
           imagePullPolicy: {{ quote $.Values.images.mariadb.pullPolicy }}
@@ -87,14 +91,14 @@ spec:
             - name: INIT_DL_VERSION
               value: {{ (ternary $.Values.database.initialisation.connector.mariadb.version $.Values.database.initialisation.connector.postgresql.version (eq $databaseType "mariadb")) | quote }}
             - name: INIT_DB_SCHEMA
-              value: {{ ternary $.Values.database.initialisation.schema.operation "none" (eq $app "adminapp") }}
+              value: {{ ternary $.Values.database.initialisation.schema.operation "none" (contains $.IAM.module "adminapp") }}
             - name: INIT_DB_HOST
               {{- if eq $databaseDeployment "external" }}
               value: {{ $.Values.database.external.host }}
               {{- else if eq $databaseDeployment "mariadb" }}
-              value: {{ print $fullName "-mariadb" }}
+              value: {{ print $.IAM.fullName "-mariadb" }}
               {{- else if eq $databaseDeployment "postgresql" }}
-              value: {{ print $fullName "-postgresql" }}
+              value: {{ print $.IAM.fullName "-postgresql" }}
               {{- end }}
             - name: INIT_DB_DATABASE
               {{- if eq $databaseDeployment "external" }}
@@ -129,7 +133,7 @@ spec:
               {{-   else }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $the_name }}
+                  name: {{ $.IAM.fullName }}
                   key: {{ $.Values.database.external.credentials.rootPassword.key }}
               {{-   end }}
               {{- else if eq $databaseDeployment "mariadb" }}
@@ -146,7 +150,7 @@ spec:
             - name: INIT_DB_VERSION
               value: {{ $.Values.images.iam.tag | quote }}
             - name: INIT_ADMIN_CREATE
-              value: {{ ternary $.Values.database.initialisation.administrator.create "false" (eq $app "adminapp") | quote }}
+              value: {{ ternary $.Values.database.initialisation.administrator.create "false" (contains $.IAM.module "adminapp") | quote }}
             - name: INIT_ADMIN_CHANGE
               value: {{ $.Values.database.initialisation.administrator.enforceChange | quote }}
             - name: INIT_ADMIN_USERNAME
@@ -168,7 +172,7 @@ spec:
               #value: {{ $.Values.database.initialisation.administrator.credentials.pwd_hash.value }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $the_name }}
+                  name: {{ $.IAM.fullName }}
                   key: {{ $.Values.database.initialisation.administrator.credentials.pwd_hash.key }}
               {{- end }}
           volumeMounts:
@@ -180,7 +184,7 @@ spec:
               name: init
       {{- end }}
       containers:
-        - name: {{ $the_name }}
+        - name: {{ $fullName }}
           image: "{{ $.Values.images.iam.repository }}:{{ $.Values.images.iam.tag }}"
           imagePullPolicy: {{ quote $.Values.images.iam.pullPolicy }}
           args: ["run", "-i", {{ quote $.Values.iam.instanceName }}]
@@ -212,7 +216,7 @@ spec:
               value: {{ $.Values.iam.apps.apiPolicyService.path }}
             {{- end }}
             - name: IAM_MODULES
-              value: {{ include "airlock-iam.mapAppName" $app }}
+              value: {{ $.IAM.module }}
             - name: IAM_WEB_SERVER_CONNECTORS
               value: "http,https"
             - name: IAM_WEB_SERVER_HTTP_PORT
@@ -226,8 +230,8 @@ spec:
             - name: IAM_LOG_LEVEL
               value: {{ $instanceProp.logging.level }}
             {{- end }}
+            {{- if and $instanceProp.logging.local.enable (eq (int $.IAM.app_values.replicas) 1) }}
             #! Local logging is disabled with multiple replicas
-            {{- if and $instanceProp.logging.local.enable (eq (int $app_values.sandbox.replicas) 1) }}
             {{-   if $instanceProp.logging.local.structured }}
             - name: IAM_LOG_STRUCTURED_FILE_ENABLED
               value: "true"
@@ -267,9 +271,9 @@ spec:
             {{-   if eq $databaseDeployment "external" }}
               value: {{ print "jdbc:" $.Values.database.external.type "://" $.Values.database.external.host "/" $.Values.database.external.database }}
             {{-   else if eq $databaseDeployment "mariadb" }}
-              value: {{ print "jdbc:mariadb://" $fullName "-mariadb/" $.Values.mariadb.auth.database }}
+              value: {{ print "jdbc:mariadb://" $.IAM.fullName "-mariadb/" $.Values.mariadb.auth.database }}
             {{-   else if eq $databaseDeployment "postgresql" }}
-              value: {{ print "jdbc:mariadb://" $fullName "-postgresql/" $.Values.postgresql.global.postgresql.auth.database }}
+              value: {{ print "jdbc:mariadb://" $.IAM.fullName "-postgresql/" $.Values.postgresql.global.postgresql.auth.database }}
             {{-   end }}
             - name: IAM_CFG_DB_USERNAME
             {{-   if eq $databaseDeployment "external" }}
@@ -316,7 +320,7 @@ spec:
               value: "8081"
             - name: IAM_HEALTH_ADDRESS
               value: ".*"
-            {{- range $name, $value := mergeOverwrite $.Values.env $instanceProp.env $app_values.sandbox.env }}
+            {{- range $name, $value := mergeOverwrite $.Values.env $instanceProp.env $.IAM.app_values.env }}
             - name: {{ quote $name }}
               value: {{ quote $value }}
             {{- end }}
@@ -327,53 +331,53 @@ spec:
               name: http
             - containerPort: 8081
               name: health
-          {{- if $healthCheckProp.liveness.enable }}
+          {{- if $healthChecksProp.liveness.enable }}
           livenessProbe:
-            periodSeconds: {{ $healthCheckProp.liveness.period }}
-            timeoutSeconds: {{ $healthCheckProp.liveness.timeout }}
-            failureThreshold: {{ $healthCheckProp.liveness.failures }}
-            initialDelaySeconds: {{ $healthCheckProp.liveness.initialDelay }}
+            periodSeconds: {{ $healthChecksProp.liveness.period }}
+            timeoutSeconds: {{ $healthChecksProp.liveness.timeout }}
+            failureThreshold: {{ $healthChecksProp.liveness.failures }}
+            initialDelaySeconds: {{ $healthChecksProp.liveness.initialDelay }}
             httpGet:
               path: /health/live
               port: health
           {{- end }}
-          {{- if $healthCheckProp.readiness.enable }}
+          {{- if $healthChecksProp.readiness.enable }}
           readinessProbe:
-            periodSeconds: {{ $healthCheckProp.readiness.period }}
-            timeoutSeconds: {{ $healthCheckProp.readiness.timeout }}
-            failureThreshold: {{ $healthCheckProp.readiness.failures }}
-            initialDelaySeconds: {{ $healthCheckProp.readiness.initialDelay }}
+            periodSeconds: {{ $healthChecksProp.readiness.period }}
+            timeoutSeconds: {{ $healthChecksProp.readiness.timeout }}
+            failureThreshold: {{ $healthChecksProp.readiness.failures }}
+            initialDelaySeconds: {{ $healthChecksProp.readiness.initialDelay }}
             httpGet:
               path: /health/ready
               port: health
           {{- end }}
-          {{- if $healthCheckProp.startup.enable }}
+          {{- if $healthChecksProp.startup.enable }}
           startupProbe:
-            periodSeconds: {{ $healthCheckProp.startup.period }}
-            timeoutSeconds: {{ $healthCheckProp.startup.timeout }}
-            failureThreshold: {{ $healthCheckProp.startup.failures }}
-            initialDelaySeconds: {{ $healthCheckProp.startup.initialDelay }}
+            periodSeconds: {{ $healthChecksProp.startup.period }}
+            timeoutSeconds: {{ $healthChecksProp.startup.timeout }}
+            failureThreshold: {{ $healthChecksProp.startup.failures }}
+            initialDelaySeconds: {{ $healthChecksProp.startup.initialDelay }}
             httpGet:
               path: /health/ready
               port: health
           {{- end }}
           resources:
-            {{- if or (ne $app_values.sandbox.resources.requests.cpu "") (ne $app_values.sandbox.resources.requests.ram "") }}
+            {{- if or (ne $.IAM.app_values.resources.requests.cpu "") (ne $.IAM.app_values.resources.requests.ram "") }}
             requests:
-              {{- if or (ne $app_values.sandbox.resources.requests.cpu "") }}
-              cpu: {{ $app_values.sandbox.resources.requests.cpu }}
+              {{- if or (ne $.IAM.app_values.resources.requests.cpu "") }}
+              cpu: {{ $.IAM.app_values.resources.requests.cpu }}
               {{- end }}
-              {{- if or (ne $app_values.sandbox.resources.requests.ram "") }}
-              memory: {{ $app_values.sandbox.resources.requests.ram }}
+              {{- if or (ne $.IAM.app_values.resources.requests.ram "") }}
+              memory: {{ $.IAM.app_values.resources.requests.ram }}
               {{- end }}
             {{- end }}
-            {{- if or (ne $app_values.sandbox.resources.limits.cpu "") (ne $app_values.sandbox.resources.limits.ram "") }}
+            {{- if or (ne $.IAM.app_values.resources.limits.cpu "") (ne $.IAM.app_values.resources.limits.ram "") }}
             limits:
-              {{- if or (ne $app_values.sandbox.resources.limits.cpu "") }}
-              cpu: {{ $app_values.sandbox.resources.limits.cpu }}
+              {{- if or (ne $.IAM.app_values.resources.limits.cpu "") }}
+              cpu: {{ $.IAM.app_values.resources.limits.cpu }}
               {{- end }}
-              {{- if or (ne $app_values.sandbox.resources.limits.ram "") }}
-              memory: {{ $app_values.sandbox.resources.limits.ram }}
+              {{- if or (ne $.IAM.app_values.resources.limits.ram "") }}
+              memory: {{ $.IAM.app_values.resources.limits.ram }}
               {{- end }}
             {{- end }}
     {{- if $.Values.resourceOptions }}
@@ -385,8 +389,8 @@ spec:
             - mountPath: /home/airlock/iam/instances
               name: config
             {{- end }}
+            {{- if or $persistenceProp.logs.enable (gt (int $.IAM.app_values.replicas) 1) }}
             #! With multiple replicas, ensure log buffers do not collide
-            {{- if or $persistenceProp.logs.enable (gt (int $app_values.sandbox.replicas) 1) }}
             - mountPath: {{ print "/home/airlock/iam/instances/" $.Values.iam.instanceName "/logs" }}
               name: logs
             {{- end }}
@@ -401,7 +405,7 @@ spec:
         - name: config
           {{- if eq $persistenceProp.config.type "request" }}
           persistentVolumeClaim:
-            claimName: {{ print $fullName "-" (ternary $persistenceProp.config.claim "config" (ne $persistenceProp.config.claim "")) }}
+            claimName: {{ print $.IAM.fullName "-" ($persistenceProp.config.claim | default "config") }}
           {{- else if eq $persistenceProp.config.type "existing" }}
           persistentVolumeClaim:
             claimName: {{ $persistenceProp.config.claim }}
@@ -417,15 +421,15 @@ spec:
           emptyDir: {}
           {{- end }}
         {{- end }}
+        {{- if gt (int $.IAM.app_values.replicas) 1 }}
         #! With multiple replicas, ensure log buffers do not collide
-        {{- if gt (int $app_values.sandbox.replicas) 1 }}
         - name: logs
           emptyDir: {}
         {{- else if $persistenceProp.logs.enable }}
         - name: logs
           {{- if eq $persistenceProp.logs.type "request" }}
           persistentVolumeClaim:
-            claimName: {{ print $fullName "-" (ternary $persistenceProp.logs.claim "logs" (ne $persistenceProp.logs.claim "")) }}
+            claimName: {{ print $.IAM.fullName "-" ($persistenceProp.logs.claim | default "logs") }}
           {{- else if eq $persistenceProp.logs.type "existing" }}
           persistentVolumeClaim:
             claimName: {{ $persistenceProp.logs.claim }}
@@ -452,10 +456,7 @@ spec:
         {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
         - name: init
           configMap:
-            name: {{ $the_name }}
+            name: {{ $.IAM.fullName }}-init
         {{- end }}
         - name: work
           emptyDir: {}
-{{-     end -}}
-{{-   end -}}
-{{- end -}}

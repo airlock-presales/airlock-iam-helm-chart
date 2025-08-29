@@ -1,54 +1,21 @@
 {{- $fullName := include "airlock-iam.fullname" . -}}
-{{- $the_name := $fullName -}}
-{{- $suffix := "" -}}
-{{- $hasSandbox := include "airlock-iam.hasSandbox" . -}}
-{{- $sharedServiceDone := false -}}
-{{- $createSharedService := false -}}
-{{- $svc := .Values.service -}}
-{{- range $app, $app_values := .Values.iam.apps -}}
-{{-   if $app_values.enable -}}
-{{-     if $app_values.sandbox.enable -}}
-{{-       $suffix = $app_values.sandbox.suffix | default $app -}}
-{{-       $the_name = print $fullName "-" $suffix -}}
-{{-       $createSharedService = false -}}
-{{-     else -}}
-{{-       if eq $hasSandbox "true" -}}
-{{-         $suffix = ternary $.Values.iam.shared.suffix "shared" (ne $.Values.iam.shared.suffix "") -}}
-{{-       end -}}
-{{-       if $suffix -}}
-{{-         $the_name = print $fullName "-" $suffix -}}
-{{-       end -}}
-{{-       $createSharedService = true -}}
-{{-     end -}}
-{{-     if or (not $createSharedService) (not $sharedServiceDone) }}
-{{-         $_ := set $ "IAM_the_name" $the_name }}
-{{-         $_ := set $ "IAM_suffix" $suffix }}
+{{- if eq .Values.iam.appDeploymentStrategy "single" -}}
+{{-   $_ := set . "IAM" (dict "fullName" $fullName
+                              "suffix" ""
+                              "module" ""
+                              "service" .Values.service) -}}
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ $the_name }}
-  namespace: {{ $.Release.Namespace }}
-  labels:
-    {{- include "airlock-iam.labels" $ | nindent 4 }}
-  annotations:
-    {{- include "airlock-iam.annotations" $ | nindent 4 }}
-spec:
-  selector:
-    {{- include "airlock-iam.selectorLabels" $ | nindent 4 }}
-  type: {{ $svc.type }}
-{{- if $svc.externalTrafficPolicy }}
-  externalTrafficPolicy: {{ quote $svc.externalTrafficPolicy }}
-{{- end }}
-  ports:
-    - name: http
-      port: 80
-      targetPort: http
-      protocol: TCP
-{{-     end }}
-{{-     if $createSharedService }}
-{{-       $sharedServiceDone = true }}
-{{-     end }}
-{{-   end }}
-{{- end }}
+{{-   tpl ($.Files.Get "include/_service.yaml") . -}}
 
+{{- else if eq .Values.iam.appDeploymentStrategy "multi" -}}
+{{-   range $app, $app_values := .Values.iam.apps -}}
+{{-     if $app_values.enable -}}
+{{-       $_ := set $ "IAM" (dict "fullName" $fullName
+                                  "suffix" ($app_values.dedicatedDeployment.suffix | default $app)
+                                  "module" (include "airlock-iam.mapAppName" $app)
+                                  "service" $.Values.service) -}}
+---
+{{-       tpl ($.Files.Get "include/_service.yaml") $ -}}
+{{-     end -}}
+{{-   end -}}
+{{- end -}}

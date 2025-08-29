@@ -1,0 +1,27 @@
+{{- $fullName := ternary $.IAM.fullName (print $.IAM.fullName "-" $.IAM.suffix) (eq $.Values.iam.appDeploymentStrategy "single") -}}
+{{- $persistenceProp := deepCopy $.Values.persistence.default -}}
+{{- $reference := $.IAM.persistenceRef | default "default" -}}
+{{- if hasKey $.Values.persistence $reference -}}
+{{-   $persistenceProp = mergeOverwrite $persistenceProp (get $.Values.persistence $reference) -}}
+{{- end -}}
+{{- range $key, $vol := $persistenceProp -}}
+{{-   if and $vol.enable (eq $vol.type "request") }}
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ print $fullName "-" (ternary $vol.claim $key (ne $vol.claim "")) }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  accessModes:
+  - {{ ternary $vol.accessMode "ReadWriteOnce" (ne $vol.accessMode "") }}
+  storageClassName: {{ $vol.storageClass }}
+  resources:
+    requests:
+      storage: {{ $vol.size }}
+{{-   end }}
+{{- end }}

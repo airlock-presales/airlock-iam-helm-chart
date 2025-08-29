@@ -1,35 +1,22 @@
 {{- $fullName := include "airlock-iam.fullname" . -}}
-{{- $base_name := $fullName -}}
-{{- $p_values := "" -}}
-{{- $lstApps := keys .Values.iam.apps -}}
-{{- $lstApps = prepend $lstApps "" -}}
-{{- range $app := $lstApps -}}
-{{-   if eq $app "" -}}
-{{-     $p_values = $.Values.persistence -}}
-{{-   else -}}
-{{-     $app_values := get $.Values.iam.apps $app -}}
-{{-     $p_values = $app_values.sandbox.persistence -}}
-{{-     $base_name = print $fullName "-" $app -}}
-{{-   end -}}
-{{-   range $key, $vol := $p_values -}}
-{{-     if and $vol.enable (eq $vol.type "request") }}
+{{- if eq .Values.iam.appDeploymentStrategy "single" -}}
+{{-   $_ := set . "IAM" (dict "fullName" $fullName
+                              "suffix" ""
+                              "persistenceRef" .Values.iam.combined.persistenceRef) -}}
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ print $base_name "-" (ternary $vol.claim $key (ne $vol.claim "")) }}
-  namespace: {{ $.Release.Namespace }}
-  labels:
-    {{- include "airlock-iam.labels" $ | nindent 4 }}
-  annotations:
-    {{- include "airlock-iam.annotations" $ | nindent 4 }}
-spec:
-  accessModes:
-  - {{ ternary $vol.accessMode "ReadWriteOnce" (ne $vol.accessMode "") }}
-  storageClassName: {{ $vol.storageClass }}
-  resources:
-    requests:
-      storage: {{ $vol.size }}
-{{-     end }}
-{{-   end }}
-{{- end }}
+{{-   tpl ($.Files.Get "include/_pvc.yaml") . -}}
+
+{{- else if eq .Values.iam.appDeploymentStrategy "multi" -}}
+{{-   range $app, $app_values := .Values.iam.apps -}}
+{{-     if $app_values.enable -}}
+{{-       $_ := set $ "IAM" (dict "fullName" $fullName
+                                  "suffix" ($app_values.dedicatedDeployment.suffix | default $app)
+                                  "persistenceRef" $app_values.dedicatedDeployment.persistenceRef) -}}
+---
+{{-       tpl ($.Files.Get "include/_pvc.yaml") $ -}}
+{{-     end -}}
+{{-   end -}}
+
+{{- else -}}
+{{-   fail "Invalid value for iam.appDeploymentStrategy" }}
+{{- end -}}

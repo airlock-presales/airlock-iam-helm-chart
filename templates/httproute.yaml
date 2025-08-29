@@ -1,34 +1,10 @@
 {{- if eq .Values.ingress.type "gatewayAPI" -}}
 {{-   $fullName := include "airlock-iam.fullname" . -}}
-{{-   $the_name := $fullName -}}
-{{-   $hasSandbox := include "airlock-iam.hasSandbox" . -}}
-{{-   $sharedDone := false -}}
-{{-   $createShared := false -}}
-{{-   $svc := .Values.service -}}
-{{-   range $app, $app_values := .Values.iam.apps -}}
-{{-     if $app_values.enable -}}
-{{-       $suffix := "" -}}
-{{-       if $app_values.sandbox.enable -}}
-{{-         $suffix = $app_values.sandbox.suffix | default $app -}}
-{{-         $the_name = print $fullName "-" $suffix -}}
-{{-         $createShared = false -}}
-{{-       else -}}
-{{-         if eq $hasSandbox "true" -}}
-{{-           $suffix = ternary $.Values.iam.shared.suffix "shared" (ne $.Values.iam.shared.suffix "") -}}
-{{-         end -}}
-{{-         if $suffix -}}
-{{-           $the_name = print $fullName "-" $suffix -}}
-{{-         end -}}
-{{-         $createShared = true -}}
-{{-       end -}}
-{{-       if or (not $createShared) (not $sharedDone) }}
-{{-         $_ := set $ "IAM_the_name" $the_name }}
-{{-         $_ := set $ "IAM_suffix" $suffix }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: {{ $the_name }}
+  name: {{ $fullName }}
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
@@ -51,21 +27,33 @@ spec:
   hostnames:
     - {{ $.Values.ingress.dns.hostname }}
   rules:
+    {{- if eq .Values.iam.appDeploymentStrategy "single" }}
     - backendRefs:
-        - name: {{ $the_name }}
+        - name: {{ $fullName }}
           port: 80
       matches:
         - path:
-            value: {{ ternary "/" (print "/" $.Values.iam.instanceName "-" $app) $createShared }}
+            value: "/"
             type: PathPrefix
       {{- if ne $.Values.ingress.timeout "" }}
       timeouts:
         backendRequest: {{ $.Values.ingress.timeout }}
       {{- end }}
-{{-       end }}
-{{-       if $createShared -}}
-{{-         $sharedDone = true -}}
-{{-       end }}
-{{-     end }}
-{{-   end }}
+    {{- else if eq .Values.iam.appDeploymentStrategy "multi" }}
+    {{-   range $app, $app_values := .Values.iam.apps }}
+    {{-     if $app_values.enable }}
+    - backendRefs:
+        - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default $app) }}
+          port: 80
+      matches:
+        - path:
+            value: {{ print "/" ($.Values.iam.apps.adminapp.path | default (print $.Values.iam.instanceName "-" $app)) }}
+            type: PathPrefix
+      {{- if ne $.Values.ingress.timeout "" }}
+      timeouts:
+        backendRequest: {{ $.Values.ingress.timeout }}
+      {{- end }}
+    {{-     end }}
+    {{-   end }}
+    {{- end }}
 {{- end -}}

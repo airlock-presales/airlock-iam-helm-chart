@@ -1,34 +1,10 @@
 {{- if eq .Values.ingress.type "ingress" -}}
 {{-   $fullName := include "airlock-iam.fullname" . -}}
-{{-   $the_name := $fullName -}}
-{{-   $hasSandbox := include "airlock-iam.hasSandbox" . -}}
-{{-   $sharedDone := false -}}
-{{-   $createShared := false -}}
-{{-   $svc := .Values.service -}}
-{{-   range $app, $app_values := .Values.iam.apps -}}
-{{-     if $app_values.enable -}}
-{{-       $suffix := "" -}}
-{{-       if $app_values.sandbox.enable -}}
-{{-         $suffix = $app_values.sandbox.suffix | default $app -}}
-{{-         $the_name = print $fullName "-" $suffix -}}
-{{-         $createShared = false -}}
-{{-       else -}}
-{{-         if eq $hasSandbox "true" -}}
-{{-           $suffix = ternary $.Values.iam.shared.suffix "shared" (ne $.Values.iam.shared.suffix "") -}}
-{{-         end -}}
-{{-         if $suffix -}}
-{{-           $the_name = print $fullName "-" $suffix -}}
-{{-         end -}}
-{{-         $createShared = true -}}
-{{-       end -}}
-{{-       if or (not $createShared) (not $sharedDone) }}
-{{-         $_ := set $ "IAM_the_name" $the_name }}
-{{-         $_ := set $ "IAM_suffix" $suffix }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ $the_name }}
+  name: {{ $fullName }}
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
@@ -40,16 +16,30 @@ metadata:
 spec:
   ingressClassName: {{ $.Values.ingress.className }}
   rules:
-  - host: {{ $.Values.ingress.dns.hostname }}
-    http:
-      paths:
-      - backend:
-          service:
-            name: {{ $the_name }}
-            port:
-              number: 80
-        path: {{ ternary "/" (print "/" $.Values.iam.instanceName "-" $app) $createShared }}
-        pathType: Prefix
+    - host: {{ $.Values.ingress.dns.hostname }}
+      http:
+        paths:
+        {{- if eq .Values.iam.appDeploymentStrategy "single" }}
+        - backend:
+            service:
+              name: {{ $fullName }}
+              port:
+                number: 80
+          path: "/"
+          pathType: Prefix
+        {{- else if eq .Values.iam.appDeploymentStrategy "multi" }}
+        {{-   range $app, $app_values := .Values.iam.apps }}
+        {{-     if $app_values.enable }}
+        - backend:
+            service:
+              name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default $app) }}
+              port:
+                number: 80
+          path: {{ print "/" ($.Values.iam.apps.adminapp.path | default (print $.Values.iam.instanceName "-" $app)) }}
+          pathType: Prefix
+        {{-     end }}
+        {{-   end }}
+        {{- end }}
   {{- if ne $.Values.ingress.tls.secretName "" }}
   tls:
   - hosts:
@@ -58,10 +48,4 @@ spec:
     secretName: {{ . }}
     {{- end -}}
   {{- end }}
-{{-       end }}
-{{-       if $createShared -}}
-{{-         $sharedDone = true -}}
-{{-       end }}
-{{-     end }}
-{{-   end }}
 {{- end -}}

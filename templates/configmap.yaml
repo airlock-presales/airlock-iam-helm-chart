@@ -1,10 +1,10 @@
 {{- $databaseDeployment := include "airlock-iam.deploymentType" . -}}
 {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
-{{- $the_name := include "airlock-iam.fullname" . -}}
+{{- $fullName := include "airlock-iam.fullname" . -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ $the_name }}
+  name: {{ $fullName }}-init
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
@@ -12,7 +12,7 @@ metadata:
     {{- include "airlock-iam.annotations" $ | nindent 4 }}
 data:
   {{- $files := .Files }}
-  {{- range tuple "scripts/init_db" }}
+  {{- range tuple "include/init_db" }}
   {{ regexSplit "/" . -1 | last }}: |-
     {{- $files.Get . | nindent 4 }} 
   {{- end }}

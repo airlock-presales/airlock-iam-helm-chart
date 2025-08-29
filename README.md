@@ -39,7 +39,7 @@ Airlock IAM is a very powerful authentication engine, supporting many different 
   <img src="media/shared_white.png" alt="shared deployment" height="250">
 </p>
 
-Foremost, the web applications can either be kept together, as a single deployment, or they can all be managed as their individual (sandboxed) deployment, and anything in between. The advantage of the former option is its ease of use and administration. Upon activation, configuration changes are automatically distributed to all components which take it up immediately. iOn the other hand, it is impossible to individually scale independent web applications. Therefore, the combined, or shared, deployment layout is geared towards test environments and proof-of-concepts.
+Foremost, the web applications can either be kept together, as a single deployment, or they can all be managed as their individual (sandboxed) deployments. The advantage of the former option is its ease of use and administration. Upon activation, configuration changes are automatically distributed to all components which take it up immediately. On the other hand, it is impossible to individually scale independent web applications. Also, modules like the Service Container must not be running multiple times. Therefore, the combined deployment layout is geared towards test environments and proof-of-concepts and their replica count is fixed to 1.
 
 <p align="left">
   <img src="media/sandboxed_white.png" alt="sandboxed deployment" height="400">

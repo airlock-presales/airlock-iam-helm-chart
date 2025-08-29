@@ -1,0 +1,26 @@
+{{- $fullName := ternary $.IAM.fullName (print $.IAM.fullName "-" $.IAM.suffix) (eq $.Values.iam.appDeploymentStrategy "single") -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  selector:
+    {{- include "airlock-iam.selectorLabels" $ | nindent 4 }}
+    {{- if $.IAM.suffix | default "" }}
+    app.kubernetes.io/component: {{ $.IAM.module }}
+    {{- end }}
+  type: {{ $.IAM.service.type }}
+{{- if $.IAM.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ quote $.IAM.service.externalTrafficPolicy }}
+{{- end }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

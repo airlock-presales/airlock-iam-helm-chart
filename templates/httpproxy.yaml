@@ -1,34 +1,10 @@
 {{- if eq .Values.ingress.type "httpproxy" -}}
 {{-   $fullName := include "airlock-iam.fullname" . -}}
-{{-   $the_name := $fullName -}}
-{{-   $hasSandbox := include "airlock-iam.hasSandbox" . -}}
-{{-   $sharedDone := false -}}
-{{-   $createShared := false -}}
-{{-   $svc := .Values.service -}}
-{{-   range $app, $app_values := .Values.iam.apps -}}
-{{-     if $app_values.enable -}}
-{{-       $suffix := "" -}}
-{{-       if $app_values.sandbox.enable -}}
-{{-         $suffix = $app_values.sandbox.suffix | default $app -}}
-{{-         $the_name = print $fullName "-" $suffix -}}
-{{-         $createShared = false -}}
-{{-       else -}}
-{{-         if eq $hasSandbox "true" -}}
-{{-           $suffix = ternary $.Values.iam.shared.suffix "shared" (ne $.Values.iam.shared.suffix "") -}}
-{{-         end -}}
-{{-         if $suffix -}}
-{{-           $the_name = print $fullName "-" $suffix -}}
-{{-         end -}}
-{{-         $createShared = true -}}
-{{-       end -}}
-{{-       if or (not $createShared) (not $sharedDone) }}
-{{-         $_ := set $ "IAM_the_name" $the_name }}
-{{-         $_ := set $ "IAM_suffix" $suffix }}
 ---
 apiVersion: projectcontour.io/v1
 kind: HTTPProxy
 metadata:
-  name: {{ $the_name }}
+  name: {{ $fullName }}
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
@@ -45,22 +21,35 @@ spec:
     secretName: {{ $.Values.ingress.tls.secretName }}
   {{- end }}
   routes:
+    {{- if eq .Values.iam.appDeploymentStrategy "single" }}
     - conditions:
-      - prefix: {{ ternary "/" (print "/" $.Values.iam.instanceName "-" $app) $createShared }}
-        {{- if eq $.Values.ingress.tls.secretName "" }}
+      - prefix: "/"
+      {{- if eq $.Values.ingress.tls.secretName "" }}
       permitInsecure: true
       {{- end }}
       services:
-        - name: {{ $the_name }}
+        - name: {{ $fullName }}
           port: 80
       {{- if ne $.Values.ingress.timeout "" }}
       timeoutPolicy:
         response: {{ $.Values.ingress.timeout }}
       {{- end }}
-{{-       end }}
-{{-       if $createShared -}}
-{{-         $sharedDone = true -}}
-{{-       end }}
-{{-     end }}
-{{-   end }}
+    {{- else if eq .Values.iam.appDeploymentStrategy "multi" }}
+    {{-   range $app, $app_values := .Values.iam.apps }}
+    {{-     if $app_values.enable }}
+    - conditions:
+      - prefix: {{ print "/" ($.Values.iam.apps.adminapp.path | default (print $.Values.iam.instanceName "-" $app)) }}
+      {{- if eq $.Values.ingress.tls.secretName "" }}
+      permitInsecure: true
+      {{- end }}
+      services:
+        - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default $app) }}
+          port: 80
+      {{- if ne $.Values.ingress.timeout "" }}
+      timeoutPolicy:
+        response: {{ $.Values.ingress.timeout }}
+      {{- end }}
+    {{-     end }}
+    {{-   end }}
+    {{- end }}
 {{- end -}}

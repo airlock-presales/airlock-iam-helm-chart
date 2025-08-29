@@ -54,11 +54,8 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Common Selector labels
 */}}
 {{- define "airlock-iam.selectorLabels" -}}
-app.kubernetes.io/name: {{ default .IAM_the_name (include "airlock-iam.fullname" $) }}
+app.kubernetes.io/name: {{ include "airlock-iam.fullname" $ }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-{{- if .IAM_suffix }}
-app.kubernetes.io/component: {{ .IAM_suffix }}
-{{- end }}
 {{- if and .Values.iam.environmentId (ne .Values.iam.environmentId "") }}
 iam.airlock.com/environment: {{ .Values.iam.environmentId }}
 {{- end }}
@@ -92,13 +89,13 @@ api-policy-service
 {{- end }}
 
 {{/*
-Get list of modules for shared deployment
+Get list of modules for combined deployment
 */}}
-{{- define "airlock-iam.listModulesShared" -}}
+{{- define "airlock-iam.listActiveModules" -}}
 {{- $modules := "" -}}
 {{- $name := "" -}}
 {{- range $app, $app_values := .Values.iam.apps -}}
-{{-   if and $app_values.enable (not $app_values.sandbox.enable) -}}
+{{-   if $app_values.enable -}}
 {{-     $name = include "airlock-iam.mapAppName" $app -}}
 {{-     if eq $modules "" -}}
 {{-       $modules = $name -}}
@@ -108,58 +105,6 @@ Get list of modules for shared deployment
 {{-   end -}}
 {{- end -}}
 {{ $modules }}
-{{- end -}}
-
-{{/*
-Check if shared deployment is required
-*/}}
-{{- define "airlock-iam.hasShared" -}}
-{{- $result := false -}}
-{{- range $app, $app_values := .Values.iam.apps -}}
-{{-   if and $app_values.enable (not $app_values.sandbox.enable) -}}
-{{-     $result = true -}}
-{{-   end -}}
-{{- end -}}
-{{ $result }}
-{{- end -}}
-
-{{/*
-Check if at least one app is sandboxed
-*/}}
-{{- define "airlock-iam.hasSandbox" -}}
-{{- $result := false -}}
-{{- range $app, $app_values := .Values.iam.apps -}}
-{{-   if and $app_values.enable $app_values.sandbox.enable -}}
-{{-     $result = true -}}
-{{-   end -}}
-{{- end -}}
-{{ $result }}
-{{- end -}}
-
-{{/*
-Find service for app
-*/}}
-{{- define "airlock-iam.findService" -}}
-{{- $values := .values -}}
-{{- $suffix := .suffix -}}
-{{- $idxSvc := -1 -}}
-{{- $idxNoSuffix := -1 -}}
-{{- $idx := -1 -}}
-{{- range $svc := $.Values.service -}}
-{{-   $idx = $idx +1 -}}
-{{-   if $svc.enable -}}
-{{-     if eq $svc.suffix "" -}}
-{{-       $idxNoSuffix = $idx -}}
-{{-     else if eq $svc.suffix $suffix -}}
-{{-       $idxSvc = $idx -}}
-{{-     end -}}
-{{-   end -}}
-{{- end -}}
-{{- if ne $idxSvc -1 -}}
-{{ $idxSvc }}
-{{- else -}}
-{{ $idxNoSuffix }}
-{{- end -}}
 {{- end -}}
 
 {{/*
@@ -203,7 +148,7 @@ sqlserver
 {{- end }}
 
 {{/*
-Get list of modules for shared deployment
+Get list of pull secrets for all images
 */}}
 {{- define "airlock-iam.listPullSecrets" -}}
 {{- $images := "" -}}
