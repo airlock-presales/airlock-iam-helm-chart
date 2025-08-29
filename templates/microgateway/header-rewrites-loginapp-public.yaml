@@ -1,0 +1,50 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $app := "loginapp" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   $app_values := get .Values.iam.apps $app -}}
+{{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
+{{-   $moduleName := print $fullName "-" $suffix | lower -}}
+{{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   if $app_values.enable }}
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: HeaderRewrites
+metadata:
+  name: {{ $moduleName }}-rest-public
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  request:
+    allow:
+      matchingHeaders:
+        custom:
+          - headers:
+              - name:
+                  matcher:
+                    exact: "X-Captcha-Solution"
+            name: "CAPTCHA solution Header"
+          - headers:
+              - name:
+                  matcher:
+                    exact: "X-Continue-Flow"
+            name: "Continue flow header"
+          - headers:
+              - name:
+                  matcher:
+                    exact: "X-Flow-Continuation-Token"
+            name: "Flow continuation header"
+          - headers:
+              - name:
+                  matcher:
+                    exact: "X-Iam-Sso-Ticket"
+            name: "SSO Ticket header"
+  response:
+    remove:
+      builtIn:
+        auth:
+          negotiate: false
+{{-   end }}
+{{- end }}

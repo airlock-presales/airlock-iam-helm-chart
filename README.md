@@ -159,6 +159,9 @@ To ensure Airlock IAM respects these variables, search for the key sqlDataSource
     cp values.yaml custom.yaml
     vi custom.yaml
 ```
+  * You must setup the correct settings for section 'ingress:'
+  * You very probably should check the settings for sections 'persistence:' and 'database:'
+  * Currently, the Helm chart still references Bitnami charts which will soon stop working. We are searching for alternatives but, as for everybody else, this prooves to be quite difficult.
 
 ## Installation
 

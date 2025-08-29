@@ -1,0 +1,164 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   range $app, $app_values := .Values.iam.apps -}}
+{{-     if $app_values.enable }}
+{{-       $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
+{{-       $moduleName := print $fullName "-" $suffix | lower -}}
+{{-       $moduleType := include "airlock-iam.mapAppName" $app }}
+---
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: ContentSecurityPolicy
+metadata:
+  name: {{ $moduleName }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $moduleName }}
+  secured:
+    parserRef:
+      name: {{ $fullName }}
+    limitsRef:
+      name: {{ $fullName }}
+    filter:
+      denyRulesRef:
+        name: {{ $moduleName }}
+{{-       if eq $app "adminapp" }}
+---
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: ContentSecurityPolicy
+metadata:
+  name: {{ $moduleName }}-rest
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $moduleName }}-rest
+  secured:
+    parserRef:
+      name: {{ $fullName }}
+    limitsRef:
+      name: {{ $fullName }}
+    filter:
+      denyRulesRef:
+        name: {{ $moduleName }}-rest
+    apiProtectionRef:
+      name: {{ $moduleName }}
+---
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: ContentSecurityPolicy
+metadata:
+  name: {{ $moduleName }}-config-editor
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $moduleName }}-config-editor
+  secured:
+    parserRef:
+      name: {{ $fullName }}
+    limitsRef:
+      name: {{ $fullName }}
+    headerRewritesRef:
+      name: {{ $moduleName }}-config-editor
+    filter:
+      denyRulesRef:
+        name: {{ $moduleName }}-config-editor
+{{-       end }}
+{{-       if eq $app "loginapp" }}
+---
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: ContentSecurityPolicy
+metadata:
+  name: {{ $moduleName }}-rest-protected
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $moduleName }}-rest-protected
+  secured:
+    parserRef:
+      name: {{ $fullName }}
+    limitsRef:
+      name: {{ $fullName }}
+    filter:
+      denyRulesRef:
+        name: {{ $moduleName }}-rest-protected
+    headerRewritesRef:
+      name: {{ $moduleName }}-rest-protected
+    apiProtectionRef:
+      name: {{ $moduleName }}
+---
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: ContentSecurityPolicy
+metadata:
+  name: {{ $moduleName }}-rest-public
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $moduleName }}-rest-public
+  secured:
+    parserRef:
+      name: {{ $fullName }}
+    limitsRef:
+      name: {{ $fullName }}
+    filter:
+      denyRulesRef:
+        name: {{ $moduleName }}-rest-public
+    headerRewritesRef:
+      name: {{ $moduleName }}-rest-public
+    apiProtectionRef:
+      name: {{ $moduleName }}
+{{-       end }}
+{{-     end }}
+{{-   end }}
+{{/*
+---
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: ContentSecurity
+metadata:
+  name: {{ $fullName }}-unspecified-path
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $fullName }}
+  secured:
+    filter:
+      denyRulesRef:
+        name: {{ $fullName }}-unspecified-path
+    headerRewritesRef:
+      name: {{ $fullName }}-unspecified-path
+*/}}
+{{- end }}

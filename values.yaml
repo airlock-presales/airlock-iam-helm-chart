@@ -25,6 +25,8 @@ iam:
   ## -  or configmap: kubectl create configmap <name> --from-file=license.txt=<filename>
   license:
     name: "airlock-iam-license"
+    ## Kind of license object
+    ## - valid values: cm, configmap, secret
     type: "cm"
 
   ## Deployment strategy for Airlock IAM apps (loginapp, adminapp, ...)
@@ -130,7 +132,7 @@ iam:
         env: {}
     serviceContainer:
       path: ""
-      enable: true
+      enable: false
       dedicatedDeployment:
         suffix: ""
         replicas: 1
@@ -266,25 +268,29 @@ service:
 ingress:
   ## Type of ingress
   ## - valid values: microgateway, gatewayAPI, ingress, httpproxy
+  ## - microgateway: use Kubernetes Gateway API to route traffic through Airlock Microgateway, deploys security manifests
   ## - it is strongly recommended to use either microgateway or gatewayAPI
-  type: "gatewayAPI"
+  type: "microgateway"
 
   ## Airlock Microgateway
   microgateway:
     ## Version of the Microgateway
     ## - selects correct protection templates
+    ## - valid values depend on selected Airlock IAM version (images.iam.tag)
     version: "4.6"
 
   ## Kubernetes Gateway API
-  ## - used for types: microgateway, gatewayAPI
+  ## - used for type: microgateway, gatewayAPI
   gatewayAPI:
     ## Which Gateway to use
-    gateway: ""
+    ## - must be defined !!!
+    gateway: "airlock-gateway/airlock-gateway"
 
     ## Namespace of Gateway
     namespace: ""
 
   ## Ingress settings
+  ## - used for type: ingress
   ingress:
     ## The Ingress API is provided by multiple implementations
     ## - select desired implementation using className
@@ -298,7 +304,7 @@ ingress:
   ## 
   dns:
     ## FQDN to access Airlock IAM
-    hostname: "example.com"
+    hostname: "iam-127-0-0-1.nip.io"
 
     ## dnsConfig option
     ndots: 2

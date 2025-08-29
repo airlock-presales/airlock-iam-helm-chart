@@ -1,0 +1,69 @@
+{{- if eq $.Values.ingress.type "microgateway" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   range $app, $app_values := $.Values.iam.apps -}}
+{{-     if $app_values.enable }}
+{{-       $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
+{{-       $moduleName := print $fullName "-" $suffix | lower -}}
+{{-       $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-       $lst := list (dict "name" "" "path" "/") -}}
+{{-       if eq $app "adminapp" -}}
+{{-         $lst = append $lst (dict "name" "rest" "path" "/rest/") -}}
+{{-         $lst = append $lst (dict "name" "config-editor" "path" "/editConfig/") -}}
+{{-       else if eq $app "loginapp" -}}
+{{-         $lst = append $lst (dict "name" "rest-protected" "path" "/rest/protected/") -}}
+{{-         $lst = append $lst (dict "name" "rest-public" "path" "/rest/public/") -}}
+{{-       else if eq $app "transactionApproval" -}}
+{{-         $lst = list (dict "name" "" "path" "/rest/") -}}
+{{-       end -}}
+{{-       range $route := $lst }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  {{- if $route.name }}
+  name: {{ $moduleName }}-{{ $route.name }}
+  {{- else }}
+  name: {{ $moduleName }}
+  {{- end }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+    {{- with $.Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  parentRefs:
+  {{- if contains "/" $.Values.ingress.gatewayAPI.gateway }}
+    - name: {{ regexSplit "/" $.Values.ingress.gatewayAPI.gateway -1 | last }}
+      namespace: {{ regexSplit "/" $.Values.ingress.gatewayAPI.gateway -1 | first }}
+  {{- else }}
+    - name: {{ $.Values.ingress.gatewayAPI.gateway }}
+    {{- if ne $.Values.ingress.gatewayAPI.namespace "" }}
+    - namespace: {{ $.Values.ingress.gatewayAPI.namespace }}
+    {{- end }}
+  {{- end }}
+  hostnames:
+    - {{ $.Values.ingress.dns.hostname }}
+  rules:
+    - backendRefs:
+        {{- if eq $.Values.iam.appDeploymentStrategy "single" }}
+        - name: {{ $fullName }}
+        {{- else if eq $.Values.iam.appDeploymentStrategy "multi" }}
+        - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
+        {{- end }}
+          port: 80
+      matches:
+        - path:
+            value: {{ print "/" ($.Values.iam.apps.adminapp.path | default (print $.Values.iam.instanceName "-" $app)) $route.path }}
+            type: PathPrefix
+      {{- if ne $.Values.ingress.timeout "" }}
+      timeouts:
+        backendRequest: {{ $.Values.ingress.timeout }}
+      {{- end }}
+{{-       end -}}
+{{-     end -}}
+{{-   end -}}
+{{- end -}}

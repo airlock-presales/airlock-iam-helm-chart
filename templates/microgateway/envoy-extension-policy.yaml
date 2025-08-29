@@ -1,0 +1,22 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   if semverCompare ">=4.7" .Values.ingress.microgateway.version }}
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: EnvoyExtensionPolicy
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $fullName }}
+  envoyHTTPFilterRefs:
+    prepend:
+      - name: {{ $fullName }}-secure-cookie-rewrite
+{{-   end }}
+{{- end }}

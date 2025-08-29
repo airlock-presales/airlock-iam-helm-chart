@@ -1,0 +1,432 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $app := "loginapp" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   $app_values := get .Values.iam.apps $app -}}
+{{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
+{{-   $moduleName := print $fullName "-" $suffix | lower -}}
+{{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   if $app_values.enable }}
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: DenyRules
+metadata:
+  name: {{ $moduleName }}-rest-protected
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  request:
+    builtIn:
+      settings:
+        level: Strict
+        threatHandlingMode: Block
+# SSRF deny rule introduced in Microgateway 4.4
+      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
+      overrides:
+        - conditions:
+            ruleKeys:
+              - SSRF
+            types:
+              - JSON
+          settings:
+            level: Unfiltered
+      {{- end }}
+      exceptions:
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.context"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/cronto/devices/activation/complete/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.id"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.attestationObject"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.publicKeyCredential.response.clientDataJSON"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.context"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/mtan/[a-zA-Z0-9]+/verify-number-change/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.publicJwk.x"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/device-tokens/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.publicJwk.y"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/device-tokens/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.id"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.userHandle"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.signature"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.authenticatorData"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$['username','representeeName']"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.email"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.data.email"
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^filter$"
+                ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            jsonPath: "$.publicKeyCredential.response.clientDataJSON"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            jsonPath: "$.queryString"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "TEMPLATE"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "UNIXCMD"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "WINCMD"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "LDAP"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "LDAP"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(?:sso|ticket|representation)$"
+                ignoreCase: false
+      - ruleKeys:
+        - "PHP"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "OGNL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.publicJwk.x"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/device-tokens/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.publicJwk.y"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/device-tokens/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            jsonPath: "$.publicKeyCredential.response.clientDataJSON"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            jsonPath: "$.queryString"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            jsonPath: "$.targetLocation"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/representation/start/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            jsonPath: "$.context"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/cronto/devices/activation/complete/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "NOSQL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SANITY"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "ENCODING"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(?:sso|ticket|representation)$"
+                ignoreCase: false
+      - ruleKeys:
+        - "ENCODING"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "PROTOCOL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "HPP"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^Location$"
+                ignoreCase: false
+            value:
+              matcher:
+                regex: "/representation/start"
+                ignoreCase: false
+      - ruleKeys:
+        - "HPP"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "HPP"
+        blockedData:
+          json:
+            jsonPath: "$.queryString"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "EXPLOIT"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SCANNING"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+{{-   end }}
+{{- end }}

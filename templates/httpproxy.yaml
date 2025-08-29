@@ -43,7 +43,7 @@ spec:
       permitInsecure: true
       {{- end }}
       services:
-        - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default $app) }}
+        - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
           port: 80
       {{- if ne $.Values.ingress.timeout "" }}
       timeoutPolicy:

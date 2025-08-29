@@ -11,7 +11,7 @@
 {{-   range $app, $app_values := .Values.iam.apps -}}
 {{-     if $app_values.enable -}}
 {{-       $_ := set $ "IAM" (dict "fullName" $fullName
-                                  "suffix" ($app_values.dedicatedDeployment.suffix | default $app)
+                                  "suffix" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app))
                                   "module" (include "airlock-iam.mapAppName" $app)
                                   "service" $.Values.service) -}}
 ---

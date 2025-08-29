@@ -1,0 +1,306 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $app := "adminapp" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   $app_values := get .Values.iam.apps $app -}}
+{{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
+{{-   $moduleName := print $fullName "-" $suffix | lower -}}
+{{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   if $app_values.enable }}
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: DenyRules
+metadata:
+  name: {{ $moduleName }}-rest
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  request:
+    builtIn:
+      settings:
+        level: Strict
+        threatHandlingMode: Block
+# SSRF deny rule introduced in Microgateway 4.4
+      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
+      overrides:
+        - conditions:
+            ruleKeys:
+              - SSRF
+            types:
+              - JSON
+          settings:
+            level: Unfiltered
+      {{- end }}
+      exceptions:
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^sso$"
+                ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.newUsername"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.contextData.email"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.data.id"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.email"
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^filter$"
+                ignoreCase: false
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/logs/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(loginUrl|afterLogoutUrl)$"
+                ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            jsonPath: "$.loginUrl"
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            jsonPath: "$.afterLogoutUrl"
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^Location$"
+                ignoreCase: false
+            value:
+              matcher:
+                regex: "^editConfig.*"
+                ignoreCase: false
+      - ruleKeys:
+        - "TEMPLATE"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.translations.en"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              ignoreCase: false
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.translations.fr"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              ignoreCase: false
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.translations.de"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              ignoreCase: false
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.translations.it"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              ignoreCase: false
+      - ruleKeys:
+        - "UNIXCMD"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "WINCMD"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "LDAP"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "PHP"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "OGNL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^sso$"
+                ignoreCase: false
+      - ruleKeys:
+        - "NOSQL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SANITY"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "ENCODING"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "PROTOCOL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "HPP"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "HPP"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^Location$"
+                ignoreCase: false
+            value:
+              matcher:
+                regex: "^editConfig.*"
+                ignoreCase: false
+      - ruleKeys:
+        - "EXPLOIT"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SCANNING"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^sso$"
+                ignoreCase: false
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(loginUrl|afterLogoutUrl)$"
+                ignoreCase: false
+        requestConditions:
+          method:
+          - "GET"
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          json:
+            jsonPath: "$.loginUrl"
+        requestConditions:
+          method:
+          - "GET"
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          json:
+            jsonPath: "$.afterLogoutUrl"
+        requestConditions:
+          method:
+          - "GET"
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          header:
+            name:
+              matcher:
+                regex: "^X-URL$"
+        requestConditions:
+          method:
+          - "POST"
+      {{- end }}
+{{-   end }}
+{{- end }}

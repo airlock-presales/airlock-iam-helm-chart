@@ -1,0 +1,576 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $app := "transactionApproval" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   $app_values := get .Values.iam.apps $app -}}
+{{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
+{{-   $moduleName := print $fullName "-" $suffix | lower -}}
+{{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   if $app_values.enable }}
+apiVersion: v1
+data:
+  openapi.json: '{"openapi":"3.0.1","info":{"title":"Airlock IAM Transaction Approval
+    REST API","version":"8.4.2","x-logo":{"url":"./airlock-logo.png","backgroundColor":"#39373A"}},"servers":[{"url":"{{
+    $app_values.path }}/rest"}],"tags":[{"name":"transaction-approval-rest-docs-openapi-intermediate_other","x-displayName":"other"},{"name":"Flow
+    Control","x-displayName":"Flow Control"},{"name":"Message Parameters","x-displayName":"Message
+    Parameters"},{"name":"Airlock 2FA","x-displayName":"Airlock 2FA"},{"name":"Cronto","x-displayName":"Cronto"},{"name":"Email
+    OTP","x-displayName":"Email OTP"},{"name":"Users","x-displayName":"Users"},{"name":"Matrix
+    Cards","x-displayName":"Matrix Cards"},{"name":"Message Acknowledgement","x-displayName":"Message
+    Acknowledgement"},{"name":"SMS/mTAN","x-displayName":"SMS/mTAN"},{"name":"Generic
+    OTP","x-displayName":"Generic OTP"}],"paths":{"/ready":{"get":{"summary":"Check
+    readiness","description":"Internal health check endpoint that reports the readiness
+    status of the Transaction Approval module.\n<div class=\"iam-resource-return\">Whether
+    the Transaction Approval readiness status is \"UP\" or \"DOWN\".</div>","operationId":"checkReadiness","responses":{"200":{"description":"Readiness
+    checks successfully executed.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HealthCheckWireFormatData"}}}},"500":{"description":"Unexpected
+    error while checking readiness.","content":{"application/json":{}}}},"x-internal":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"options":{"operationId":"checkReadinessCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/dynamic-steps/{stepId}/activate":{"post":{"tags":["Flow
+    Control"],"summary":"Activate step","description":"Activates a flow step.\n<div
+    class=\"iam-resource-return\">The required next step action or an error if the
+    step ID is invalid or the step could not be activated.</div>","operationId":"activate","responses":{"200":{"description":"Transaction
+    approval successful or further steps required.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>INVALID_STEP_ID</td>\n<td>The selected
+    step ID is not available.</td>\n</tr>\n<tr>\n<td>STEP_ACTIVATION_NOT_ALLOWED</td>\n<td>The
+    selected step cannot be activated.</td>\n</tr>\n</table>\n</div>\n<br>Possible
+    next step: always the same as before the activate call.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"activateCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"parameters":[{"name":"stepId","in":"path","description":"The
+    ID of the step to be activated.","required":true,"schema":{"maxLength":30,"minLength":1,"type":"string"}}]},"/transaction-approval/dynamic-steps/{stepId}/deactivate":{"post":{"tags":["Flow
+    Control"],"summary":"Deactivate step","description":"Deactivates a flow step.\n<div
+    class=\"iam-resource-return\">The required next step action or an error if the
+    step ID is invalid or the step could not be deactivated.</div>","operationId":"deactivate","responses":{"200":{"description":"Transaction
+    approval successful or further steps required.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>INVALID_STEP_ID</td>\n<td>The selected
+    step ID is not available.</td>\n</tr>\n<tr>\n<td>STEP_DEACTIVATION_NOT_ALLOWED</td>\n<td>The
+    selected step cannot be deactivated.</td>\n</tr>\n</table>\n</div>\n<br>Possible
+    next step: always the same as before the deactivate call.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"deactivateCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"parameters":[{"name":"stepId","in":"path","description":"The
+    ID of the step to be deactivated","required":true,"schema":{"maxLength":30,"minLength":1,"type":"string"}}]},"/transaction-approval/dynamic-steps/retrieve":{"post":{"tags":["Flow
+    Control"],"summary":"List dynamic steps","description":"Retrieves list of all
+    steps that can be dynamically activated or deactivated on the current step.\n<div
+    class=\"iam-resource-return\">A list of dynamic steps with their activation information.</div>","operationId":"retrieve","responses":{"200":{"description":"The
+    information has been successfully returned.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalDynamicStepActivationDataCollectionDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalDynamicStepActivationDataCollectionDocument"}}}}}},"options":{"operationId":"retrieveCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/flow":{"delete":{"tags":["Flow
+    Control"],"summary":"Abort flow","description":"Aborts the current transaction
+    approval flow and terminates any session connected to it.\n<div class=\"iam-resource-return\">If
+    the termination of the transaction approval was successful.</div>","operationId":"abort","responses":{"204":{"description":"Transaction
+    Approval session successfully terminated.","content":{"application/vnd.api+json":{},"application/json":{}}}}},"options":{"operationId":"abortCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/flows/{flowId}/select":{"post":{"tags":["Flow
+    Control"],"summary":"Select flow","description":"<div id=\"flowStart\"/>\nSelects
+    a transaction approval flow.\n<div class=\"iam-resource-return\">A success response
+    with a next step indicating the required next action.</div>","operationId":"selectFlow","responses":{"200":{"description":"
+    Transaction approval flow selection successful.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>UNEXPECTED_CALL</td>\n<td>Another
+    transaction approval flow is already in progress.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"404":{"description":"No
+    flow with the requested ID exists.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"selectFlowCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"parameters":[{"name":"flowId","in":"path","description":"the
+    ID of the selected flow as configured.","required":true,"schema":{"maxLength":30,"minLength":1,"type":"string"}}]},"/transaction-approval/goto-targets/{stepId}/goto":{"post":{"tags":["Flow
+    Control"],"summary":"Go to step","description":"Go to the selected flow step.\n<div
+    class=\"iam-resource-return\">The required next step action or an error if the
+    step ID is invalid.</div>","operationId":"doGoto","responses":{"200":{"description":"Transaction
+    approval successful or further steps required.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>GOTO_FAILED</td>\n<td>The selected
+    step ID is not available.</td>\n</tr>\n</table>\n</div>\n<br>Possible next step:
+    always the same as before the goto call.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"doGotoCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"parameters":[{"name":"stepId","in":"path","description":"The
+    goto target''s step ID.","required":true,"schema":{"maxLength":30,"minLength":1,"type":"string"}}]},"/transaction-approval/goto-targets/retrieve":{"post":{"tags":["Flow
+    Control"],"summary":"List goto steps","description":"Retrieves possible target
+    steps of an interactive goto.\n<div class=\"iam-resource-return\">A list of target
+    steps.</div>","operationId":"retrieve_1","responses":{"200":{"description":"The
+    information has been successfully returned.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalGotoTargetAttributesDataCollectionDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalGotoTargetAttributesDataCollectionDocument"}}}}}},"options":{"operationId":"retrieve_1CorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/parameters":{"post":{"tags":["Message
+    Parameters"],"summary":"Validate and save","description":"Validate and save parameters
+    for transaction approval.\nValidates and saves transaction approval message parameters
+    and accepts an \"Auth Token ID\"\nthat identifies the device used for login.\nIn
+    contrast to other endpoints, <tt>null</tt> values are ignored here (no \"delete\"
+    semantic).\n<p>\nAn example of a parameter request is:\n<pre>\n{\n\"messageParameters\":
+    {\n\"accountNumber\": \"12345\",\n\"amount\": \"300\",\n\"currency\": \"CHF\"\n}\n}</pre>\n</p>\n<div
+    class=\"iam-resource-return\">Whether validation of the message parameters was
+    successful. If the attribute <tt>nextStep</tt> is present in the response,\n further
+    steps are required to successfully approve the transaction. If the attribute is
+    missing, the transaction approval\n of the user was successful.</div>","operationId":"validateAndConsume","requestBody":{"description":"Contains
+    the id used for device selection in further steps and message parameters used
+    to create a transaction approval message.","content":{"*/*":{"schema":true}},"required":true},"responses":{"200":{"description":"Message
+    parameters and id for device selection successfully validated and saved.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"If
+    some parameters are missing or not supported.\n<br>Possible next step: <tt>PARAMETERS_REQUIRED</tt>
+    (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"The
+    current flow has been aborted.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"validateAndConsumeCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/airlock-2fa/status/poll":{"post":{"tags":["Airlock
+    2FA"],"summary":"Poll status","description":"<p>Polls Airlock 2FA transaction
+    approval status.</p>\n<p>Allows polling whether the transaction was approved by
+    the app (\"online validation\"). If there\nhas not been any response from the
+    app, keep polling in regular intervals or switch to\noffline mode (<tt>POST /airlock-2fa/offline</tt>),
+    if allowed by the configuration, and check the OTP manually\n(<tt>POST /airlock-2fa/otp/check</tt>).</p>\n<p>This
+    endpoint is used for authentication using the Airlock 2FA factors One-Touch and
+    Online QR Code, or for mobile-only authentication.</p>\n<div class=\"iam-resource-return\">The
+    status of the online validation.\n If the attribute <tt>nextStep</tt> is present
+    in the response, further steps are required\n to successfully approve the transaction.
+    If the attribute is missing, the transaction approval\n of the user was successful.</div>","operationId":"pollOnlineValidation","responses":{"200":{"description":"Transaction
+    approval successful (if attribute <tt>nextStep</tt> is missing),\ntransaction
+    not yet validated (if <tt>nextStep</tt> has value <tt>AIRLOCK_2FA_POLLING_REQUIRED</tt>
+    or <tt>AIRLOCK_2FA_POLLING_OR_OTP_REQUIRED</tt>),\nfurther steps required in all
+    other cases.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"403":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>TRANSACTION_DENIED</td>\n<td>The transaction
+    was denied. This could be due to the user actively cancelling the transaction
+    or a timeout.</td>\n</tr>\n</table>\n</div>\n<br>The current transaction approval
+    flow has been aborted.\n<br>Possible next step: none.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"pollOnlineValidationCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"parameters":[{"name":"queryOnly","in":"query","description":"Whether
+    the final result should be returned. See \"Polling endpoints\" section for details.","schema":{"type":"boolean"}}]},"/transaction-approval/airlock-2fa/devices/retrieve":{"post":{"tags":["Airlock
+    2FA"],"summary":"List devices","description":"Retrieves all applicable Airlock
+    2FA devices.\n<div class=\"iam-resource-return\">The collection of applicable
+    Airlock 2FA devices</div>","operationId":"retrieveDeviceChoices","responses":{"200":{"description":"Available
+    devices retrieved.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FADeviceDataCollectionDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FADeviceDataCollectionDocument"}}}}},"deprecated":true},"options":{"operationId":"retrieveDeviceChoicesCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/airlock-2fa/mobile-only/challenge/retrieve":{"post":{"tags":["Airlock
+    2FA"],"summary":"Get mobile-only challenge","description":"Retrieves the challenge
+    for transaction approval in case of mobile-only.\n<div class=\"iam-resource-return\">a
+    challenge in the form of a URI.</div>","operationId":"retrieveMobileOnlyChallenge","responses":{"200":{"description":"A
+    challenge has been returned.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FAMobileOnlyChallengeDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FAMobileOnlyChallengeDataResourceDocument"}}}}},"deprecated":true},"options":{"operationId":"retrieveMobileOnlyChallengeCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/airlock-2fa/challenge/retrieve":{"post":{"tags":["Airlock
+    2FA"],"summary":"Get QR challenge","description":"Returns the Offline QR Code
+    challenge for Airlock 2FA.\nThe challenge is delivered as a base64-encoded image.\nThe
+    OTP returned by the user after scanning the image needs to be checked manually
+    (<tt>POST /airlock-2fa/otp/check</tt>).\n<div class=\"iam-resource-return\">A
+    challenge for Airlock 2FA.</div>","operationId":"retrieveOfflineQrCodeChallenge","responses":{"200":{"description":"A
+    challenge has been returned.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FAOfflineChallengeDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FAOfflineChallengeDataResourceDocument"}}}}},"deprecated":true},"options":{"operationId":"retrieveOfflineQrCodeChallengeCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/airlock-2fa/devices/{id}/select":{"post":{"tags":["Airlock
+    2FA"],"summary":"Select device","description":"Selects one of the available Airlock
+    2FA devices to use for transaction approval.\n<div class=\"iam-resource-return\">Whether
+    the device selection was successful. Gives information about the next transaction
+    approval step required.</div>","operationId":"selectDevice","responses":{"200":{"description":"Airlock
+    2FA device successfully selected, notification sent.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AIRLOCK_2FA_DEVICE_CHOICE_FAILED</td>\n<td>Invalid
+    ID selected. Retry with valid ID.</td>\n</tr>\n</table>\n</div>\n<br>Possible
+    next step: <tt>AIRLOCK_2FA_DEVICE_CHOICE_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"selectDeviceCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"parameters":[{"name":"id","in":"path","description":"The
+    ID of the selected Airlock 2FA device.","required":true,"schema":{"maxLength":50,"minLength":1,"type":"string"}}]},"/transaction-approval/airlock-2fa/offline":{"post":{"tags":["Airlock
+    2FA"],"summary":"Switch to offline","description":"Switch to Airlock 2FA offline
+    transaction approval.\nThis will terminate any occurring online validation. As
+    a consequence, any push notification sent can no longer be used to approve the
+    transaction\nand subsequent online validation of the transaction is no longer
+    possible.\nIf no validation was currently taking place when the call was made
+    (because a device selection was required),\na new transaction approval process
+    with Offline QR Code (only) will be transparently started.\n<p>This call is <em>required</em>
+    to verify an OTP to validate an Offline QR Code challenge (<tt>POST /airlock-2fa/otp/check</tt>).\n</p>\n<div
+    class=\"iam-resource-return\">Whether the switch to offline transaction approval
+    was successful. Gives information about the next transaction approval step required.</div>","operationId":"switchToOffline","responses":{"200":{"description":"Successfully
+    switched to offline transaction approval.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"403":{"description":"Offline
+    selection failed. The current transaction approval flow has been aborted.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"switchToOfflineCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/airlock-2fa/otp/check":{"post":{"tags":["Airlock
+    2FA"],"summary":"Verify OTP","description":"Verifies the provided OTP to validate
+    an Airlock 2FA Offline QR Code challenge.\nThe OTP is provided by the user (after
+    scanning the Offline QR Code challenge).\n<p>Use this call for manual OTP validation
+    for a <tt>AIRLOCK_2FA_OTP_REQUIRED</tt> next approval step.\n</p>\n<div class=\"iam-resource-return\">Whether
+    the check was successful. If the attribute <tt>nextStep</tt> is present in the
+    response,\n further steps are required to successfully approve the transaction.
+    If the attribute is missing, the transaction approval\n of the user was successful.</div>","operationId":"validateOfflineQrCode","requestBody":{"description":"Contains
+    the Airlock 2FA OTP.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericOtpCheckRequest"}}},"required":true},"responses":{"200":{"description":"Transaction
+    approval successful or further steps required.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AIRLOCK_2FA_OTP_WRONG</td>\n<td>OTP
+    could not be validated successfully. Retry with correct OTP.</td>\n</tr>\n</table>\n</div>\n<br>Possible
+    next step: <tt>AIRLOCK_2FA_OTP_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AIRLOCK_2FA_OTP_WRONG</td>\n<td>The
+    OTP could not be validated successfully and no retries are allowed.</td>\n</tr>\n</table>\n</div>\n<br>The
+    current transaction approval flow has been aborted.\n<br>Possible next step: none.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"validateOfflineQrCodeCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/cronto/otp/check":{"post":{"tags":["Cronto"],"summary":"Verify
+    Cronto OTP","description":"Verifies the submitted Cronto OTP.\nThe OTP was entered
+    by the user (after scanning the cryptogram image) or returned by the Cronto app\n(when
+    using the secure channel challenge in app-to-app communication).\n<p>Use this
+    call for manual OTP validation for a <tt>CRONTO_OTP_REQUIRED</tt> next approval
+    step\n(when \"onlineValidation\" was false, or offline fallback was selected by
+    the user). Note that in any case\nmanually OTP checking <em>cancels online validation</em>.
+    It is recommended to obtain the current\nchallenge again after each failed OTP
+    check, as the \"onlineValidation\" flag could have changed.</p>\n<div class=\"iam-resource-return\">Whether
+    the check was successful. If the attribute <tt>nextStep</tt> is present in the
+    response,\n further steps are required to successfully approve the transaction.
+    If the attribute is missing, the transaction approval\n of the user was successful.</div>","operationId":"checkCrontoOtp","requestBody":{"description":"Contains
+    the Cronto OTP.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericOtpCheckRequest"}}},"required":true},"responses":{"200":{"description":"Transaction
+    approval successful or further steps required.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>CRONTO_OTP_WRONG</td>\n<td>OTP could
+    not be validated successfully. Retry with correct OTP.</td>\n</tr>\n</table>\n</div>\n<br>Possible
+    next step: <tt>CRONTO_OTP_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>CRONTO_OTP_WRONG</td>\n<td>The OTP
+    could not be validated successfully and no retries are allowed.</td>\n</tr>\n</table>\n</div>\n<br>The
+    current transaction approval flow has been aborted.\n<br>Possible next step: none.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"checkCrontoOtpCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/cronto/otp/poll":{"post":{"tags":["Cronto"],"summary":"Poll
+    challenge","description":"Cronto Challenge Polling.\nAllows polling whether the
+    Cronto challenge has been answered by the app (\"online validation\"). If there\nhas
+    not been any response from the app, keep polling in regular intervals or check
+    the OTP manually\n(<tt>POST /cronto/otp/check</tt>).\n<div class=\"iam-resource-return\">The
+    status of the online validation (still waiting/success/cancelled/failed).\n If
+    the attribute <tt>nextStep</tt> is present in the response, further steps are
+    required\n to successfully approve the transaction. If the attribute is missing,
+    the transaction approval\n of the user was successful.</div>","operationId":"pollOnlineValidation_1","responses":{"200":{"description":"Challenge
+    not yet validated (retry later or check OTP manually), transaction approval successful
+    or further steps required.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"403":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>CRONTO_OTP_WRONG</td>\n<td>The OTP
+    could not be validated successfully.</td>\n</tr>\n<tr>\n<td>CANCELLED_BY_USER</td>\n<td>The
+    process has been cancelled by the user in the app.</td>\n</tr>\n</table>\n</div>\n<br>The
+    current transaction approval flow has been aborted.\n<br>Possible next step: none.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"pollOnlineValidation_1CorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"parameters":[{"name":"queryOnly","in":"query","description":"Whether
+    the final result should be returned. See \"Polling endpoints\" section for details.","schema":{"type":"boolean"}}]},"/transaction-approval/cronto/challenge/retrieve":{"post":{"tags":["Cronto"],"summary":"Get
+    challenge","description":"Returns a challenge for Cronto.\nThe challenge is delivered
+    as a base64-encoded image (''cryptogram'') and as a string representation for\napp-to-app
+    authentication.\n<p>\nThe two attributes \"onlineValidation\" and \"pushed\" have
+    only informative character and indicate\nthe recommended behavior for clients:\n<ul>\n<li>If
+    the \"onlineValidation\" attribute is true, the client application should not
+    ask the user for the\nresponse OTP, as the app will send the response directly
+    to the server (Scan&amp;Login or Push use-cases).\nInstead, the client application
+    should regularly poll (<tt>POST /cronto/otp/poll</tt>) to check if a response\nhas
+    been received. There should be an option for the user to fall back to entering
+    the OTP manually. Sending the\nmanually entered OTP to (<tt>POST /cronto/otp/check</tt>)
+    cancels the online validation</li>\n<li>If also the \"pushed\" attribute is true,
+    the challenge has been pushed to a Cronto app. In this case also\nthe cryptogram
+    should not be displayed. Instead, the user should be informed about this and asked
+    to confirm\nthe transaction on their Cronto app. Again, a fallback for offline
+    situations should be available.\nIf \"pushed\" is true, \"onlineValidation\" is
+    always also true.</li>\n</ul>\n</p>\n<div class=\"iam-resource-return\">A Cronto
+    challenge.</div>","operationId":"retrieveChallenge","responses":{"200":{"description":"A
+    challenge has been returned.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalCrontoChallengeDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalCrontoChallengeDataResourceDocument"}}}}},"deprecated":true},"options":{"operationId":"retrieveChallengeCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/cronto/push-devices/retrieve":{"post":{"tags":["Cronto"],"summary":"List
+    devices","description":"Retrieves the set of active Cronto push devices.\n<div
+    class=\"iam-resource-return\">The collection of active Cronto push devices</div>","operationId":"retrievePushDeviceChoices","responses":{"200":{"description":"Available
+    push devices retrieved.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalCrontoPushDeviceDataCollectionDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalCrontoPushDeviceDataCollectionDocument"}}}}},"deprecated":true},"options":{"operationId":"retrievePushDeviceChoicesCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/cronto/offline":{"post":{"tags":["Cronto"],"summary":"Select
+    offline","description":"Selects offline transaction approval. No push notification
+    is sent to a device and no subsequent online validation\nof the response will
+    be possible.\n<div class=\"iam-resource-return\">Whether the selection of offline
+    transaction approval was successful. Gives information about the next transaction
+    approval step required.</div>","operationId":"selectOfflineAuthentication","responses":{"200":{"description":"Successfully
+    selected an offline device.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"403":{"description":"Offline
+    selection failed. The current transaction approval flow has been aborted.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"selectOfflineAuthenticationCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/cronto/push-devices/{id}/select":{"post":{"tags":["Cronto"],"summary":"Select
+    push device","description":"Selects one of the active push devices to which the
+    push notification will be sent.\n<div class=\"iam-resource-return\">Whether the
+    device selection was successful. Gives information about the next transaction
+    approval step required.</div>","operationId":"selectPushDevice","responses":{"200":{"description":"Push
+    device successfully selected, notification sent.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>CRONTO_DEVICE_CHOICE_FAILED</td>\n<td>Invalid
+    ID selected. Retry with valid ID.</td>\n</tr>\n</table>\n</div>\n<br>Possible
+    next step: <tt>CRONTO_DEVICE_CHOICE_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>CRONTO_DEVICE_CHOICE_FAILED</td>\n<td>Invalid
+    ID selected.</td>\n</tr>\n</table>\n</div>\n<br>The current transaction approval
+    flow has been aborted.\n<br>Possible next step: none.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"selectPushDeviceCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"parameters":[{"name":"id","in":"path","description":"The
+    ID of the selected push device.","required":true,"schema":{"maxLength":50,"minLength":1,"type":"string"}}]},"/transaction-approval/email/otp/check":{"post":{"tags":["Email
+    OTP"],"summary":"Check email OTP","description":"Checks the submitted email OTP.\n<div
+    class=\"iam-resource-return\">Whether the check was successful. If the attribute
+    <tt>nextStep</tt> is present in the response,\n further steps are required to
+    successfully approve the transaction. If the attribute is missing, the transaction
+    approval\n of the user was successful.</div>","operationId":"checkOtp","requestBody":{"description":"Request
+    containing the OTP.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericOtpCheckRequest"}}},"required":true},"responses":{"200":{"description":"Transaction
+    approval successful or further steps required.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>OTP_WRONG</td>\n<td>The OTP could
+    not be validated successfully.</td>\n</tr>\n</table>\n</div>\n<br>Possible next
+    step: <tt>EMAIL_OTP_CHECK_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>OTP_WRONG</td>\n<td>The OTP could
+    not be validated successfully. No retries are possible.</td>\n</tr>\n<tr>\n<td>OTP_EXPIRED</td>\n<td>The
+    OTP has expired.</td>\n</tr>\n</table>\n</div>\n<br>The current transaction approval
+    flow has been aborted.\n<br>Possible next step: none.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"checkOtpCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/email/otp/resend":{"post":{"tags":["Email
+    OTP"],"summary":"Resend email OTP","description":"Resends the email OTP.\n<div
+    class=\"iam-resource-return\">Whether the resend was successful and informs about
+    the <tt>nextStep</tt>.\n Additionally, the response includes information about
+    the possibility of an OTP resend.</div>","operationId":"resendOtp","responses":{"200":{"description":"The
+    OTP has been resent.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>EMAIL_OTP_RESEND_REFUSED</td>\n<td>The
+    OTP could not be resent.</td>\n</tr>\n</table>\n</div>\n<br>Possible next step:
+    <tt>EMAIL_OTP_CHECK_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"Resend
+    failed. The current transaction approval flow has been aborted.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"resendOtpCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/user/identify":{"post":{"tags":["Users"],"summary":"Identify
+    user","description":"Identifies the transmitted username.\n<div class=\"iam-resource-return\">Whether
+    the username check was successful. If the attribute <tt>nextStep</tt> is present
+    in the response,\n further steps are required to successfully approve the transaction.
+    If the attribute is missing, transaction approval\n of the user was successful.</div>","operationId":"checkUsername","requestBody":{"description":"Contains
+    the username.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalUsernameCheckRequest"}}}},"responses":{"200":{"description":"Transaction
+    approval successful or further steps required.\n<br>Possible next step: <tt>PARAMETERS_REQUIRED</tt>
+    (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>USER_NOT_FOUND</td>\n<td>The user
+    does not exist.</td>\n</tr>\n</table>\n</div>\n<br>Possible next step: <tt>USERNAME_REQUIRED</tt>.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"The
+    current transaction approval flow has been aborted.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"checkUsernameCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/matrix/check":{"post":{"tags":["Matrix
+    Cards"],"summary":"Verify response","description":"Verifies the submitted challenge
+    response.\n<div class=\"iam-resource-return\">Whether the check was successful.
+    If the attribute <tt>nextAuthStep</tt> is present in the response,\n further steps
+    are required to successfully approve the transaction. If the attribute is missing,
+    the transaction is\n successfully approved.</div>","operationId":"checkChallengeResponse","requestBody":{"description":"Contains
+    the challenge response(s).","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalMatrixChallengeCheckRequest"}}},"required":true},"responses":{"200":{"description":"Transaction
+    approval successful or further steps required.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>MATRIX_RESPONSE_WRONG</td>\n<td>One
+    or more responses could not be validated successfully. Retry again.<br>\nSince
+    challenge coordinates may change after failed attempts (depending on configuration),\nthe
+    new ones might have to be requested again.</td>\n</tr>\n</table>\n</div>\n<br>Possible
+    next step: <tt>MATRIX_RESPONSE_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>MATRIX_RESPONSE_WRONG</td>\n<td>One
+    or more responses could not be validated successfully.</td>\n</tr>\n<tr>\n<td>TOO_MANY_UNANSWERED_CHALLENGES</td>\n<td>Too
+    many challenges were requested but not answered. Try again later.</td>\n</tr>\n</table>\n</div>\n<br>The
+    current transaction approval flow has been aborted.\n<br>Possible next step: none.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"checkChallengeResponseCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/matrix/challenge/retrieve":{"post":{"tags":["Matrix
+    Cards"],"summary":"Get challenges","description":"Returns one or more challenges
+    for matrix/index list transaction approval.\n<div class=\"iam-resource-return\">A
+    list of one or more matrix coordinates or index list indexes.</div>","operationId":"retrieveChallenge_1","responses":{"200":{"description":"The
+    challenge has been returned.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalMatrixChallengeDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalMatrixChallengeDataResourceDocument"}}}}},"deprecated":true},"options":{"operationId":"retrieveChallenge_1CorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/message/acknowledge":{"post":{"tags":["Message
+    Acknowledgement"],"summary":"Acknowledge message","description":"Acknowledges
+    a previously received message.\nThe message can be a pre-configured message ID
+    or server-generated message, depending on the step configuration.\nIt has been
+    received as an additional in a previous step response (as documented <a href=\"#additionalTransactionApprovalAttributes\">here</a>).\n<div
+    class=\"iam-resource-return\">If the attribute <tt>nextStep</tt> is present in
+    the response,\n further steps are required to successfully continue with the flow.
+    If the attribute is missing,\n the transaction approval flow is successfully terminated.</div>","operationId":"acknowledgeMessageId","responses":{"200":{"description":"Message
+    successfully acknowledged or further steps required (as documented <a href=\"#nextApprovalStepCodes\">here</a>).","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}}}},"options":{"operationId":"acknowledgeMessageIdCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/mtan/otp/check":{"post":{"tags":["SMS/mTAN"],"summary":"Check
+    mTAN OTP","description":"Checks the submitted mTAN OTP.\n<div class=\"iam-resource-return\">Whether
+    the check was successful. If the attribute <tt>nextStep</tt> is present in the
+    response,\n further steps are required to successfully approve the transaction.
+    If the attribute is missing, the transaction approval\n of the user was successful.</div>","operationId":"checkMtanOtp","requestBody":{"description":"Request
+    containing the mTAN OTP.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericOtpCheckRequest"}}},"required":true},"responses":{"200":{"description":"Transaction
+    approval successful or further steps required.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>MTAN_OTP_WRONG</td>\n<td>OTP could
+    not be validated successfully. Retry with correct OTP.</td>\n</tr>\n</table>\n</div>\n<br>Possible
+    next step: <tt>MTAN_OTP_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>MTAN_OTP_WRONG</td>\n<td>OTP could
+    not be validated successfully and no retries are allowed.</td>\n</tr>\n<tr>\n<td>MTAN_OTP_EXPIRED</td>\n<td>The
+    OTP has expired.</td>\n</tr>\n</table>\n</div>\n<br>The current transaction approval
+    flow has been aborted.\n<br>Possible next step: none.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"checkMtanOtpCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/mtan/otp/resend":{"post":{"tags":["SMS/mTAN"],"summary":"Resend
+    OTP","description":"Resends the mTAN OTP by SMS.\n<div class=\"iam-resource-return\">Whether
+    the resend was successful and informs about the <tt>nextStep</tt>.\n Additionally,
+    the response includes information about the possibility of an OTP resend.\n <p><b>Deprecated:</b>
+    The ''included'' section containing resend information is deprecated and will
+    be removed in a future version.\n The resend information is returned as <a href=\"#additionalTransactionApprovalAttributes\">additional
+    attribute</a>\n with the <tt>MTAN_OTP_REQUIRED</tt> next step code.</p></div>","operationId":"resendMtanOtp","responses":{"200":{"description":"The
+    OTP has been resent.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>MTAN_OTP_RESEND_REFUSED</td>\n<td>The
+    OTP could not be resent.</td>\n</tr>\n</table>\n</div>\n<br>Possible next step:
+    <tt>MTAN_OTP_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"Resend
+    failed. The current transaction approval flow has been aborted.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"resendMtanOtpCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/mtan/tokens/retrieve":{"post":{"tags":["SMS/mTAN"],"summary":"List
+    tokens","description":"Retrieves the set of active mTAN tokens.\n<div class=\"iam-resource-return\">The
+    collection of active mTAN tokens.</div>","operationId":"retrieveMtanTokens","responses":{"200":{"description":"Available
+    mTAN tokens retrieved.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalMtanTokenDataCollectionDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalMtanTokenDataCollectionDocument"}}}}},"deprecated":true},"options":{"operationId":"retrieveMtanTokensCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/mtan/otp/resend-info/retrieve":{"post":{"tags":["SMS/mTAN"],"summary":"Verify
+    OTP resend possible","description":"Returns whether a new OTP can be resent by
+    SMS.\n<div class=\"iam-resource-return\">Whether an OTP resend is possible or
+    not.</div>","operationId":"retrieveResendInfo","responses":{"200":{"description":"Returns
+    information about a possible OTP resend.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalResendMtanOtpPossibleDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalResendMtanOtpPossibleDataResourceDocument"}}}}},"deprecated":true},"options":{"operationId":"retrieveResendInfoCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/mtan/tokens/{id}/select":{"post":{"tags":["SMS/mTAN"],"summary":"Select
+    token","description":"Selects one of the active mTAN tokens (phone numbers) for
+    sending the OTP to.\n<div class=\"iam-resource-return\">Whether the token selection
+    and sending of the OTP was successful. Gives information about the next transaction
+    approval step required.\n Additionally, the response includes information about
+    the possibility of an OTP resend.\n <p><b>Deprecated:</b> The ''included'' section
+    containing resend information is deprecated and will be removed in a future version.\n
+    The resend information is returned as <a href=\"#additionalTransactionApprovalAttributes\">additional
+    attribute</a>\n with the <tt>MTAN_OTP_REQUIRED</tt> next step code.</p></div>","operationId":"selectMtanToken","responses":{"200":{"description":"mTAN
+    token successfully selected, OTP sent.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>MTAN_TOKEN_CHOICE_FAILED</td>\n<td>Invalid
+    mTAN token ID. Retry with valid ID.</td>\n</tr>\n</table>\n</div>\n<br>Possible
+    next step: <tt>MTAN_TOKEN_CHOICE_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"Selection
+    failed. The current transaction approval flow has been aborted.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"selectMtanTokenCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"parameters":[{"name":"id","in":"path","description":"the
+    ID of the selected mTAN token.","required":true,"schema":{"maxLength":50,"minLength":1,"type":"string"}}]},"/transaction-approval/otp/check":{"post":{"tags":["Generic
+    OTP"],"summary":"Verify OTP","description":"Checks the submitted OTP.\n<div class=\"iam-resource-return\">Whether
+    the check was successful. If the attribute <tt>nextStep</tt> is present in the
+    response,\n further steps are required to successfully approve the transaction.
+    If the attribute is missing, the transaction\n has successfully been approved.</div>","operationId":"checkOtp_1","requestBody":{"description":"Request
+    containing the OTP.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericOtpCheckRequest"}}},"required":true},"responses":{"200":{"description":"Transaction
+    successfully approved or further steps required.<br>Possible next step: <tt>NEXT_OTP_REQUIRED</tt>
+    (as documented <a href=\"#nextApprovalStepCodes\">here</a>).","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>OTP_WRONG</td>\n<td>The OTP could
+    not be validated successfully.</td>\n</tr>\n</table>\n</div>\n<br>Possible next
+    step: <tt>OTP_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"403":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>OTP_WRONG</td>\n<td>The OTP could
+    not be validated successfully.</td>\n</tr>\n<tr>\n<td>OTP_EXPIRED</td>\n<td>The
+    OTP has expired.</td>\n</tr>\n</table>\n</div>\n<br>The current  transaction approval
+    flow has been aborted.\n<br>Possible next step: none.\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"checkOtp_1CorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/selection/options/retrieve":{"post":{"tags":["Flow
+    Control"],"summary":"List options","description":"Retrieval of available options
+    for selection.\nRetrieves the available selection options in a transaction approval
+    flow.\n<div class=\"iam-resource-return\">The available options.</div>","operationId":"retrieveOptions","responses":{"200":{"description":"Available
+    selection options retrieved.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalSelectionOptionDataCollectionDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalSelectionOptionDataCollectionDocument"}}}}},"deprecated":true},"options":{"operationId":"retrieveOptionsCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]}},"/transaction-approval/selection/options/{id}/select":{"post":{"tags":["Flow
+    Control"],"summary":"Select option","description":"Selects the given option if
+    available.\n<div class=\"iam-resource-return\">The selected next step or an error
+    if the option is invalid.</div>","operationId":"selectOption","responses":{"200":{"description":"Selected
+    the chosen step and requires next step actions.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceDocument"}}}},"400":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>SELECTION_FAILED</td>\n<td>The selected
+    option is not available.</td>\n</tr>\n</table>\n</div>\n<br>Possible next step:
+    <tt>SELECTION_REQUIRED</tt> (as documented <a href=\"#nextApprovalStepCodes\">here</a>).\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"selectOptionCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}}}}},"x-cors":"true","tags":["transaction-approval-rest-docs-openapi-intermediate_other"]},"parameters":[{"name":"id","in":"path","description":"option
+    to select.","required":true,"schema":{"maxLength":1000,"minLength":1,"type":"string"}}]}},"components":{"schemas":{"HealthCheckData":{"required":["name","status"],"type":"object","properties":{"name":{"type":"string"},"status":{"type":"string","enum":["UP","DOWN"]}}},"HealthCheckWireFormatData":{"required":["status"],"type":"object","properties":{"status":{"type":"string","enum":["UP","DOWN"]},"checks":{"type":"array","items":{"$ref":"#/components/schemas/HealthCheckData"}}}},"DocumentMetadata":{"$ref":"#/components/schemas/Meta"},"JsonApi":{"$ref":"#/components/schemas/Jsonapi"},"Links":{"type":"object","additionalProperties":{"$ref":"#/components/schemas/Link"}},"Metadata":{"$ref":"#/components/schemas/Meta"},"Relationships":{"description":"Members
+    of the relationships object (\"relationships\") represent references from the
+    resource object in which it''s defined to other resource objects.","type":"object","additionalProperties":{"$ref":"#/components/schemas/Relationship"}},"TransactionApprovalFlowResultData":{"type":"object","properties":{"nextStep":{"type":"string","description":"Expected
+    next step. See <a href=\"#nextApprovalStepCodes\">table</a> for corresponding
+    endpoints.","nullable":true},"additionalAttributes":{"type":"object","additionalProperties":{},"writeOnly":true}},"description":"Attributes
+    of this resource."},"TransactionApprovalFlowResultDataResourceDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"$ref":"#/components/schemas/TransactionApprovalFlowResultDataResourceObject"}}},"TransactionApprovalFlowResultDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.session"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalFlowResultData"}},"description":"An
+    included resource to which the primary data refers."},"TransactionApprovalDynamicStepActivationData":{"type":"object","properties":{"activatable":{"type":"boolean","description":"Whether
+    this step is activatable from the current step."},"deactivatable":{"type":"boolean","description":"Whether
+    this step is deactivatable from the current step."},"activated":{"type":"boolean","description":"Whether
+    this step is currently activated."}},"description":"Attributes of this resource."},"TransactionApprovalDynamicStepActivationDataCollectionDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"type":"array","description":"A
+    collection of included resources to which the primary data refers.","items":{"$ref":"#/components/schemas/TransactionApprovalDynamicStepActivationDataResourceObject"}}}},"TransactionApprovalDynamicStepActivationDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.dynamic-step"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalDynamicStepActivationData"}},"description":"A
+    collection of included resources to which the primary data refers."},"TransactionApprovalGotoTargetAttributesData":{"type":"object","properties":{"treatedAsFailure":{"type":"boolean","description":"Whether
+    an interactive goto to this target is treated as a failure (e.g. failed attempt
+    counters are increased if applicable)."}},"description":"Attributes of this resource."},"TransactionApprovalGotoTargetAttributesDataCollectionDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"type":"array","description":"A
+    collection of included resources to which the primary data refers.","items":{"$ref":"#/components/schemas/TransactionApprovalGotoTargetAttributesDataResourceObject"}}}},"TransactionApprovalGotoTargetAttributesDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.goto-target"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalGotoTargetAttributesData"}},"description":"A
+    collection of included resources to which the primary data refers."},"TransactionApprovalParameterRequest":{"required":["messageParameters"],"type":"object","properties":{"authTokenId":{"maxLength":100000,"minLength":0,"type":"string","description":"The
+    id that will be used to determine which devices can or can not be used for the
+    further transaction approval process.","nullable":true},"messageParameters":{"minProperties":1,"type":"object","additionalProperties":{"minProperties":1,"type":"string","description":"Parameters
+    that will be used to generate the transaction approval message."},"description":"Parameters
+    that will be used to generate the transaction approval message."}}},"TransactionApprovalAirlock2FADeviceData":{"required":["capabilities"],"type":"object","properties":{"displayName":{"type":"string","description":"A
+    short string which can be used to identify the device in a prompt. By default,
+    the display name is the device model."},"capabilities":{"type":"array","description":"Deprecated
+    for removal without replacement.","items":{"type":"string","enum":["ONE_TOUCH","TOTP","MOBILE_TOTP","QR_CODE"]}}},"description":"Attributes
+    of this resource."},"TransactionApprovalAirlock2FADeviceDataCollectionDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"type":"array","description":"A
+    collection of included resources to which the primary data refers.","items":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FADeviceDataResourceObject"}}}},"TransactionApprovalAirlock2FADeviceDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.airlock-2fa.device"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FADeviceData"}},"description":"A
+    collection of included resources to which the primary data refers."},"TransactionApprovalAirlock2FAMobileOnlyChallengeData":{"required":["authUri"],"type":"object","properties":{"authUri":{"type":"string","description":"URI
+    that contains the challenge to be used by the authenticating mobile app to perform
+    transaction approval. In scenarios where the authentication is performed by a
+    dedicated authentication app, such as the Airlock 2FA app, the URI can also be
+    used to perform the switch from the initiating app to the authentication app."}},"description":"Attributes
+    of this resource."},"TransactionApprovalAirlock2FAMobileOnlyChallengeDataResourceDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FAMobileOnlyChallengeDataResourceObject"}}},"TransactionApprovalAirlock2FAMobileOnlyChallengeDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.airlock-2fa.mobile-only.challenge"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FAMobileOnlyChallengeData"}},"description":"An
+    included resource to which the primary data refers."},"TransactionApprovalAirlock2FAOfflineChallengeData":{"required":["challengeImage"],"type":"object","properties":{"challengeImage":{"type":"string","description":"Challenge
+    image in format \"image/png\" encoded into a base64 string."}},"description":"Attributes
+    of this resource."},"TransactionApprovalAirlock2FAOfflineChallengeDataResourceDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FAOfflineChallengeDataResourceObject"}}},"TransactionApprovalAirlock2FAOfflineChallengeDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.airlock-2fa.challenge"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalAirlock2FAOfflineChallengeData"}},"description":"An
+    included resource to which the primary data refers."},"GenericOtpCheckRequest":{"required":["otp"],"type":"object","properties":{"otp":{"maxLength":200,"minLength":1,"type":"string","description":"The
+    OTP to be verified."}}},"CrontoPushDeviceData":{"type":"object","properties":{"id":{"type":"string","description":"The
+    device ID."},"label":{"type":"string","description":"Optional label of the push
+    device."},"platform":{"type":"string","description":"The device platform. One
+    of ''IOS'' or ''ANDROID''."}}},"TransactionApprovalCrontoChallengeData":{"required":["challengeImage","onlineValidation","pushed","secureChannelChallenge"],"type":"object","properties":{"challengeImage":{"type":"string","description":"Challenge
+    image (cryptogram) in format \"image/png\" encoded into a base64 string."},"secureChannelChallenge":{"type":"string","description":"The
+    secure channel challenge (for use in app-to-app scenarios)."},"onlineValidation":{"type":"boolean","description":"Indicates
+    whether \"online validation\" is available (if true, the Cronto app can directly
+    send the OTP to the server)."},"pushed":{"type":"boolean","description":"Indicates
+    whether the challenge has been pushed directly to the device / Cronto app."},"pushDevices":{"type":"array","description":"Contains
+    information about the device if the challenge has been pushed.","items":{"$ref":"#/components/schemas/CrontoPushDeviceData"}}},"description":"Attributes
+    of this resource."},"TransactionApprovalCrontoChallengeDataResourceDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"$ref":"#/components/schemas/TransactionApprovalCrontoChallengeDataResourceObject"}}},"TransactionApprovalCrontoChallengeDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.cronto.challenge"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalCrontoChallengeData"}},"description":"An
+    included resource to which the primary data refers."},"TransactionApprovalCrontoPushDeviceData":{"type":"object","properties":{"id":{"type":"string","description":"The
+    device ID."},"label":{"type":"string","description":"Label of the push device."},"defaultDevice":{"type":"boolean","description":"Indicates,
+    whether this is the default device."}},"description":"Attributes of this resource."},"TransactionApprovalCrontoPushDeviceDataCollectionDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"type":"array","description":"A
+    collection of included resources to which the primary data refers.","items":{"$ref":"#/components/schemas/TransactionApprovalCrontoPushDeviceDataResourceObject"}}}},"TransactionApprovalCrontoPushDeviceDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.cronto.push-device"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalCrontoPushDeviceData"}},"description":"A
+    collection of included resources to which the primary data refers."},"TransactionApprovalUsernameCheckRequest":{"required":["username"],"type":"object","properties":{"username":{"maxLength":500,"minLength":1,"type":"string"}}},"TransactionApprovalMatrixChallengeCheckRequest":{"required":["challengeResponse"],"type":"object","properties":{"challengeResponse":{"minProperties":1,"type":"object","additionalProperties":{"minProperties":1,"type":"string","description":"Map
+    of the original challenge coordinate to the respective challenge response."},"description":"Map
+    of the original challenge coordinate to the respective challenge response."}}},"TransactionApprovalMatrixChallengeData":{"required":["challenges"],"type":"object","properties":{"listId":{"type":"string","description":"The
+    ID of the list being used (if available).","nullable":true},"challenges":{"type":"array","description":"The
+    challenge(s) containing the matrix coordinates or indexes.","items":{"type":"string"}}},"description":"Attributes
+    of this resource."},"TransactionApprovalMatrixChallengeDataResourceDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"$ref":"#/components/schemas/TransactionApprovalMatrixChallengeDataResourceObject"}}},"TransactionApprovalMatrixChallengeDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.matrix.challenge"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalMatrixChallengeData"}},"description":"An
+    included resource to which the primary data refers."},"TransactionApprovalMtanTokenData":{"required":["number"],"type":"object","properties":{"label":{"type":"string","description":"Optional
+    label of the phone number."},"number":{"type":"string","description":"The phone
+    number with masked digits."},"defaultNumber":{"type":"boolean","description":"Indicates,
+    whether this is the default number."}},"description":"Attributes of this resource."},"TransactionApprovalMtanTokenDataCollectionDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"type":"array","description":"A
+    collection of included resources to which the primary data refers.","items":{"$ref":"#/components/schemas/TransactionApprovalMtanTokenDataResourceObject"}}}},"TransactionApprovalMtanTokenDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.mtan.token"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalMtanTokenData"}},"description":"A
+    collection of included resources to which the primary data refers."},"TransactionApprovalResendMtanOtpPossibleData":{"required":["otpResendPossible"],"type":"object","properties":{"otpResendPossible":{"type":"boolean","description":"Indicates
+    whether an OTP resend may be requested by the client. An OTP resend is not possible,
+    if the maximum amount of resends has already been exceeded."}},"description":"Attributes
+    of this resource."},"TransactionApprovalResendMtanOtpPossibleDataResourceDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"$ref":"#/components/schemas/TransactionApprovalResendMtanOtpPossibleDataResourceObject"}}},"TransactionApprovalResendMtanOtpPossibleDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.mtan.otp.resend.information"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalResendMtanOtpPossibleData"}},"description":"An
+    included resource to which the primary data refers."},"TransactionApprovalSelectionOptionData":{"type":"object","properties":{"lastSelected":{"type":"boolean","description":"Flag
+    indicating whether this selection was last selected. This flag is only sent if
+    true.","nullable":true}},"description":"Attributes of this resource."},"TransactionApprovalSelectionOptionDataCollectionDocument":{"type":"object","properties":{"included":{"type":"array","description":"A
+    collection of included resources to which the primary data refers","items":{"type":"object","description":"A
+    collection of included resources to which the primary data refers"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"data":{"type":"array","description":"A
+    collection of included resources to which the primary data refers.","items":{"$ref":"#/components/schemas/TransactionApprovalSelectionOptionDataResourceObject"}}}},"TransactionApprovalSelectionOptionDataResourceObject":{"type":"object","properties":{"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["transaction-approval.selection.option"]},"attributes":{"$ref":"#/components/schemas/TransactionApprovalSelectionOptionData"}},"description":"A
+    collection of included resources to which the primary data refers."},"Meta":{"description":"Non-standard
+    meta-information that can not be represented as an attribute or relationship.","type":"object","additionalProperties":true},"Jsonapi":{"description":"An
+    object describing the server''s implementation.","type":"object","properties":{"version":{"description":"A
+    string indicating the highest JSON:API version supported.","type":"string"},"ext":{"description":"An
+    array of URIs for all applied extensions.","type":"array","items":{"type":"string","format":"uri-reference"}},"profile":{"description":"An
+    array of URIs for all applied profiles.","type":"array","items":{"type":"string","format":"uri-reference"}},"meta":{"$ref":"#/components/schemas/Meta"}},"additionalProperties":false},"Link":{"description":"A
+    link **MUST** be represented as either: a string containing the link''s URL or
+    a link object.","oneOf":[{"description":"A string containing the link''s URL.","type":"string","format":"uri-reference"},{"type":"object","required":["href"],"properties":{"href":{"description":"A
+    string containing the link''s URL.","type":"string","format":"uri-reference"},"meta":{"$ref":"#/components/schemas/Meta"}}}]},"ResourceIdentifierRef":{"type":"object","required":["id","type"],"properties":{"type":{"type":"string"},"id":{"type":"string"},"meta":{"$ref":"#/components/schemas/Meta"}}},"LinkageToOne":{"oneOf":[{"description":"Empty
+    to-one relationship.","type":"string","nullable":true,"enum":[]},{"$ref":"#/components/schemas/ResourceIdentifierRef"}]},"LinkageToMany":{"type":"array","items":{"$ref":"#/components/schemas/ResourceIdentifierRef"},"minItems":0,"uniqueItems":true},"Linkage":{"oneOf":[{"$ref":"#/components/schemas/LinkageToOne"},{"$ref":"#/components/schemas/LinkageToMany"}]},"Relationship":{"type":"object","properties":{"links":{"$ref":"#/components/schemas/Links"},"data":{"$ref":"#/components/schemas/Linkage"},"meta":{"$ref":"#/components/schemas/Meta"}}},"ResourceObjectBase":{"type":"object","required":["type","id"],"properties":{"type":{"type":"string"},"id":{"type":"string"},"attributes":{"type":"object"},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"}}},"Pagination":{"type":"object","properties":{"first":{"$ref":"#/components/schemas/Link"},"last":{"$ref":"#/components/schemas/Link"},"prev":{"$ref":"#/components/schemas/Link"},"next":{"$ref":"#/components/schemas/Link"}}},"ResponseDocumentBase":{"type":"object","properties":{"meta":{"$ref":"#/components/schemas/Meta"},"included":{"description":"To
+    reduce the number of HTTP requests, servers **MAY** allow responses that include
+    related resources along with the requested primary resources. Such responses are
+    called \"compound documents\".","type":"array","items":{"$ref":"#/components/schemas/ResourceObjectBase"},"uniqueItems":true},"links":{"description":"Link
+    members related to the primary data.","allOf":[{"$ref":"#/components/schemas/Links"},{"$ref":"#/components/schemas/Pagination"}]},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"}}},"Error":{"type":"object","properties":{"id":{"description":"A
+    unique identifier for this particular occurrence of the problem.","type":"string"},"links":{"$ref":"#/components/schemas/Links"},"status":{"description":"The
+    HTTP status code applicable to this problem, expressed as a string value.","type":"number"},"code":{"description":"An
+    application-specific error code, expressed as a string value.","type":"string"},"title":{"description":"A
+    short, human-readable summary of the problem. It **SHOULD NOT** change from occurrence
+    to occurrence of the problem, except for purposes of localization.","type":"string"},"detail":{"description":"A
+    human-readable explanation specific to this occurrence of the problem.","type":"string"},"source":{"type":"object","properties":{"pointer":{"description":"A
+    JSON Pointer [RFC6901] to the associated entity in the request document [e.g.
+    \"/data\" for a primary data object, or \"/data/attributes/title\" for a specific
+    attribute].","type":"string"},"parameter":{"description":"A string indicating
+    which query parameter caused the error.","type":"string"},"header":{"description":"A
+    string indicating the name of a single request header which caused the error.","type":"string"}}},"meta":{"$ref":"#/components/schemas/Meta"}},"additionalProperties":false},"ErrorDocumentResponse":{"type":"object","additionalProperties":false,"allOf":[{"$ref":"#/components/schemas/ResponseDocumentBase"},{"type":"object","required":["errors"],"properties":{"errors":{"type":"array","items":{"$ref":"#/components/schemas/Error"},"uniqueItems":true}}}]}}},"x-tagGroups":[{"name":"Airlock
+    IAM Transaction Approval REST API","tags":["transaction-approval-rest-docs-openapi-intermediate_other","Flow
+    Control","Message Parameters","Airlock 2FA","Cronto","Email OTP","Users","Matrix
+    Cards","Message Acknowledgement","SMS/mTAN","Generic OTP"]}]}'
+kind: ConfigMap
+metadata:
+  name: {{ $moduleName }}-openapi
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" . | nindent 4 }}
+{{-   end }}
+{{- end }}

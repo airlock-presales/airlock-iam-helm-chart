@@ -1,0 +1,477 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $app := "adminapp" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   $app_values := get .Values.iam.apps $app -}}
+{{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
+{{-   $moduleName := print $fullName "-" $suffix | lower -}}
+{{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   if $app_values.enable }}
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: DenyRules
+metadata:
+  name: {{ $moduleName }}-config-editor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  request:
+    builtIn:
+      settings:
+        level: Strict
+        threatHandlingMode: Block
+# SSRF deny rule introduced in Microgateway 4.4
+      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
+      overrides:
+        - conditions:
+            ruleKeys:
+              - SSRF
+            types:
+              - JSON
+          settings:
+            level: Unfiltered
+      {{- end }}
+      exceptions:
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^sso$"
+                ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^v-loc$"
+                ignoreCase: false
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.newUsername"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.contextData.email"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.data.id"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.email"
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^filter$"
+                ignoreCase: false
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/logs/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(loginUrl|afterLogoutUrl)$"
+                ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            jsonPath: "$.loginUrl"
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            jsonPath: "$.afterLogoutUrl"
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^Location$"
+                ignoreCase: false
+            value:
+              matcher:
+                regex: "^editConfig.*"
+                ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^v-loc$"
+                ignoreCase: false
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig$"
+              ignoreCase: false
+      - ruleKeys:
+        - "TEMPLATE"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "TEMPLATE"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.translations.en"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              ignoreCase: false
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.translations.fr"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              ignoreCase: false
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.translations.de"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              ignoreCase: false
+      - ruleKeys:
+        - "HTML"
+        blockedData:
+          json:
+            jsonPath: "$.data.attributes.translations.it"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              ignoreCase: false
+      - ruleKeys:
+        - "HTML"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "UNIXCMD"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "UNIXCMD"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "WINCMD"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "WINCMD"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "LDAP"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "LDAP"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "PHP"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "PHP"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "OGNL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "OGNL"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^sso$"
+                ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "NOSQL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "NOSQL"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SANITY"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SANITY"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "ENCODING"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "ENCODING"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "PROTOCOL"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "PROTOCOL"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "HPP"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "HPP"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^v-loc$"
+                ignoreCase: false
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig$"
+              ignoreCase: false
+      - ruleKeys:
+        - "HPP"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "HPP"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^Location$"
+                ignoreCase: false
+            value:
+              matcher:
+                regex: "^editConfig.*"
+                ignoreCase: false
+      - ruleKeys:
+        - "EXPLOIT"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "EXPLOIT"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SCANNING"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SCANNING"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              ignoreCase: false
+      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^sso$"
+                ignoreCase: false
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^v-loc$"
+                ignoreCase: false
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $app_values.path }}/editConfig$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(loginUrl|afterLogoutUrl)$"
+                ignoreCase: false
+        requestConditions:
+          method:
+          - "GET"
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          json:
+            jsonPath: "$.loginUrl"
+        requestConditions:
+          method:
+          - "GET"
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          json:
+            jsonPath: "$.afterLogoutUrl"
+        requestConditions:
+          method:
+          - "GET"
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          header:
+            name:
+              matcher:
+                regex: "^X-URL$"
+        requestConditions:
+          method:
+          - "POST"
+      {{- end }}
+{{-   end }}
+{{- end }}

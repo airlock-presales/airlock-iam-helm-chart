@@ -3,3 +3,5 @@
 /custom.yaml
 /sandboxed.yaml
 *.swp
+/samples/
+/manifests/

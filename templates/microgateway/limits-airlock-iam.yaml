@@ -1,0 +1,29 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: Limits
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  settings:
+    threatHandlingMode: Block
+  request:
+    limited:
+      general:
+        pathLength: "1Ki"
+      parameter:
+        count: 256
+        nameLength: "128"
+        valueLength: "10Ki"
+      json:
+        nestingDepth: 100
+        keyCount: 250
+        elementCount: 150000
+        keyLength: "256"
+        valueLength: "8Ki"
+{{- end }}

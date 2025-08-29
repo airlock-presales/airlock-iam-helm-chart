@@ -32,7 +32,7 @@ spec:
         {{-     if $app_values.enable }}
         - backend:
             service:
-              name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default $app) }}
+              name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
               port:
                 number: 80
           path: {{ print "/" ($.Values.iam.apps.adminapp.path | default (print $.Values.iam.instanceName "-" $app)) }}

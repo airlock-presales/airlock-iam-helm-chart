@@ -16,8 +16,8 @@ metadata:
 spec:
   parentRefs:
   {{- if contains "/" $.Values.ingress.gatewayAPI.gateway }}
-    - name: {{ $.Values.ingress.gatewayAPI.gateway | split "/" | index 1 }}
-    - namespace: {{ $.Values.ingress.gatewayAPI.gateway | split "/" | first }}
+    - name: {{ regexSplit "/" $.Values.ingress.gatewayAPI.gateway -1 | last }}
+      namespace: {{ regexSplit "/" $.Values.ingress.gatewayAPI.gateway -1 | first }}
   {{- else }}
     - name: {{ $.Values.ingress.gatewayAPI.gateway }}
     {{- if ne $.Values.ingress.gatewayAPI.namespace "" }}
@@ -43,7 +43,7 @@ spec:
     {{-   range $app, $app_values := .Values.iam.apps }}
     {{-     if $app_values.enable }}
     - backendRefs:
-        - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default $app) }}
+        - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
           port: 80
       matches:
         - path:

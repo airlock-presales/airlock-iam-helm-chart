@@ -461,9 +461,11 @@ spec:
           {{- if has (lower $.Values.iam.license.type) (list "cm" "configmap") }}
           configMap:
             name: {{ $.Values.iam.license.name }}
-          {{- else }}
+          {{- else if has (lower $.Values.iam.license.type) (list "secret") }}
           secret:
             secretName: {{ $.Values.iam.license.name }}
+          {{- else }}
+          {{-   fail "Invalid value for iam.license.type" }}
           {{- end }}
         {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
         - name: init

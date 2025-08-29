@@ -1,0 +1,61 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   if semverCompare ">=4.7" .Values.ingress.microgateway.version }}
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: EnvoyHTTPFilter
+metadata:
+  name: {{ $fullName }}-secure-cookie-rewrite
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  value:
+    name: envoy.filters.http.lua
+    typed_config:
+      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+      default_source_code:
+        inline_string: |
+          SET_COOKIE_KEY = "Set-Cookie"
+          SECURE_COOKIE_SUFFIX = "; Secure"
+          SECURE_COOKIE_PATTERN = ";(%s*)secure"
+
+          function cloneCookiesWithSecureFlag(response_handle, numCookies)
+              local newCookies = {}
+              -- IMPORTANT: Unlike Lua's built-in functions, Envoy's header index starts at 0
+              for i=0,(numCookies-1) do
+                  local cookie = response_handle:headers():getAtIndex(SET_COOKIE_KEY, i)
+                  if (cookie ~= nil) then
+                        if (string.find(string.lower(cookie), SECURE_COOKIE_PATTERN) == nil) then
+                              newCookies[i] = cookie .. SECURE_COOKIE_SUFFIX
+                        else
+                              newCookies[i] = cookie
+                        end
+                  end
+              end
+              return newCookies
+          end
+
+          function replaceExistingCookies(response_handle, newCookies, numCookies)
+              response_handle:headers():remove(SET_COOKIE_KEY)
+              for i=0,(numCookies-1) do
+                  response_handle:headers():add(SET_COOKIE_KEY, newCookies[i])
+              end
+          end
+
+          function envoy_on_response(response_handle)
+              if (response_handle:connection():ssl() == nil) then
+                  return
+              end
+
+              local numCookies = response_handle:headers():getNumValues(SET_COOKIE_KEY)
+              if (numCookies > 0) then
+                  response_handle:logDebug("Response cookies before appending secure flag: " .. response_handle:headers():get(SET_COOKIE_KEY))
+                  local newCookies = cloneCookiesWithSecureFlag(response_handle, numCookies)
+                  replaceExistingCookies(response_handle, newCookies, numCookies)
+                  response_handle:logDebug("Response cookies after appending secure flag: " .. response_handle:headers():get(SET_COOKIE_KEY))
+              end
+          end
+{{-   end }}
+{{- end }}
