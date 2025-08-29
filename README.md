@@ -83,7 +83,7 @@ To alleviate this challenge, the Helm chart forces an emptyDir() volume on the l
 
 ### <code>instance.properties</code>
 
-For many settings in <code>instance.properties</code>, the Helm chart provides easy configuration possibilities, in <code>iam.apps.\<application-name\>.path</code> and <code>iam.instanceProperties[]</code>. There are also multiple sections to define environment variables which can be used to almost all other settings, e.g. in <code>iam.apps.\<application-name\>.dedicatedDeployment.env</code>, <code>iam.instanceProperties[].env</code>, and <code>env</code>. Finally, a few settings are pre-defined in the Helm chart and should not be overwritten:
+For many settings in <code>instance.properties</code>, the Helm chart provides easy configuration possibilities, in <code>iam.apps.\<application-name\>.path</code> and <code>iam.instanceProperties[]</code>. There are also multiple sections to define environment variables which can be used to adjust almost all other settings, e.g. in <code>iam.apps.\<application-name\>.dedicatedDeployment.env</code>, <code>iam.instanceProperties[].env</code>, and <code>env</code>. Finally, a few settings are pre-defined in the Helm chart and should not be overwritten:
 
 * IAM_CONFIG_FORMAT
 * IAM_HEALTH_PORT
