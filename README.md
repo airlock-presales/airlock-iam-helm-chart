@@ -10,13 +10,13 @@ It can be installed either as a Self-Contained Application (SCA), directly on to
 
 For the latter, a Helm chart is an easy option to generate and maintain the required manifests.
 
-In stark contrast to the "official" [charts](https://github.com/airlock/iam-helm-charts/), this chart here can actually be used to create a working deployment.
+As of now, there is unfortunately no official chart. To simplify deploying Airlock IAM on Kubernets / OpenShift, the pre-sales team got to work. :-)
 
 ## Disclaimer
 
 This is not an official chart. It is maintained by the Airlock Pre-Sales team, as time permits, on a best-efforts basis. Still, we welcome bug reports (issues) and PRs.
 
-Also note, the chart is work in progress. Not all features and possible configurations have been tested and the structure of the configuration parameters may still change.
+Also note, the chart is work in progress. Not all features and possible configurations have been tested and the structure of the configuration parameters may always change.
 
 ## Cluster requirements
 
@@ -36,7 +36,7 @@ The Kubernetes cluster must comply with the following requirements:
 Airlock IAM is a very powerful authentication engine, supporting many different use cases - [click for details](https://www.airlock.com/secure-access-hub/komponenten/iam). It consists of multiple web applications, uses a database, and can make use of Redis. Consequently, there are different ways to deploy it.
 
 <p align="left">
-  <img src="media/shared_white.png" alt="shared deployment" height="250">
+  <img src="media/shared_white.png" alt="combined deployment" height="250">
 </p>
 
 Foremost, the web applications can either be kept together, as a single deployment, or they can all be managed as their individual (sandboxed) deployments. The advantage of the former option is its ease of use and administration. Upon activation, configuration changes are automatically distributed to all components which take it up immediately. On the other hand, it is impossible to individually scale independent web applications. Also, modules like the Service Container must not be running multiple times. Therefore, the combined deployment layout is geared towards test environments and proof-of-concepts and their replica count is fixed to 1.
@@ -45,28 +45,23 @@ Foremost, the web applications can either be kept together, as a single deployme
   <img src="media/sandboxed_white.png" alt="sandboxed deployment" height="400">
 </p>
 
-For a production environment, it is paramount to be able to freely scale the customer-facing loginapp and transaction approval while, for example, there always must only be one replica of the service container.
+For a production environment, it is paramount to be able to freely scale the customer-facing loginapp and, potnetially also, transaction approval while, for example, there always must only be one replica of the service container.
 
-By the way, using the new YAML config format, configuration environments, and GitOps, config changes can also be easily and automatically distributed across your whole setup.
+By the way, using the new YAML config format, configuration environments, and GitOps, config changes can also be easily and automatically distributed across your whole setup, even with multiple deployments.
 
 ### Configuration
 
 Use the following settings in <code>values.yaml</code> to define your deployment layout:
 
     iam:
+      appDeploymentStrategy: single | multi
       apps:
         loginapp:
           enable: true | false
-          sandbox:
-            enable: true | false
         adminapp:
           enable: true | false
-          sandbox:
-            enable: true | false
         transactionApproval:
           enable: true | false
-          sandbox:
-            enable: true | false
         ...
 
 ## Instance directory
@@ -79,15 +74,15 @@ Each Airlock IAM instance requires a so-called instance directory which contains
 * UI resources
 * Instance settings in <code>instance.properties</code>
 
-All applications of the same instance must have access to the same content. How you achieve that is up to you but one obvious, simple way is to mount the same volume into all deployments. This requires a type of storage supporting ReadWriteMany or ReadOnlyMany, if you have at least one sandboxed application.
+All applications of the same instance must have access to the same content. How you achieve that is up to you but one obvious, simple way is to mount the same volume into all deployments. This requires a type of storage supporting ReadWriteMany or ReadOnlyMany, if you have chose appDeploymentStrategy 'multi'.
 
 Unfortunately, logging may make the situation a bit more complicated. If you opt to have Airlock IAM ship to an Elasticsearch server, each replica will forcibly first write the logs to files before they are forwarded. By default, these files are also in the instance directory, leading to concurrent write access on text files.
 
-To alleviate this challenge, the Helm chart uses StatefulSets if the number of replicas is greater than 1. It will also mount a dedicated volume onto the logs directory. It is best to make sure reasonable values have been set for persistence to avoid problems. Understand that persistence can be defined "globally" in <code>persistence</code> as well as per applications <code>iam.apps.\<application-name\>.sandbox.persistence</code>, with the latter overriding the former.
+To alleviate this challenge, the Helm chart forces an emptyDir() volume on the logs subdirectory and turns of local logging, if the number of replicas is greater than 1.
 
 ### <code>instance.properties</code>
 
-For many settings in <code>instance.properties</code>, the Helm chart provides easy configuration possibilities, in <code>iam.apps.\<application-name\>.path</code> and <code>iam.instanceProperties[]</code>. There are also multiple sections to define environment variables which can be used to almost all other settings, e.g. in <code>iam.apps.\<application-name\>.sandbox.env</code>, <code>iam.instanceProperties[].env</code>, and <code>env</code>. Finally, a few settings are pre-defined in the Helm chart and should not be overriden:
+For many settings in <code>instance.properties</code>, the Helm chart provides easy configuration possibilities, in <code>iam.apps.\<application-name\>.path</code> and <code>iam.instanceProperties[]</code>. There are also multiple sections to define environment variables which can be used to almost all other settings, e.g. in <code>iam.apps.\<application-name\>.dedicatedDeployment.env</code>, <code>iam.instanceProperties[].env</code>, and <code>env</code>. Finally, a few settings are pre-defined in the Helm chart and should not be overwritten:
 
 * IAM_CONFIG_FORMAT
 * IAM_HEALTH_PORT
@@ -97,9 +92,20 @@ For many settings in <code>instance.properties</code>, the Helm chart provides e
 
 ## Other important settings
 
-* If any application has more than one replica, it is strongly recommended to enable Redis in <code>redis.enable</code> and configure an <code>Expert Mode Redis State Repository</code> in Airlock IAM.
 * Hostname and TLS certificate in <code>ingress.dns.hostname</code> and <code>ingress.tls.secretName</code>, respectively.
-* The required version of Airlock in in <code>image.tag</code>
+* The required version of Airlock in <code>image.tag</code>
+* If any application has more than one replica, it is strongly recommended to enable Redis in <code>redis.enable</code> and configure an <code>Expert Mode Redis State Repository</code> in Airlock IAM.
+  * Due to limitations in the Helm dependency condition syntax, this can unfortunately not be automated.
+  * For simplification, the Helm charts sets the following environment variable:
+    * IAM_CFG_REDIS_EXPERT_CONFIG
+  * In your <code>iam-config.yaml</code> make sure that the <stateRepository> config contains the following:
+  ```
+  yamlConfig:
+    - value: "sentinelServersConfig: \n  connectTimeout: 10000 \n  masterName: \"mymaster\" \n  sentinelAddresses: \n  - \"redis://redis1:2812\" \n  - \"redis://redis2:2813\"  "
+      var:
+        name: IAM_CFG_REDIS_EXPERT_CONFIG
+
+  ```
 
 ## Database setup
 
@@ -142,7 +148,7 @@ To ensure Airlock IAM respects these variables, search for the key sqlDataSource
 
 ## Preparations
 
-* Create the pull secret as Airlock IAM images are not publicly available on Quay.io using these [instructions](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/).
+* Airlock IAM images are hosted on Quay.io but are not publicly accessible. Create the necessary pull secret using these [instructions](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/).
 * Create a ConfigMap or Secret with the license:
 ```
     kubectl create secret generic \<name\> --from-file=license.txt=\<filename\>

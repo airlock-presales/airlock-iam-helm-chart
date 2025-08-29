@@ -312,6 +312,18 @@ spec:
                   key: {{ $.Values.postgresql.global.postgresql.auth.secretKeys.userPasswordKey }}
             {{-   end }}
             {{- end }}
+            {{- if $.Values.redis.enable }}
+              {{- $addrs := print "{\"sentinelServersConfig\":" "{" "\"connectTimeout\":10000,\"masterName\":\"mymaster\",\"sentinelAddresses\":[" -}}
+              {{- range untilStep 0 (int $.Values.redis.replica.replicaCount) 1 -}}
+              {{-   if gt . 0 -}}
+              {{-     $addrs = print $addrs "," -}}
+              {{-   end -}}
+              {{-   $addrs = print $addrs "\"redis://" $.IAM.fullName "-redis-node-" . "." $.IAM.fullName "-redis-headless:26379\"" -}}
+              {{- end -}}
+              {{- $addrs = print $addrs "]}}" }}
+            - name: IAM_CFG_REDIS_EXPERT_CONFIG
+              value: {{ $addrs | fromJson | toYaml | quote }}
+            {{- end }}
             {{- if $instanceProp.metrics }}
             - name: IAM_METRICS_PORT
               value: {{ quote $instanceProp.metrics }}

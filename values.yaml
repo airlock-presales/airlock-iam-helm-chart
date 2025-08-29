@@ -437,6 +437,7 @@ persistence:
 ## the IAM configuration, accordingly.
 redis:
   enable: false
+  architecture: "replication"
   replica:
     replicaCount: 2
   sentinel:
