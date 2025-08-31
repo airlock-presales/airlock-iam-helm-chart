@@ -16,10 +16,10 @@ metadata:
 spec:
   virtualhost:
     fqdn: {{ $.Values.ingress.dns.hostname }}
-  {{- if ne $.Values.ingress.tls.secretName "" }}
-  tls:
-    secretName: {{ $.Values.ingress.tls.secretName }}
-  {{- end }}
+    {{- if ne $.Values.ingress.tls.secretName "" }}
+    tls:
+      secretName: {{ $.Values.ingress.tls.secretName }}
+    {{- end }}
   routes:
     {{- if eq .Values.iam.appDeploymentStrategy "single" }}
     - conditions:
