@@ -91,7 +91,7 @@ spec:
             - name: INIT_DL_VERSION
               value: {{ (ternary $.Values.database.initialisation.connector.mariadb.version $.Values.database.initialisation.connector.postgresql.version (eq $databaseType "mariadb")) | quote }}
             - name: INIT_DB_SCHEMA
-              value: {{ ternary $.Values.database.initialisation.schema.operation "none" (contains $.IAM.module "adminapp") }}
+              value: {{ ternary $.Values.database.initialisation.schema.operation "none" (contains "adminapp" $.IAM.module) }}
             - name: INIT_DB_HOST
               {{- if eq $databaseDeployment "external" }}
               value: {{ $.Values.database.external.host }}
@@ -164,7 +164,7 @@ spec:
             - name: INIT_DB_VERSION
               value: {{ $.Values.images.iam.tag | quote }}
             - name: INIT_ADMIN_CREATE
-              value: {{ ternary $.Values.database.initialisation.administrator.create "false" (contains $.IAM.module "adminapp") | quote }}
+              value: {{ ternary $.Values.database.initialisation.administrator.create "false" (contains "adminapp" $.IAM.module) | quote }}
             - name: INIT_ADMIN_CHANGE
               value: {{ $.Values.database.initialisation.administrator.enforceChange | quote }}
             - name: INIT_ADMIN_USERNAME
