@@ -516,7 +516,7 @@ database:
         key: "root_user"
       rootPassword:
         value: ""
-        existingSecret: "airlock-iam"
+        existingSecret: ""
         key: "root_password"
   
   ## Configure MariaDB deployed from this chart
@@ -612,7 +612,7 @@ database:
         ## - define the correct hash value, e.g. 'MedusaPwdHistoryAAAARjE2Mzg0fF1jjOhya0ZuJ5OrHXgSXznOBBLl6eJ70PTdFYerSYPwgrlK1uq6UCzc5cvN8t1xtgc+YBQO8UgWBYhzDgpkQGM='
         pwd_hash:
           value: ""
-          existingSecret: "airlock-iam"
+          existingSecret: ""
           key: "admin_password"
       
 
