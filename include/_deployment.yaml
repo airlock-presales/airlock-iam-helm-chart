@@ -115,8 +115,15 @@ spec:
                 secretKeyRef:
                   name: {{ $.Values.database.external.credentials.rootUser.existingSecret }}
                   key: {{ $.Values.database.external.credentials.rootUser.key }}
-              {{-   else }}
+              {{-   else if ne $.Values.database.external.credentials.rootUser.value "" }}
               value: {{ $.Values.database.external.credentials.rootUser.value }}
+              {{-   else if ne $.Values.database.external.credentials.user.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.database.external.credentials.user.existingSecret }}
+                  key: {{ $.Values.database.external.credentials.user.key }}
+              {{-   else }}
+              value: {{ $.Values.database.external.credentials.user.value }}
               {{-   end }}
               {{- else if eq $databaseDeployment "mariadb" }}
               value: {{ $.Values.mariadb.auth.username }}
@@ -130,11 +137,18 @@ spec:
                 secretKeyRef:
                   name: {{ $.Values.database.external.credentials.rootPassword.existingSecret }}
                   key: {{ $.Values.database.external.credentials.rootPassword.key }}
-              {{-   else }}
+              {{-   else if ne $.Values.database.external.credentials.rootPassword.value "" }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $.IAM.fullName }}
                   key: {{ $.Values.database.external.credentials.rootPassword.key }}
+              {{-   else if ne $.Values.database.external.credentials.password.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.database.external.credentials.password.existingSecret }}
+                  key: {{ $.Values.database.external.credentials.password.key }}
+              {{-   else }}
+              value: {{ $.Values.database.external.credentials.password.value }}
               {{-   end }}
               {{- else if eq $databaseDeployment "mariadb" }}
               valueFrom:

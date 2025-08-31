@@ -14,7 +14,7 @@ maintainers:
 name: iam
 sources:
   - https://github.com/airlock-presales/the-iam-helm-chart
-version: 0.0.1
+version: 0.0.2
 dependencies:
   - name: redis
     version: 19.6.4
