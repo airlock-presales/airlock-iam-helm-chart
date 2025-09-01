@@ -25,6 +25,7 @@ echo "Variables checked"
 
 instance_dir="${INSTANCE_DIR:-/home/airlock/iam/instances}/${INIT_INSTANCE}"
 
+
 # ###########
 # Create instance
 # ###########
@@ -45,4 +46,21 @@ if [[ "${INIT_INSTANCE_CREATE}" == "true" ]]; then
         fi
     fi
 fi
+
+
+# ###########
+# Wait for instance to be created
+# ###########
+
+# needs to be done on all deployments not containing adminapp
+
+while true
+do
+    if [[ -d "${instance_dir}" ]]; then
+        echo "Instance ${INIT_INSTANCE} ready"
+    else
+        echo "Waiting for instance initialisation to be completed"
+        sleep 5
+    fi
+done
 

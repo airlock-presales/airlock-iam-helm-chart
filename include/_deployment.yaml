@@ -223,7 +223,7 @@ spec:
               name: init
         {{- end }}
       containers:
-        - name: {{ $fullName }}
+        - name: "iam"
           image: "{{ $.Values.images.iam.repository }}:{{ $.Values.images.iam.tag }}"
           imagePullPolicy: {{ quote $.Values.images.iam.pullPolicy }}
           args: ["run", "-i", {{ quote $.Values.iam.instanceName }}]
