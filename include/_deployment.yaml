@@ -78,7 +78,7 @@ spec:
           image: "{{ $.Values.images.mysql.repository }}:{{ $.Values.images.mysql.tag }}"
           imagePullPolicy: {{ quote $.Values.images.mysql.pullPolicy }}
           {{- end }}
-          args: ["/bin/bash", "/var/tmp/scripts/init_db"]
+          command: ["/bin/bash", "/var/tmp/scripts/init_db"]
           env:
             - name: INSTANCE_DIR
               value: "/home/airlock/iam/instances"
@@ -201,7 +201,7 @@ spec:
         - name: {{ print $fullName "-init-instance" }}
           image: "{{ $.Values.images.iam.repository }}:{{ $.Values.images.iam.tag }}"
           imagePullPolicy: {{ quote $.Values.images.iam.pullPolicy }}
-          args: ["/bin/bash", "/var/tmp/scripts/init_instance"]
+          command: ["/bin/bash", "/var/tmp/scripts/init_instance"]
           env:
             - name: INSTANCE_DIR
               value: "/home/airlock/iam/instances"
