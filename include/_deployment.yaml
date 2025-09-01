@@ -214,6 +214,9 @@ spec:
             - mountPath: /home/airlock/iam/instances
               name: config
             {{- end }}
+            - mountPath: /home/airlock/iam/license.txt
+              name: license
+              subPath: license.txt
             - mountPath: /var/tmp/scripts
               name: init
         {{- end }}
