@@ -269,7 +269,7 @@ spec:
             - name: IAM_LOG_LEVEL
               value: {{ $instanceProp.logging.level }}
             {{- end }}
-            {{- if and $instanceProp.logging.local.enable (eq (int $.IAM.app_values.replicas) 1) }}
+            {{- if and $instanceProp.logging.local.enable (or (eq $.Values.iam.appDeploymentStrategy "single") (eq (int $.IAM.app_values.replicas) 1)) }}
             #! Local logging is disabled with multiple replicas
             {{-   if $instanceProp.logging.local.structured }}
             - name: IAM_LOG_STRUCTURED_FILE_ENABLED
