@@ -67,7 +67,7 @@ spec:
       {{- end }}
       initContainers:
         {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
-        - name: {{ print $fullName "-init-db" }}
+        - name: "init-db"
           {{- if eq $databaseType "mariadb" }}
           image: "{{ $.Values.images.mariadb.repository }}:{{ $.Values.images.mariadb.tag }}"
           imagePullPolicy: {{ quote $.Values.images.mariadb.pullPolicy }}
@@ -198,7 +198,7 @@ spec:
               name: init
         {{- end }}
         {{- if $.Values.iam.instanceCreate }}
-        - name: {{ print $fullName "-init-instance" }}
+        - name: "init-instance"
           image: "{{ $.Values.images.iam.repository }}:{{ $.Values.images.iam.tag }}"
           imagePullPolicy: {{ quote $.Values.images.iam.pullPolicy }}
           command: ["/bin/bash", "/var/tmp/scripts/init_instance"]

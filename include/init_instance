@@ -33,7 +33,7 @@ if [[ "${INIT_INSTANCE_CREATE}" == "true" ]]; then
     if [[ -d "${instance_dir}" ]]; then
         echo "Instance ${INIT_INSTANCE} exists - doing nothing"
     else
-        iam init -i "${INIT_INSTANCE}" || die "Failed to create instance '${INIT_INSTANCE}'"
+        /opt/airlock-iam/bin/iam init -i "${INIT_INSTANCE}" || die "Failed to create instance '${INIT_INSTANCE}'"
         if [[ -d "${instance_dir}" ]]; then
             echo "Instance ${INIT_INSTANCE} created"
         else
