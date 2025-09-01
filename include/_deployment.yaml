@@ -209,6 +209,8 @@ spec:
               value: {{ $.Values.iam.instanceName }}
             - name: INIT_INSTANCE_CREATE
               value: {{ ternary "true" "false" (contains "adminapp" $.IAM.module) | quote }}
+            - name: INIT_CONFIG_FORMAT
+              value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.configFormat) "xml") }}
           volumeMounts:
             {{- if $persistenceProp.config.enable }}
             - mountPath: /home/airlock/iam/instances
