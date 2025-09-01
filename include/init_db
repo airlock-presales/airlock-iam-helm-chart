@@ -1,6 +1,6 @@
 #! /bin/bash
 
-[[ -r env.init ]] && source env.init
+[[ -r ../work/env.init ]] && source ../work/env.init
 
 function die ()
 {
@@ -125,20 +125,15 @@ echo "Database engine on ${INIT_DB_HOST} ready"
 # ###########
 
 if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
-    # download db script
-    url="https://docs.airlock.com/iam/${schema_version}/sql-scripts/schema/${INIT_TYPE}/create-medusa-schema.sql"
-    curl -s -L "${url}" --output "/var/tmp/create-medusa-schema.sql" || die "Failed to download schema creation script"
-
-    # create database and tables
+    # create database
     created=0
     case "${INIT_TYPE}" in
         mariadb)
             r="$(cmd_mariadb "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${INIT_DB_DATABASE}'")" || die "Failed to check for database"
             if [[ -z "$r" ]]; then
                 cmd_mariadb "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
-                cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
                 created=1
-	    fi
+            fi
             ;;
         postgresql)
             die "DB initialisation not yet supported for PostgreSQL"
@@ -147,9 +142,42 @@ if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
             r="$(cmd_mysql "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${INIT_DB_DATABASE}'")" || die "Failed to check for database"
             if [[ -z "$r" ]]; then
                 cmd_mysql "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
+                created=1
+            fi
+            ;;
+    esac
+
+    # report
+    if [[ ${created} -eq 1 ]]; then
+        echo "Database ${INIT_DB_DATABASE} created on ${INIT_DB_HOST}"
+    else
+        echo "Database ${INIT_DB_DATABASE} already existing on ${INIT_DB_HOST}"
+    fi
+
+    # download db script
+    url="https://docs.airlock.com/iam/${schema_version}/sql-scripts/schema/${INIT_TYPE}/create-medusa-schema.sql"
+    curl -s -L "${url}" --output "/var/tmp/create-medusa-schema.sql" || die "Failed to download schema creation script"
+    echo "Schema ${schema_version} for ${INIT_TYPE} downloaded"
+
+    # create tables
+    created=0
+    case "${INIT_TYPE}" in
+        mariadb)
+            r="$(cmd_mariadb "SELECT table_name FROM information_schema.tables WHERE table_schema = '${INIT_DB_DATABASE}' AND table_name = 'medusa_user' LIMIT 1")" || die "Failed to check for database"
+            if [[ -z "$r" ]]; then
                 cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
                 created=1
-	    fi
+            fi
+            ;;
+        postgresql)
+            die "DB initialisation not yet supported for PostgreSQL"
+            ;;
+        mysql)
+            r="$(cmd_mysql "SELECT table_name FROM information_schema.tables WHERE table_schema = '${INIT_DB_DATABASE}' AND table_name = 'medusa_user' LIMIT 1")" || die "Failed to check for database"
+            if [[ -z "$r" ]]; then
+                cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+                created=1
+            fi
             ;;
     esac
 
@@ -157,9 +185,9 @@ if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
     if [[ ${created} -eq 1 ]]; then
         cmd_sql "CREATE TABLE metadata(name VARCHAR(32) NOT NULL, value VARCHAR(32)) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_nopad_ci;"
         cmd_sql "INSERT INTO metadata(name,value) VALUES ('schema_version', '${schema_version}');"
-        echo "Database ${INIT_DB_DATABASE}, version ${schema_version}, created on ${INIT_DB_HOST}"
+        echo "Database ${INIT_DB_DATABASE}, version ${schema_version}, initialised on ${INIT_DB_HOST}"
     else
-        echo "Database ${INIT_DB_DATABASE} already existing on ${INIT_DB_HOST} - leaving unchanged"
+        echo "Database ${INIT_DB_DATABASE}, table 'medusa_user' already existing - doing nothing"
     fi
 fi
 
