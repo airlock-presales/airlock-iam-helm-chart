@@ -58,6 +58,7 @@ while true
 do
     if [[ -d "${instance_dir}" ]]; then
         echo "Instance ${INIT_INSTANCE} ready"
+        break
     else
         echo "Waiting for instance initialisation to be completed"
         sleep 5
