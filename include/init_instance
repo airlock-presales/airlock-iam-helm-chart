@@ -1,0 +1,40 @@
+#! /bin/bash
+
+if [[ -r "${INIT_ENV_PATH:-.}"/env.init ]]; then
+    echo "Loading variables from '${INIT_ENV_PATH:-.}/env.init'"
+    source "${INIT_ENV_PATH:-.}"/env.init
+fi
+
+function die ()
+{
+    echo $@
+    # do not exit to indicate problem
+    while true
+    do
+        sleep 10
+    done
+}
+
+# sanity checks
+# - not checking INSTANCE_DIR, INIT_DB_MIRROR
+for f in INIT_INSTANCE INIT_INSTANCE_CREATE
+do
+  [[ -z "${!f}" ]] && die "${f} not set"
+done
+echo "Variables checked"
+
+instance_dir="${INSTANCE_DIR:-/home/airlock/iam/instances}/${INIT_INSTANCE}"
+
+# ###########
+# Create instance
+# ###########
+
+if [[ "${INIT_INSTANCE_CREATE}" == "true" ]]; then
+    if [[ -d "${instance_dir}" ]]; then
+        echo "Instance ${INIT_INSTANCE} exists - doing nothing"
+    else
+        iam init -i "${INIT_INSTANCE}" || die "Failed to create instance '${INIT_INSTANCE}'"
+        echo "Instance ${INIT_INSTANCE} created"
+    fi
+fi
+

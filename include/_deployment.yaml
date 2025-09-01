@@ -65,9 +65,9 @@ spec:
         - name: {{ . }}
         {{- end }}
       {{- end }}
-      {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
       initContainers:
-        - name: {{ print $fullName "-init" }}
+        {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
+        - name: {{ print $fullName "-init-db" }}
           {{- if eq $databaseType "mariadb" }}
           image: "{{ $.Values.images.mariadb.repository }}:{{ $.Values.images.mariadb.tag }}"
           imagePullPolicy: {{ quote $.Values.images.mariadb.pullPolicy }}
@@ -196,7 +196,27 @@ spec:
             {{- end }}
             - mountPath: /var/tmp/scripts
               name: init
-      {{- end }}
+        {{- end }}
+        {{- if $.Values.iam.instanceCreate }}
+        - name: {{ print $fullName "-init-instance" }}
+          image: "{{ $.Values.images.iam.repository }}:{{ $.Values.images.iam.tag }}"
+          imagePullPolicy: {{ quote $.Values.images.iam.pullPolicy }}
+          args: ["/bin/bash", "/var/tmp/scripts/init_instance"]
+          env:
+            - name: INSTANCE_DIR
+              value: "/home/airlock/iam/instances"
+            - name: INIT_INSTANCE
+              value: {{ $.Values.iam.instanceName }}
+            - name: INIT_INSTANCE_CREATE
+              value: {{ ternary "true" "false" (contains "adminapp" $.IAM.module) | quote }}
+          volumeMounts:
+            {{- if $persistenceProp.config.enable }}
+            - mountPath: /home/airlock/iam/instances
+              name: config
+            {{- end }}
+            - mountPath: /var/tmp/scripts
+              name: init
+        {{- end }}
       containers:
         - name: {{ $fullName }}
           image: "{{ $.Values.images.iam.repository }}:{{ $.Values.images.iam.tag }}"

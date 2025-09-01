@@ -9,6 +9,10 @@ iam:
   ## - needs to match the folder name of the instance on the config volume
   instanceName: "auth"
 
+  ## Create instance if it does not yet exist
+  ## - default is 'false'
+  instanceCreate: false
+
   ## Format of the configuration file
   ## - valid values: yaml, xml
   ## - it is very strongly recommended to use the yaml format unless you have existing tooling

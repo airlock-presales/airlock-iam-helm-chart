@@ -1,6 +1,9 @@
 #! /bin/bash
 
-[[ -r ../work/env.init ]] && source ../work/env.init
+if [[ -r "${INIT_ENV_PATH:-.}"/env.init ]]; then
+    echo "Loading variables from '${INIT_ENV_PATH:-.}/env.init'"
+    source "${INIT_ENV_PATH:-.}"/env.init
+fi
 
 function die ()
 {
