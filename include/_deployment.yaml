@@ -66,6 +66,31 @@ spec:
         {{- end }}
       {{- end }}
       initContainers:
+        {{- if $.Values.iam.instanceCreate }}
+        - name: "init-instance"
+          image: "{{ $.Values.images.iam.repository }}:{{ $.Values.images.iam.tag }}"
+          imagePullPolicy: {{ quote $.Values.images.iam.pullPolicy }}
+          command: ["/bin/bash", "/var/tmp/scripts/init_instance"]
+          env:
+            - name: INSTANCE_DIR
+              value: "/home/airlock/iam/instances"
+            - name: INIT_INSTANCE
+              value: {{ $.Values.iam.instanceName }}
+            - name: INIT_INSTANCE_CREATE
+              value: {{ ternary "true" "false" (contains "adminapp" $.IAM.module) | quote }}
+            - name: INIT_CONFIG_FORMAT
+              value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.configFormat) "xml") }}
+          volumeMounts:
+            {{- if $persistenceProp.config.enable }}
+            - mountPath: /home/airlock/iam/instances
+              name: config
+            {{- end }}
+            - mountPath: /home/airlock/iam/license.txt
+              name: license
+              subPath: license.txt
+            - mountPath: /var/tmp/scripts
+              name: init
+        {{- end }}
         {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
         - name: "init-db"
           {{- if eq $databaseType "mariadb" }}
@@ -194,31 +219,6 @@ spec:
             - mountPath: /home/airlock/iam/instances
               name: config
             {{- end }}
-            - mountPath: /var/tmp/scripts
-              name: init
-        {{- end }}
-        {{- if $.Values.iam.instanceCreate }}
-        - name: "init-instance"
-          image: "{{ $.Values.images.iam.repository }}:{{ $.Values.images.iam.tag }}"
-          imagePullPolicy: {{ quote $.Values.images.iam.pullPolicy }}
-          command: ["/bin/bash", "/var/tmp/scripts/init_instance"]
-          env:
-            - name: INSTANCE_DIR
-              value: "/home/airlock/iam/instances"
-            - name: INIT_INSTANCE
-              value: {{ $.Values.iam.instanceName }}
-            - name: INIT_INSTANCE_CREATE
-              value: {{ ternary "true" "false" (contains "adminapp" $.IAM.module) | quote }}
-            - name: INIT_CONFIG_FORMAT
-              value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.configFormat) "xml") }}
-          volumeMounts:
-            {{- if $persistenceProp.config.enable }}
-            - mountPath: /home/airlock/iam/instances
-              name: config
-            {{- end }}
-            - mountPath: /home/airlock/iam/license.txt
-              name: license
-              subPath: license.txt
             - mountPath: /var/tmp/scripts
               name: init
         {{- end }}
