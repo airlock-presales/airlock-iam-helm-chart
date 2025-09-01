@@ -39,7 +39,10 @@ if [[ "${INIT_INSTANCE_CREATE}" == "true" ]]; then
         else
             die "Failed to create instance '${INIT_INSTANCE}'"
         fi
-	[[ "${INIT_CONFIG_FORMAT}" == "yaml" ]] && /opt/airlock-iam/bin/iam config convert -i "${INIT_INSTANCE}" || die "Failed to convert instance '${INIT_INSTANCE}' to YAML config format"
+        if [[ "${INIT_CONFIG_FORMAT}" == "yaml" ]]; then
+            /opt/airlock-iam/bin/iam config convert -i "${INIT_INSTANCE}" || die "Failed to convert instance '${INIT_INSTANCE}' to YAML config format"
+            rm -f "${instance_dir}"/medusa-configuration.xml
+        fi
     fi
 fi
 
