@@ -288,10 +288,26 @@ ingress:
   gatewayAPI:
     ## Which Gateway to use
     ## - must be defined !!!
+    ## - supported formats: <name> or <namespace>/<name>
     gateway: "airlock-gateway/airlock-gateway"
 
     ## Namespace of Gateway
+    ## - define namespace if gateway uses format <name>
     namespace: ""
+
+    ## Listener section name
+    ## - gateways support multiple listeners
+    ## - section names help in the process of attaching an HTTPRoute to a specific listener
+    ## - optional but may need to be defined if listener cannot be uniquely determined from the hostname
+    ## - requires section names to be defined in the Gateway Listeners
+    sectionName: ""
+
+    ## Listener port
+    ## - listeners can be defined on different ports
+    ## - port specification help in the process of attaching an HTTPRoute to a specific listener
+    ## - optional but may need to be defined if listener cannot be uniquely determined from the hostname
+    ## - requires different ports to be defined in the Gateway Listeners
+    port: 0
 
   ## Ingress settings
   ## - used for type: ingress

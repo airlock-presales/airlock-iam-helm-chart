@@ -21,9 +21,15 @@ spec:
   {{- else }}
     - name: {{ $.Values.ingress.gatewayAPI.gateway }}
     {{- if ne $.Values.ingress.gatewayAPI.namespace "" }}
-    - namespace: {{ $.Values.ingress.gatewayAPI.namespace }}
+      namespace: {{ $.Values.ingress.gatewayAPI.namespace }}
     {{- end }}
   {{- end }}
+    {{- if ne $.Values.ingress.gatewayAPI.sectionName "" }}
+      sectionName: {{ $.Values.ingress.gatewayAPI.sectionName }}
+    {{- end }}
+    {{- if ne (int $.Values.ingress.gatewayAPI.port) 0 }}
+      port: {{ $.Values.ingress.gatewayAPI.port }}
+    {{- end }}
   hostnames:
     - {{ $.Values.ingress.dns.hostname }}
   rules:
