@@ -63,7 +63,7 @@ spec:
           port: 80
       matches:
         - path:
-            value: {{ print "/" ($.Values.iam.apps.adminapp.path | default (print $.Values.iam.instanceName "-" $app)) $route.path }}
+            value: {{ print ($app_values.path | default (print $.Values.iam.instanceName "-" $app)) $route.path }}
             type: PathPrefix
       {{- if ne $.Values.ingress.timeout "" }}
       timeouts:
