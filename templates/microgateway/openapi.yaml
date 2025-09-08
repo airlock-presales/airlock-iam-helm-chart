@@ -23,8 +23,6 @@ spec:
         configMapRef:
           name: {{ $moduleName }}-openapi
     threatHandlingMode: Block
-  response:
-    secured: { }
 {{-     end }}
 {{-   end }}
 {{- end }}

@@ -47,6 +47,7 @@ spec:
               matcher:
                 regex: "^sso$"
                 ignoreCase: false
+            source: Any
       - ruleKeys:
         - "SQL"
         blockedData:
@@ -80,7 +81,9 @@ spec:
               matcher:
                 regex: "^filter$"
                 ignoreCase: false
+            source: Any
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/rest/logs/.*$"
@@ -93,6 +96,7 @@ spec:
               matcher:
                 regex: "^(loginUrl|afterLogoutUrl)$"
                 ignoreCase: false
+            source: Any
       - ruleKeys:
         - "XSS"
         blockedData:
@@ -111,6 +115,7 @@ spec:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
+            source: Any
             value:
               matcher:
                 regex: "^editConfig.*"
@@ -131,6 +136,7 @@ spec:
           json:
             jsonPath: "$.data.attributes.translations.en"
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
@@ -141,6 +147,7 @@ spec:
           json:
             jsonPath: "$.data.attributes.translations.fr"
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
@@ -151,6 +158,7 @@ spec:
           json:
             jsonPath: "$.data.attributes.translations.de"
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
@@ -161,6 +169,7 @@ spec:
           json:
             jsonPath: "$.data.attributes.translations.it"
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
@@ -203,6 +212,7 @@ spec:
               matcher:
                 regex: "^sso$"
                 ignoreCase: false
+            source: Any
       - ruleKeys:
         - "NOSQL"
         blockedData:
@@ -236,6 +246,7 @@ spec:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
+            source: Any
             value:
               matcher:
                 regex: "^editConfig.*"
@@ -264,6 +275,7 @@ spec:
               matcher:
                 regex: "^sso$"
                 ignoreCase: false
+            source: Any
       - ruleKeys:
         - "SSRF"
         blockedData:
@@ -272,7 +284,9 @@ spec:
               matcher:
                 regex: "^(loginUrl|afterLogoutUrl)$"
                 ignoreCase: false
+            source: Any
         requestConditions:
+          invert: false
           method:
           - "GET"
       - ruleKeys:
@@ -281,6 +295,7 @@ spec:
           json:
             jsonPath: "$.loginUrl"
         requestConditions:
+          invert: false
           method:
           - "GET"
       - ruleKeys:
@@ -289,6 +304,7 @@ spec:
           json:
             jsonPath: "$.afterLogoutUrl"
         requestConditions:
+          invert: false
           method:
           - "GET"
       - ruleKeys:
@@ -298,7 +314,9 @@ spec:
             name:
               matcher:
                 regex: "^X-URL$"
+            source: Any
         requestConditions:
+          invert: false
           method:
           - "POST"
       {{- end }}

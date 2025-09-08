@@ -43,6 +43,7 @@ spec:
         - "XSS"
         blockedData:
           parameter:
+            source: Any
             name:
               matcher:
                 regex: "^filter$"

@@ -30,6 +30,8 @@ spec:
     {{- if ne (int $.Values.ingress.gatewayAPI.port) 0 }}
       port: {{ $.Values.ingress.gatewayAPI.port }}
     {{- end }}
+      group: gateway.networking.k8s.io
+      kind: Gateway
   hostnames:
     - {{ $.Values.ingress.dns.hostname }}
   rules:
@@ -37,6 +39,8 @@ spec:
     - backendRefs:
         - name: {{ $fullName }}
           port: 80
+          group: ''
+          kind: Service
       matches:
         - path:
             value: "/"

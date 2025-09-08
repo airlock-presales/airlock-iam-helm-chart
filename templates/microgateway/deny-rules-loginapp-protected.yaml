@@ -45,10 +45,12 @@ spec:
           json:
             jsonPath: "$.context"
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/rest/protected/my/tokens/cronto/devices/activation/complete/?$"
               ignoreCase: false
+          invert: false
       - ruleKeys:
         - "SQL"
         blockedData:
@@ -59,6 +61,7 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.id"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -75,6 +78,7 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.attestationObject"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -87,6 +91,7 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.clientDataJSON"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -99,6 +104,7 @@ spec:
           json:
             jsonPath: "$.context"
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/rest/protected/my/tokens/mtan/[a-zA-Z0-9]+/verify-number-change/?$"
@@ -109,6 +115,7 @@ spec:
           json:
             jsonPath: "$.data.attributes.publicJwk.x"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -121,6 +128,7 @@ spec:
           json:
             jsonPath: "$.data.attributes.publicJwk.y"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -137,6 +145,7 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.id"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -153,6 +162,7 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.userHandle"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -169,6 +179,7 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.signature"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -185,6 +196,7 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.authenticatorData"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -215,6 +227,7 @@ spec:
         - "XSS"
         blockedData:
           parameter:
+            source: Any
             name:
               matcher:
                 regex: "^filter$"
@@ -225,6 +238,7 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.clientDataJSON"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -237,6 +251,7 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -272,6 +287,7 @@ spec:
         - "LDAP"
         blockedData:
           parameter:
+            source: Any
             name:
               matcher:
                 regex: "^(?:sso|ticket|representation)$"
@@ -297,6 +313,7 @@ spec:
           json:
             jsonPath: "$.data.attributes.publicJwk.x"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -309,6 +326,7 @@ spec:
           json:
             jsonPath: "$.data.attributes.publicJwk.y"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -321,6 +339,7 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.clientDataJSON"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -333,6 +352,7 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -345,6 +365,7 @@ spec:
           json:
             jsonPath: "$.targetLocation"
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/rest/protected/self-service/representation/start/?$"
@@ -355,6 +376,7 @@ spec:
           json:
             jsonPath: "$.context"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:
@@ -375,6 +397,7 @@ spec:
         - "ENCODING"
         blockedData:
           parameter:
+            source: Any
             name:
               matcher:
                 regex: "^(?:sso|ticket|representation)$"
@@ -393,6 +416,7 @@ spec:
         - "HPP"
         blockedData:
           parameter:
+            source: Any
             name:
               matcher:
                 regex: "^Location$"
@@ -412,6 +436,7 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
+          invert: false
           method:
           - "POST"
           path:

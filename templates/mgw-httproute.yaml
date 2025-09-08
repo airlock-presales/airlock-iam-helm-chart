@@ -51,6 +51,8 @@ spec:
     {{- if ne (int $.Values.ingress.gatewayAPI.port) 0 }}
       port: {{ $.Values.ingress.gatewayAPI.port }}
     {{- end }}
+      group: gateway.networking.k8s.io
+      kind: Gateway
   hostnames:
     - {{ $.Values.ingress.dns.hostname }}
   rules:
@@ -61,6 +63,8 @@ spec:
         - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
         {{- end }}
           port: 80
+          group: ''
+          kind: Service
       matches:
         - path:
             value: {{ print ($app_values.path | default (print $.Values.iam.instanceName "-" $app)) $route.path }}

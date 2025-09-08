@@ -38,11 +38,13 @@ spec:
         - "SQL"
         blockedData:
           parameter:
+            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/serviceContainer$"
@@ -51,11 +53,13 @@ spec:
         - "XSS"
         blockedData:
           parameter:
+            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/serviceContainer$"
@@ -64,11 +68,13 @@ spec:
         - "HPP"
         blockedData:
           parameter:
+            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/serviceContainer$"
@@ -78,11 +84,13 @@ spec:
         - "SSRF"
         blockedData:
           parameter:
+            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
+          invert: false
           path:
             matcher:
               regex: "^{{ $app_values.path }}/serviceContainer$"
