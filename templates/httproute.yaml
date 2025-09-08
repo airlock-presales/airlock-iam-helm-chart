@@ -39,6 +39,7 @@ spec:
     - backendRefs:
         - name: {{ $fullName }}
           port: 80
+          weight: 1
           group: ''
           kind: Service
       matches:

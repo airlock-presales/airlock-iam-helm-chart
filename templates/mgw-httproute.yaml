@@ -63,6 +63,7 @@ spec:
         - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
         {{- end }}
           port: 80
+          weight: 1
           group: ''
           kind: Service
       matches:
