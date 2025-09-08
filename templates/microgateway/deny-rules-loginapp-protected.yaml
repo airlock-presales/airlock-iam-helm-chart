@@ -50,7 +50,6 @@ spec:
             matcher:
               regex: "^{{ $app_values.path }}/rest/protected/my/tokens/cronto/devices/activation/complete/?$"
               ignoreCase: false
-          invert: false
       - ruleKeys:
         - "SQL"
         blockedData:
