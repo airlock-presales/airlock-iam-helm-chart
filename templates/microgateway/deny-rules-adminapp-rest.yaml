@@ -314,7 +314,6 @@ spec:
             name:
               matcher:
                 regex: "^X-URL$"
-            source: Any
         requestConditions:
           invert: false
           method:

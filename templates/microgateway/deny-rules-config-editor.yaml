@@ -507,7 +507,6 @@ spec:
         - "SSRF"
         blockedData:
           header:
-            source: Any
             name:
               matcher:
                 regex: "^X-URL$"

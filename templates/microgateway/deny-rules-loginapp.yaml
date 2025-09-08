@@ -486,7 +486,6 @@ spec:
         - "SQL"
         blockedData:
           header:
-            source: Any
             name:
               matcher:
                 regex: "^X-IAM-SSO-Ticket$"
@@ -504,7 +503,6 @@ spec:
         - "SQL"
         blockedData:
           header:
-            source: Any
             name:
               matcher:
                 regex: "^X-Captcha-Solution$"
@@ -748,7 +746,6 @@ spec:
         - "HTML"
         blockedData:
           header:
-            source: Any
             name:
               matcher:
                 regex: "^Signature$"
@@ -1309,7 +1306,6 @@ spec:
         - "SANITY"
         blockedData:
           header:
-            source: Any
             name:
               matcher:
                 regex: "^Signature$"
