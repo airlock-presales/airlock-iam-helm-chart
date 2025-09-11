@@ -1,0 +1,66 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   range $app, $app_values := .Values.iam.apps -}}
+{{-     if $app_values.enable }}
+{{-       $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
+{{-       $moduleName := print $fullName "-" $suffix | lower -}}
+{{-       $moduleType := include "airlock-iam.mapAppName" $app }}
+{{-       if eq $app "adminapp" }}
+---
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: APIProtection
+metadata:
+  name: {{ $moduleName }}-rest
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  policies:
+    - name: {{ $moduleName }}-rest
+      openAPIRef:
+        name: {{ $moduleName }}
+{{-       end }}
+
+{{-       if eq $app "loginapp" }}
+---
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: APIProtection
+metadata:
+  name: {{ $moduleName }}-rest
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  policies:
+    - name: {{ $moduleName }}-rest
+      openAPIRef:
+        name: {{ $moduleName }}
+{{-       end }}
+
+{{-       if eq $app "transaction-approval" }}
+---
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: APIProtection
+metadata:
+  name: {{ $moduleName }}-rest
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  policies:
+    - name: {{ $moduleName }}
+      openAPIRef:
+        name: {{ $moduleName }}
+{{-       end }}
+{{-     end }}
+{{-   end }}
+{{- end }}
