@@ -1,4 +1,4 @@
-{{- if eq $.Values.ingress.type "microgateway" -}}
+{{- if or (eq .Values.ingress.type "gatewayAPI") (eq .Values.ingress.type "httproute") -}}
 {{-   $fullName := include "airlock-iam.fullname" . -}}
 {{-   range $app, $app_values := $.Values.iam.apps -}}
 {{-     if $app_values.enable }}
