@@ -35,7 +35,7 @@ spec:
               name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
               port:
                 number: 80
-          path: {{ print "/" ($.Values.iam.apps.adminapp.path | default (print $.Values.iam.instanceName "-" $app)) }}
+          path: {{ print ($app_values.path | default (print "/" $.Values.iam.instanceName "-" $app)) }}
           pathType: Prefix
         {{-     end }}
         {{-   end }}

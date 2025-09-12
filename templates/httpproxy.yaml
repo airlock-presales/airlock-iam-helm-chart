@@ -38,7 +38,7 @@ spec:
     {{-   range $app, $app_values := .Values.iam.apps }}
     {{-     if $app_values.enable }}
     - conditions:
-      - prefix: {{ print "/" ($.Values.iam.apps.adminapp.path | default (print $.Values.iam.instanceName "-" $app)) }}
+      - prefix: {{ print ($app_values.path | default (print "/" $.Values.iam.instanceName "-" $app)) }}
       {{- if eq $.Values.ingress.tls.secretName "" }}
       permitInsecure: true
       {{- end }}
