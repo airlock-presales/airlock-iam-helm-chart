@@ -1,0 +1,72 @@
+{{- $fullName := include "airlock-iam.fullname" . -}}
+{{- if .Values.database.embedded.mariadb }}
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
+metadata:
+  name: {{ $fullName }}-mariadb
+spec:
+{{-   if .Values.database.embedded.mariadbSettings.specFull }}
+  {{- toYaml .Values.database.embedded.mariadbSettings.specFull | nindent 2 }}
+{{-   else }}
+  {{- if .Values.database.embedded.mariadbSettings.spec }}
+    {{- toYaml .Values.database.embedded.mariadbSettings.spec | nindent 2 }}
+  {{- end }}
+  rootPasswordSecretKeyRef:
+    name: {{ $fullName }}
+    key: {{ .Values.database.credentials.rootPassword.key }}
+  username: {{ .Values.database.credentials.user.value }}
+  passwordSecretKeyRef:
+    name: {{ $fullName }}
+    key: {{ .Values.database.credentials.password.key }}
+  database: {{ $fullName }}
+  replicas: 1
+  port: 3306
+  storage:
+    size: {{ .Values.database.embedded.size }}
+    {{- if and (ne .Values.database.embedded.storageClass "") .Values.database.embedded.pvcTemplate }}
+    storageClass: {{ .Values.database.embedded.storageClass }}
+    {{- end }}
+    {{- if .Values.database.embedded.pvcTemplate }}
+    volumeClaimTemplate:
+      {{- toYaml .Values.database.embedded.pvcTemplate | nindent 6 }}
+      resources:
+        requests:
+          storage: {{ .Values.database.embedded.size }}
+    {{- end }}
+  {{- if eq .Values.database.embedded.mariadbSettings.myCnf "" }}
+  myCnf: |
+    [mariadb]
+    bind-address=*
+    default_storage_engine=InnoDB
+    binlog_format=row
+    innodb_autoinc_lock_mode=2
+    innodb_buffer_pool_size=128M
+    max_allowed_packet=16M
+  {{- else }}
+  myCnf: |
+    {{- .Values.database.embedded.mariadbSettings.myCnf | nindent 4 }}
+  {{- end }}
+  resources:
+    {{- if or (ne .Values.database.embedded.mariadbSettings.resources.requests.cpu "") (ne .Values.database.embedded.mariadbSettings.resources.requests.ram "") }}
+    requests:
+      {{- if or (ne .Values.database.embedded.mariadbSettings.resources.requests.cpu "") }}
+      cpu: {{ .Values.database.embedded.mariadbSettings.resources.requests.cpu }}
+      {{- end }}
+      {{- if or (ne .Values.database.embedded.mariadbSettings.resources.requests.ram "") }}
+      memory: {{ .Values.database.embedded.mariadbSettings.resources.requests.ram }}
+      {{- end }}
+    {{- end }}
+    {{- if or (ne .Values.database.embedded.mariadbSettings.resources.limits.cpu "") (ne .Values.database.embedded.mariadbSettings.resources.limits.ram "") }}
+    limits:
+      {{- if or (ne .Values.database.embedded.mariadbSettings.resources.limits.cpu "") }}
+      cpu: {{ .Values.database.embedded.mariadbSettings.resources.limits.cpu }}
+      {{- end }}
+      {{- if or (ne .Values.database.embedded.mariadbSettings.resources.limits.ram "") }}
+      memory: {{ .Values.database.embedded.mariadbSettings.resources.limits.ram }}
+      {{- end }}
+    {{- end }}
+  metrics:
+    enabled: {{ .Values.database.embedded.mariadbSettings.metrics }}
+{{-   end }}
+{{- end }}

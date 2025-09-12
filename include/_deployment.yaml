@@ -93,16 +93,8 @@ spec:
         {{- end }}
         {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
         - name: "init-db"
-          {{- if eq $databaseType "mariadb" }}
-          image: "{{ $.Values.images.mariadb.repository }}:{{ $.Values.images.mariadb.tag }}"
-          imagePullPolicy: {{ quote $.Values.images.mariadb.pullPolicy }}
-          {{- else if eq $databaseType "postgresql" }}
-          image: "{{ $.Values.images.postgresql.repository }}:{{ $.Values.images.postgresql.tag }}"
-          imagePullPolicy: {{ quote $.Values.images.postgresql.pullPolicy }}
-          {{- else if eq $databaseType "mysql" }}
-          image: "{{ $.Values.images.mysql.repository }}:{{ $.Values.images.mysql.tag }}"
-          imagePullPolicy: {{ quote $.Values.images.mysql.pullPolicy }}
-          {{- end }}
+          image: "{{ $.Values.images.initdb.repository }}:{{ $.Values.images.initdb.tag }}"
+          imagePullPolicy: {{ quote $.Values.images.initdb.pullPolicy }}
           command: ["/bin/bash", "/var/tmp/scripts/init_db"]
           env:
             - name: INSTANCE_DIR
@@ -123,68 +115,79 @@ spec:
               {{- else if eq $databaseDeployment "mariadb" }}
               value: {{ print $.IAM.fullName "-mariadb" }}
               {{- else if eq $databaseDeployment "postgresql" }}
-              value: {{ print $.IAM.fullName "-postgresql" }}
+              value: {{ print $.IAM.fullName "-postgresql-rw" }}
               {{- end }}
             - name: INIT_DB_DATABASE
               {{- if eq $databaseDeployment "external" }}
               value: {{ $.Values.database.external.database }}
               {{- else if eq $databaseDeployment "mariadb" }}
-              value: {{ $.Values.mariadb.auth.database }}
+              value: {{ $fullName }}
               {{- else if eq $databaseDeployment "postgresql" }}
-              value: {{ $.Values.postgresql.global.postgresql.auth.database }}
+              value: "iam"
               {{- end }}
             - name: INIT_DB_USERNAME
               {{- if eq $databaseDeployment "external" }}
-              {{-   if ne $.Values.database.external.credentials.rootUser.existingSecret "" }}
+              {{-   if ne $.Values.database.credentials.rootUser.existingSecret "" }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.database.external.credentials.rootUser.existingSecret }}
-                  key: {{ $.Values.database.external.credentials.rootUser.key }}
-              {{-   else if ne $.Values.database.external.credentials.rootUser.value "" }}
-              value: {{ $.Values.database.external.credentials.rootUser.value }}
-              {{-   else if ne $.Values.database.external.credentials.user.existingSecret "" }}
+                  name: {{ $.Values.database.credentials.rootUser.existingSecret }}
+                  key: {{ $.Values.database.credentials.rootUser.key }}
+              {{-   else if ne $.Values.database.credentials.rootUser.value "" }}
+              value: {{ $.Values.database.credentials.rootUser.value }}
+              {{-   else if ne $.Values.database.credentials.user.existingSecret "" }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.database.external.credentials.user.existingSecret }}
-                  key: {{ $.Values.database.external.credentials.user.key }}
+                  name: {{ $.Values.database.credentials.user.existingSecret }}
+                  key: {{ $.Values.database.credentials.user.key }}
               {{-   else }}
-              value: {{ $.Values.database.external.credentials.user.value }}
+              value: {{ $.Values.database.credentials.user.value }}
               {{-   end }}
               {{- else if eq $databaseDeployment "mariadb" }}
-              value: {{ $.Values.mariadb.auth.username }}
+              value: {{ $.Values.database.credentials.user.value }}
               {{- else if eq $databaseDeployment "postgresql" }}
-              value: {{ $.Values.postgresql.global.postgresql.auth.username }}
+              {{-   if ne $.Values.database.credentials.user.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.database.credentials.user.existingSecret }}
+                  key: "username"
+              {{-   else }}
+              value: {{ $.Values.database.credentials.user.value }}
+              {{-   end }}
               {{- end }}
             - name: INIT_DB_PASSWORD
               {{- if eq $databaseDeployment "external" }}
-              {{-   if ne $.Values.database.external.credentials.rootPassword.existingSecret "" }}
+              {{-   if ne $.Values.database.credentials.rootPassword.existingSecret "" }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.database.external.credentials.rootPassword.existingSecret }}
-                  key: {{ $.Values.database.external.credentials.rootPassword.key }}
-              {{-   else if ne $.Values.database.external.credentials.rootPassword.value "" }}
+                  name: {{ $.Values.database.credentials.rootPassword.existingSecret }}
+                  key: {{ $.Values.database.credentials.rootPassword.key }}
+              {{-   else if ne $.Values.database.credentials.rootPassword.value "" }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $.IAM.fullName }}
-                  key: {{ $.Values.database.external.credentials.rootPassword.key }}
-              {{-   else if ne $.Values.database.external.credentials.password.existingSecret "" }}
+                  key: {{ $.Values.database.credentials.rootPassword.key }}
+              {{-   else if ne $.Values.database.credentials.password.existingSecret "" }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.database.external.credentials.password.existingSecret }}
-                  key: {{ $.Values.database.external.credentials.password.key }}
+                  name: {{ $.Values.database.credentials.password.existingSecret }}
+                  key: {{ $.Values.database.credentials.password.key }}
               {{-   else }}
-              value: {{ $.Values.database.external.credentials.password.value }}
+              value: {{ $.Values.database.credentials.password.value }}
               {{-   end }}
               {{- else if eq $databaseDeployment "mariadb" }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.mariadb.auth.existingSecret }}
-                  key: "mariadb-password"
+                  name: {{ $fullName }}
+                  key: {{ $.Values.database.credentials.password.key }}
               {{- else if eq $databaseDeployment "postgresql" }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.postgresql.global.postgresql.auth.existingSecret }}
-                  key: {{ $.Values.postgresql.global.postgresql.auth.secretKeys.userPasswordKey }}
+                  {{- if ne $.Values.database.credentials.password.existingSecret "" }}
+                  name: {{ $.Values.database.credentials.password.existingSecret }}
+                  {{- else }}
+                  name: {{ $fullName }}
+                  {{- end }}
+                  key: "password"
               {{- end }}
             - name: INIT_DB_VERSION
               value: {{ $.Values.images.iam.tag | quote }}
@@ -208,7 +211,6 @@ spec:
                   name: {{ $.Values.database.initialisation.administrator.credentials.pwd_hash.existingSecret }}
                   key: {{ $.Values.database.initialisation.administrator.credentials.pwd_hash.key }}
               {{- else }}
-              #value: {{ $.Values.database.initialisation.administrator.credentials.pwd_hash.value }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $.IAM.fullName }}
@@ -310,45 +312,60 @@ spec:
             {{-   if eq $databaseDeployment "external" }}
               value: {{ print "jdbc:" $.Values.database.external.type "://" $.Values.database.external.host "/" $.Values.database.external.database }}
             {{-   else if eq $databaseDeployment "mariadb" }}
-              value: {{ print "jdbc:mariadb://" $.IAM.fullName "-mariadb/" $.Values.mariadb.auth.database }}
+              value: {{ print "jdbc:mariadb://" $.IAM.fullName "-mariadb/" $fullName }}
             {{-   else if eq $databaseDeployment "postgresql" }}
-              value: {{ print "jdbc:mariadb://" $.IAM.fullName "-postgresql/" $.Values.postgresql.global.postgresql.auth.database }}
+              value: {{ print "jdbc:postgres://" $.IAM.fullName "-postgresql-rw/" $.Values.postgresql.global.postgresql.auth.database }}
             {{-   end }}
             - name: IAM_CFG_DB_USERNAME
             {{-   if eq $databaseDeployment "external" }}
-              {{- if ne $.Values.database.external.credentials.user.existingSecret "" }}
+              {{- if ne $.Values.database.credentials.user.existingSecret "" }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.database.external.credentials.user.existingSecret }}
-                  key: {{ $.Values.database.external.credentials.user.key }}
+                  name: {{ $.Values.database.credentials.user.existingSecret }}
+                  key: {{ $.Values.database.credentials.user.key }}
               {{- else }}
-              value: {{ $.Values.database.external.credentials.user.value }}
+              value: {{ $.Values.database.credentials.user.value }}
               {{- end }}
             {{-   else if eq $databaseDeployment "mariadb" }}
-              value: {{ $.Values.mariadb.auth.username }}
+              value: {{ $.Values.database.credentials.user.value }}
             {{-   else if eq $databaseDeployment "postgresql" }}
-              value: {{ $.Values.postgresql.global.postgresql.auth.username }}
+              {{-   if ne $.Values.database.credentials.user.existingSecret "" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.database.credentials.user.existingSecret }}
+                  key: "username"
+              {{-   else }}
+              value: {{ $.Values.database.credentials.user.value }}
+              {{-   end }}
             {{-   end }}
             - name: IAM_CFG_DB_PASSWORD
             {{-   if eq $databaseDeployment "external" }}
-              {{- if ne $.Values.database.external.credentials.password.existingSecret "" }}
+              {{- if ne $.Values.database.credentials.password.existingSecret "" }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.database.external.credentials.password.existingSecret }}
-                  key: {{ $.Values.database.external.credentials.password.key }}
+                  name: {{ $.Values.database.credentials.password.existingSecret }}
+                  key: {{ $.Values.database.credentials.password.key }}
               {{- else }}
-              value: {{ $.Values.database.external.credentials.password.value }}
+              value: {{ $.Values.database.credentials.password.value }}
               {{- end }}
             {{-   else if eq $databaseDeployment "mariadb" }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.mariadb.auth.existingSecret }}
-                  key: "mariadb-password"
+                  {{- if ne $.Values.database.credentials.password.existingSecret "" }}
+                  name: {{ $.Values.database.credentials.password.existingSecret }}
+                  {{- else }}
+                  name: {{ $fullName }}
+                  {{- end }}
+                  key: {{ $.Values.database.credentials.password.key }}
             {{-   else if eq $databaseDeployment "postgresql" }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.postgresql.global.postgresql.auth.existingSecret }}
-                  key: {{ $.Values.postgresql.global.postgresql.auth.secretKeys.userPasswordKey }}
+                  {{- if ne $.Values.database.credentials.password.existingSecret "" }}
+                  name: {{ $.Values.database.credentials.password.existingSecret }}
+                  {{- else }}
+                  name: {{ $fullName }}
+                  {{- end }}
+                  key: "password"
             {{-   end }}
             {{- end }}
             {{- if $.Values.redis.enable }}

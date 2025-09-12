@@ -116,11 +116,11 @@ Get deployment type
 {{-   $cnt = add $cnt 1 -}}
 external
 {{- end }}
-{{- if .Values.database.mariadb.enable }}
+{{- if .Values.database.embedded.mariadb }}
 {{-   $cnt = add $cnt 1 -}}
 mariadb
 {{- end }}
-{{- if .Values.database.postgresql.enable }}
+{{- if .Values.database.embedded.postgresql }}
 {{-   $cnt = add $cnt 1 -}}
 postgresql
 {{- end }}
@@ -152,14 +152,13 @@ Get list of pull secrets for all images
 */}}
 {{- define "airlock-iam.listPullSecrets" -}}
 {{- $images := "" -}}
-{{- range $img, $img_values := .Values.images -}}
-{{-   if ne $img_values.pullSecret "" -}}
-{{-     if eq $images "" -}}
-{{-       $images = $img_values.pullSecret -}}
-{{-     else -}}
-{{-       $images = print $images "," $img_values.pullSecret -}}
-{{-     end -}}
-{{-   end -}}
+{{- $sep := "" -}}
+{{- if ne .Values.images.iam.pullSecret "" -}}
+{{-   $images = .Values.images.iam.pullSecret -}}
+{{-   $sep = "," -}}
+{{- end -}}
+{{- if ne .Values.images.initdb.pullSecret "" -}}
+{{-   $images = print $images $sep .Values.images.initdb.pullSecret -}}
 {{- end -}}
 {{ $images }}
 {{- end -}}

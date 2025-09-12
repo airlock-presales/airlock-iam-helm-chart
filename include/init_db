@@ -1,5 +1,11 @@
 #! /bin/bash
 
+## Uses the following command line tools:
+## - mariadb / mysql / psql - depending on database type (INIT_TYPE)
+## - pg_isready for PostgreSQL
+## - curl
+## - ls, grep, sed, wc
+
 if [[ -r "${INIT_ENV_PATH:-.}"/env.init ]]; then
     echo "Loading variables from '${INIT_ENV_PATH:-.}/env.init'"
     source "${INIT_ENV_PATH:-.}"/env.init
@@ -35,19 +41,19 @@ schema_version="$(echo ${INIT_DB_VERSION} | sed -e 's,\([0-9]*\.[0-9]*\).*,\1,')
 cmd_mariadb() {
     db=""
     [[ $# -gt 1 ]] && { db="$1"; shift 1; }
-    mariadb --host=${INIT_DB_HOST} --user=${INIT_DB_USERNAME} --password=${INIT_DB_PASSWORD} ${db} --batch --silent --execute="$@"
+    mariadb --host=${INIT_DB_HOST} --user=${INIT_DB_USERNAME} --password="${INIT_DB_PASSWORD}" ${db} --batch --silent --execute="$@"
 }
 
 cmd_pg() {
     db=""
-    [[ $# -gt 1 ]] && { db="$1"; shift 1; }
-    psql -h=${INIT_DB_HOST} -U=${INIT_DB_USERNAME} -d ${db} --command "$@"
+    [[ $# -gt 1 ]] && { db="-d $1"; shift 1; }
+    psql -h ${INIT_DB_HOST} -U ${INIT_DB_USERNAME} ${db} -t -A --command "$@"
 }
 
 cmd_mysql() {
     db=""
     [[ $# -gt 1 ]] && { db="$1"; shift 1; }
-    mysql --host=${INIT_DB_HOST} --user=${INIT_DB_USERNAME} --password=${INIT_DB_PASSWORD} ${db} --batch --silent --execute="$@"
+    mysql --host=${INIT_DB_HOST} --user=${INIT_DB_USERNAME} --password="${INIT_DB_PASSWORD}" ${db} --batch --silent --execute="$@"
 }
 
 cmd_sql() {
@@ -70,6 +76,7 @@ cmd_sql() {
 # ###########
 
 if [[ "${INIT_DL}" == "true" ]]; then
+    mirror=""
     case "${INIT_TYPE}" in
         mariadb)
             cnt=$(ls -1 "${instance_libs}"/mariadb-java-client-${INIT_DL_VERSION}.jar 2>/dev/null | wc -l)
@@ -91,7 +98,11 @@ if [[ "${INIT_DL}" == "true" ]]; then
             die "Automated download of Java Connector for MySQL is not supported"
             ;;
     esac
-    echo "Connector version ${INIT_DL_VERSION} downloaded from ${mirror}"
+    if [[ -n "${mirror}" ]]; then
+        echo "Connector version ${INIT_DL_VERSION} downloaded from ${mirror}"
+    else
+        echo "Connector version ${INIT_DL_VERSION} already exists."
+    fi
 fi
 
 
@@ -139,7 +150,11 @@ if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
             fi
             ;;
         postgresql)
-            die "DB initialisation not yet supported for PostgreSQL"
+            psql -h ${INIT_DB_HOST} -U ${INIT_DB_USERNAME} -lqt | cut -d \| -f 1 | grep -qw "${INIT_DB_DATABASE}" || die "Failed to check for database"
+            if [[ $? -ne 0 ]]; then
+                cmd_pg "CREATE DATABASE ${INIT_DB_DATABASE}" || die "Failed to create database"
+                created=1
+            fi
             ;;
         mysql)
             r="$(cmd_mysql "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${INIT_DB_DATABASE}'")" || die "Failed to check for database"
@@ -173,7 +188,11 @@ if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
             fi
             ;;
         postgresql)
-            die "DB initialisation not yet supported for PostgreSQL"
+            r="$(cmd_sql "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_type = 'BASE_TABLE' AND table_schema = 'public' AND table_catalog='${INIT_DB_DATABASE}' AND table_name = 'medusa_user');")" || die "Failed to check for database"
+            if [[ "$r" == "f" ]]; then
+                psql -h ${INIT_DB_HOST} -U ${INIT_DB_USERNAME} -d "${INIT_DB_DATABASE}" -f "/var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+                created=1
+            fi
             ;;
         mysql)
             r="$(cmd_mysql "SELECT table_name FROM information_schema.tables WHERE table_schema = '${INIT_DB_DATABASE}' AND table_name = 'medusa_user' LIMIT 1")" || die "Failed to check for database"
@@ -186,7 +205,12 @@ if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
 
     # add metadata table and version number
     if [[ ${created} -eq 1 ]]; then
-        cmd_sql "CREATE TABLE metadata(name VARCHAR(32) NOT NULL, value VARCHAR(32)) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_nopad_ci;"
+        if [[ "${INIT_TYPE}" == "postgresql" ]]; then
+            cs=""
+        else
+            cs="CHARACTER SET utf8mb4 COLLATE utf8mb4_general_nopad_ci"
+        fi
+        cmd_sql "CREATE TABLE metadata(name VARCHAR(32) NOT NULL, value VARCHAR(32)) ${cs};"
         cmd_sql "INSERT INTO metadata(name,value) VALUES ('schema_version', '${schema_version}');"
         echo "Database ${INIT_DB_DATABASE}, version ${schema_version}, initialised on ${INIT_DB_HOST}"
     else

@@ -7,7 +7,7 @@ iam:
   ## Name of the Airlock IAM configuration instance
   ## - default is 'auth'
   ## - needs to match the folder name of the instance on the config volume
-  instanceName: "auth"
+  instanceName: 'auth'
 
   ## Create instance if it does not yet exist
   ## - default is 'false'
@@ -17,27 +17,27 @@ iam:
   ## - valid values: yaml, xml
   ## - it is very strongly recommended to use the yaml format unless you have existing tooling
   ##   which modifies the file medusa-configuration.xml
-  configFormat: "yaml"
+  configFormat: 'yaml'
 
   ## Active configuration environment
   ## - must match an environment identifier in the configuration file
-  environmentId: ""
+  environmentId: ''
 
   ## License
   ## - Airlock IAM requires a valid license to run
   ## - Create secret: kubectl create secret generic <name> --from-file=license.txt=<filename>
   ## -  or configmap: kubectl create configmap <name> --from-file=license.txt=<filename>
   license:
-    name: "airlock-iam-license"
+    name: 'airlock-iam-license'
     ## Kind of license object
     ## - valid values: cm, configmap, secret
-    type: "cm"
+    type: 'cm'
 
   ## Deployment strategy for Airlock IAM apps (loginapp, adminapp, ...)
   ## - valid values: single, multi
   ## - single: combine all apps into a single pod with replicas=1
   ## - multi: separate every app into its own deployment for greater separation and control
-  appDeploymentStrategy: "single"
+  appDeploymentStrategy: 'single'
 
   ## IAM web applications
   ## - for tests, all applications can be part of one deployment
@@ -50,7 +50,8 @@ iam:
     loginapp:
       ## URL path to the loginapp
       ## - default is /<instanceName>-login
-      path: ""
+      ## - must start with '/'
+      path: ''
 
       ## Activation
       ## - activate only those applications which are required for your use case
@@ -61,7 +62,7 @@ iam:
         ## Naming suffix
         ## - allows to append a special tag to the name to differentiate from other deployments
         ## - by default, set to name of application, e.g. loginapp
-        suffix: ""
+        suffix: ''
 
         ## Number of replicas to schedule
         replicas: 1
@@ -70,29 +71,29 @@ iam:
         ## These settings are defined in their own section, under iam.instanceProperties (see further down).
         ## Each set of settings is combined under their own name (dict key) which can be referenced here.
         ## If name is not set here, iam.instanceProperties.default is used.
-        instancePropertiesRef: ""
+        instancePropertiesRef: ''
 
         ## Airlock IAM uses an instance directory from which it reads the configuration and other resources.
         ## Applications can share the same volume or use individual ones.
         ## Persistence settings are defined in their own section, under persistence (see further down).
         ## Each set of settings is combined under their own name (dict key) which can be referenced here.
         ## If name is not set here, persistence.default is used.
-        persistenceRef: ""
+        persistenceRef: ''
 
         ## Health checks
         ## Settings are defined in their own section, under healthChecks (see further down).
         ## Each set of settings is combined under their own name (dict key) which can be referenced here.
         ## If name is not set here, healthChecks.default is used.
-        healthChecksRef: ""
+        healthChecksRef: ''
 
         ## CPU & memory resource limits and requests
         resources:
           requests:
-            cpu: ""
-            ram: ""
+            cpu: ''
+            ram: ''
           limits:
-            cpu: ""
-            ram: ""
+            cpu: ''
+            ram: ''
 
         ## Environment variables for loginapp
         ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
@@ -101,88 +102,88 @@ iam:
         ## - these settings take precedence over environment variable settings for instanceProperties and global env
         env: {}
     adminapp:
-      path: ""
+      path: ''
       enable: true
       dedicatedDeployment:
-        suffix: ""
+        suffix: ''
         replicas: 1
-        instancePropertiesRef: ""
-        persistenceRef: ""
-        healthChecksRef: ""
+        instancePropertiesRef: ''
+        persistenceRef: ''
+        healthChecksRef: ''
         resources:
           requests:
-            cpu: ""
-            ram: ""
+            cpu: ''
+            ram: ''
           limits:
-            cpu: ""
-            ram: ""
+            cpu: ''
+            ram: ''
         env: {}
     transactionApproval:
-      path: ""
+      path: ''
       enable: false
       dedicatedDeployment:
-        suffix: ""
+        suffix: ''
         replicas: 1
-        instancePropertiesRef: ""
-        persistenceRef: ""
-        healthChecksRef: ""
+        instancePropertiesRef: ''
+        persistenceRef: ''
+        healthChecksRef: ''
         resources:
           requests:
-            cpu: ""
-            ram: ""
+            cpu: ''
+            ram: ''
           limits:
-            cpu: ""
-            ram: ""
+            cpu: ''
+            ram: ''
         env: {}
     serviceContainer:
-      path: ""
+      path: ''
       enable: false
       dedicatedDeployment:
-        suffix: ""
+        suffix: ''
         replicas: 1
-        instancePropertiesRef: ""
-        persistenceRef: ""
-        healthChecksRef: ""
+        instancePropertiesRef: ''
+        persistenceRef: ''
+        healthChecksRef: ''
         resources:
           requests:
-            cpu: ""
-            ram: ""
+            cpu: ''
+            ram: ''
           limits:
-            cpu: ""
-            ram: ""
+            cpu: ''
+            ram: ''
         env: {}
     apiPolicyService:
-      path: ""
+      path: ''
       enable: false
       dedicatedDeployment:
-        suffix: ""
+        suffix: ''
         replicas: 1
-        instancePropertiesRef: ""
-        persistenceRef: ""
-        healthChecksRef: ""
+        instancePropertiesRef: ''
+        persistenceRef: ''
+        healthChecksRef: ''
         resources:
           requests:
-            cpu: ""
-            ram: ""
+            cpu: ''
+            ram: ''
           limits:
-            cpu: ""
-            ram: ""
+            cpu: ''
+            ram: ''
         env: {}
   ## Settings for combined deployment of multiple applications
   ## - forced to replicas: 1
   combined:
-    instancePropertiesRef: ""
-    persistenceRef: ""
-    healthChecksRef: ""
+    instancePropertiesRef: ''
+    persistenceRef: ''
+    healthChecksRef: ''
 
     ## CPU & memory resource limits and requests
     resources:
       requests:
-        cpu: ""
-        ram: ""
+        cpu: ''
+        ram: ''
       limits:
-        cpu: ""
-        ram: ""
+        cpu: ''
+        ram: ''
 
     ## Environment variables for combined deployment
     ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
@@ -200,13 +201,12 @@ iam:
     ## - you should probably not overwrite the 'default' dict but create a custom dict
     ## - missing information in a custom dict is back-filled with settings from 'default'
     default:
-
       ## Define logging
       logging:
         ## Log level
         ## - valid values: TRACE, DEBUG, INFO, WARN, ERROR
         ## - default is INFO
-        level: ""
+        level: ''
 
         ## Local logging to files
         ## - same as for SCA (self-contained application, not container)
@@ -224,26 +224,26 @@ iam:
         ## - define REST API URL of server, e.g. http://elasticsearch.example.com:9200/
         ## - if defined, local.structured (above) is forced to true
         ## - files are written to instance's logs/ directory and used as buffer
-        elasticsearchUrl: ""
+        elasticsearchUrl: ''
 
         ## Log webserver access logs to (instance) local files
         webserver: false
 
       ## Metrics endpoint port
       ## - if defined, metrics endpoint is exposed on this port
-      metrics: ""
+      metrics: ''
 
       ## JAVA_OPTS settings
       java:
         ## Override the default Java heapsize of 50% available RAM
         ## - must be specified as a percentage number, e.g. 60
         ## - does not support absolute values
-        heapSize: ""
+        heapSize: ''
 
         ## Other java options
         opts:
-          - key: ""
-            value: ""
+          - key: ''
+            value: ''
 
       ## Environment variables
       ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
@@ -258,30 +258,30 @@ iam:
 service:
   ## It is strongly recommended to not change the service type
   ## Communication to Airlock IAM should be routed over ingress and/or Airlock Microgateway
-  type: "ClusterIP"
+  type: 'ClusterIP'
 
-  ## 
+  ##
   externalTrafficPolicy: false
 
   ## Service-specific annotations
   ## - sometimes required for DNS settings et al.
-  annotations: { }
+  annotations: {}
 
 ## Data communications ingress
 ## - make Airlock IAM accessible from the outside
 ingress:
   ## Type of ingress
-  ## - valid values: microgateway, gatewayAPI, ingress, httpproxy
+  ## - valid values: microgateway, gatewayAPI, httproute, ingress, httpproxy
   ## - microgateway: use Kubernetes Gateway API to route traffic through Airlock Microgateway, deploys security manifests
-  ## - it is strongly recommended to use either microgateway or gatewayAPI
-  type: "microgateway"
+  ## - it is strongly recommended to use either microgateway or gatewayAPI/httproute
+  type: 'microgateway'
 
   ## Airlock Microgateway
   microgateway:
     ## Version of the Microgateway
     ## - selects correct protection templates
     ## - valid values depend on selected Airlock IAM version (images.iam.tag)
-    version: "4.6"
+    version: '4.6'
 
   ## Kubernetes Gateway API
   ## - used for type: microgateway, gatewayAPI
@@ -289,18 +289,18 @@ ingress:
     ## Which Gateway to use
     ## - must be defined !!!
     ## - supported formats: <name> or <namespace>/<name>
-    gateway: "airlock-gateway/airlock-gateway"
+    gateway: 'airlock-gateway/airlock-gateway'
 
     ## Namespace of Gateway
     ## - define namespace if gateway uses format <name>
-    namespace: ""
+    namespace: ''
 
     ## Listener section name
     ## - gateways support multiple listeners
     ## - section names help in the process of attaching an HTTPRoute to a specific listener
     ## - optional but may need to be defined if listener cannot be uniquely determined from the hostname
     ## - requires section names to be defined in the Gateway Listeners
-    sectionName: ""
+    sectionName: ''
 
     ## Listener port
     ## - listeners can be defined on different ports
@@ -314,17 +314,17 @@ ingress:
   ingress:
     ## The Ingress API is provided by multiple implementations
     ## - select desired implementation using className
-    className: ""
+    className: ''
 
   ## Response timeout
   ## - specified as, e.g., "60s"
   ## - usually not needed
-  timeout: ""
+  timeout: ''
 
-  ## 
+  ##
   dns:
     ## FQDN to access Airlock IAM
-    hostname: "iam-127-0-0-1.nip.io"
+    hostname: 'iam-127-0-0-1.nip.io'
 
     ## dnsConfig option
     ndots: 2
@@ -332,7 +332,7 @@ ingress:
   ## TLS settings
   tls:
     ## Secret containing TLS certificate
-    secretName: ""
+    secretName: ''
 
   ## Ingress-specific annotations
   ## - used to be required for older versions of Ingress API
@@ -382,47 +382,47 @@ persistence:
       ## - remote: storage from a remote server is mounted as volume
       ## - subpath: the storage refers to a (sub)path on an already existing volume
       ## - hostpath: the storage refers to a directory on the Kubernetes node
-      type: "request"
+      type: 'request'
 
       ## The storage class to use for the PVC
       ## - for type 'existing'
-      storageClass: ""
+      storageClass: ''
 
       ## Volume access restrictions
       ## - valid values: ReadWriteOnce, ReadWriteMany, ReadWriteOncePod, ReadOnlyMany
       ## - for types 'request,existing,remote'
-      accessMode: "ReadWriteMany"
+      accessMode: 'ReadWriteMany'
 
       ## Name of existing PVC
       ## - for type 'existing'
-      claim: ""
+      claim: ''
 
       ## Name of already existing volume and (sub)path to storage
       ## - for type 'volume'
-      volumeName: ""
-      subPath: ""
+      volumeName: ''
+      subPath: ''
 
       ## Allocated size
       ## - for types 'request,existing,remote'
-      size: "10M"
+      size: '10M'
 
       ## Specify the mount
       ## - for type 'remote'
       remote:
         ## Network file system type
         ## - many possible values, e.g. nfs
-        type: ""
+        type: ''
 
         ## server and path of mount
-        server: ""
-        path: ""
+        server: ''
+        path: ''
 
       ## Hostpath mount
       ## - do not use unless you know what you are doing
       ## - only for test environments or local administration setups
       ## - never use for production or production-like test environments - you have been warned
       ## - on Rancher Desktop, use a value like "/mnt/c/Users/<user>/Documents/Airlock/IAM"
-      hostPath: ""
+      hostPath: ''
 
     ## Volume for log files
     ## - by default, logs are written to stdout
@@ -433,9 +433,9 @@ persistence:
     ## - properties are the same as documented for config (above), except where noted
     logs:
       enable: false
-      type: "request"
-      storageClass: ""
-      accessMode: "ReadWriteOnce"
+      type: 'request'
+      storageClass: ''
+      accessMode: 'ReadWriteOnce'
 
       ## With replicas > 1, StatefulSets are used instead of Deployments causing a PVC to be created per replica.
       ## The retention policy defines what to do when replicas are scaled down or the StatefulSet is deleted.
@@ -443,16 +443,16 @@ persistence:
       ## - with Retain, manual cleanup is required
       ## - as volume contains only log data which should have been forwarded to Elasticsearch, anyway,
       ##   it should be quite safe to just remove
-      replicaRetentionPolicy: "Delete"
-      claim: ""
-      volumeName: ""
-      subPath: ""
-      size: "100M"
+      replicaRetentionPolicy: 'Delete'
+      claim: ''
+      volumeName: ''
+      subPath: ''
+      size: '100M'
       remote:
-        type: ""
-        server: ""
-        path: ""
-      hostPath: ""
+        type: ''
+        server: ''
+        path: ''
+      hostPath: ''
 
 ## Authentication and self-service processes usually require multiple data exchanges between client and server.
 ## For security reasons, corresponding state information is not exposed to the client but retained on the server.
@@ -463,7 +463,7 @@ persistence:
 ## the IAM configuration, accordingly.
 redis:
   enable: false
-  architecture: "replication"
+  architecture: 'replication'
   replica:
     replicaCount: 2
   sentinel:
@@ -481,90 +481,177 @@ database:
   external:
     ## Activation
     ## - enable to use an external database
-    ## - conflicts with database.mariadb.enable and database.postgresql.enable
+    ## - conflicts with database.embedded.mariadb and database.embedded.postgresql
     ## - only one of these may be set to true
     enable: false
 
     ## Database engine
     ## - the type of the  external database
     ## - valid values: mysql, mariadb, postgresql, mssql, oracle
-    type: "mariadb"
+    type: 'mariadb'
 
     ## Database host
     ## - append port, if required, separated by colon, e.g. 'myhost:1234'
-    host: "db.example.com"
+    host: 'db.example.com'
 
     ## Database name
-    database: "airlock_iam"
+    database: 'airlock_iam'
 
-    ## Database access credentials
-    ## - specify username & password to access database
-    ## - preferably, use pre-existing secret
-    ## - if secretName is defined, it is expected to contain the specified key
-    credentials:
-      ## The datrabase account (and its password) to access the Airlock IAM database
-      user:
-        ## Username to access database
-        ## - ignored if existingSecret is set
-        value: "airlock_iam"
-  
-        ## Name of existing secret containing username
-        ## - overrides username setting
-        existingSecret: ""
-  
-        ## Key for username in existing secret
-        key: "db_user"
-  
-      password:
-        ## Password to access database
-        ## - ignored if existingSecret is set
-        value: "a very hush and absolutely not well known secret"
-  
-        ## Name of existing secret containing password
-        ## - overrides password setting
-        existingSecret: ""
-  
-        ## Key for password in existing secret
-        key: "db_password"
-  
-      ## A privileged datrabase account (and its password) authorized to create databases and define tables
-      ## - only required if database.initialisation.schema.operation=init
-      ## - properties are the same as documented for database.external.credentials.user & password (just above)
-      rootUser:
-        value: "root"
-        existingSecret: ""
-        key: "root_user"
-      rootPassword:
-        value: ""
-        existingSecret: ""
-        key: "root_password"
-  
-  ## Configure MariaDB deployed from this chart
-  mariadb:
-    ## Activation
-    ## - enable to use an external database
-    ## - conflicts with database.external.enable and database.postgresql.enable
+  ## Configure in-cluster database embedded with Airlock IAM
+  embedded:
+    ## Select MariaDB as embedded database
+    ## - one of mariadb or postgresql must be set to true for an embedded database
+    ## - conflicts with database.external.enable and database.embedded.postgresql
     ## - only one of these may be set to true
-    enable: false
+    mariadb: true
 
-    ## Rest of MariaDB configuration
-    ## Unfortunately, Helm is pretty limited when it comes to passing values from a parent to a child chart
-    ## Such values must be defined in the parent values.yaml (this file) under the key '<name-of-subchart>'
-    ## In the case of MariaDB, look for a top-level key 'mariadb' towards the end of the file.
-  
-  ## Configure PostgreSQL deployed from this chart
-  postgresql:
-    ## Activation
-    ## - enable to use an external database
-    ## - conflicts with database.external.enable and database.mariadb.enable
+    ## Select PostgreSQL as embedded database
+    ## - one of mariadb or postgresql must be set to true for an embedded database
+    ## - conflicts with database.external.enable and database.embedded.postgresql
     ## - only one of these may be set to true
-    enable: false
+    ##
+    ## - !!!!! IMPORTANT !!!!!
+    ##
+    ##   - CloudNativePG currently does NOT allow a database engine to restart and reuse an existing database/PVC
+    ##     See https://github.com/cloudnative-pg/cloudnative-pg/discussions/5253
+    ##   - Upon restart, it will ALWAYS recreate the database
+    ##   - Your data WILL BE DELETED !!!
+    ##   - You must make sure to NEVER delete the custom resource Cluster
+    ##   - This is pretty hard when using the embedded database in a Helm chart
+    ##   - You probably should manage the PostgreSQL database yourself and configure database.external
+    ##
+    ##   - YOU HAVE BEEN WARNED !!!
+    ##
+    postgresql: false
 
-    ## Rest of PostgreSQL configuration
-    ## Unfortunately, Helm is pretty limited when it comes to passing values from a parent to a child chart
-    ## Such values must be defined in the parent values.yaml (this file) under the key '<name-of-subchart>'
-    ## In the case of PostgreSQL, look for a top-level key 'postgresql' towards the end of the file.
-  
+    ## Number of nodes for database cluster
+    ## - if set to 1, a simple setup without HA is deployed
+    ## - for production, 3 is recommended
+    instances: 1
+
+    ## Disk size
+    size: '100Mi'
+
+    ## Storageclass for database
+    ## - if undefined, use default storage class, unless database.embedded.postgresql.pvcTemplate is defined
+    storageClass: ''
+
+    ## Template for PersistentVolumeClaim
+    ## - for greater control over storage
+    ## - see pvcTemplate @ https://cloudnative-pg.io/documentation/1.27/cloudnative-pg.v1/#postgresql-cnpg-io-v1-StorageConfiguration
+    ## - must not contain 'resources.requests.storage:' property as it is set from database.embedded.size
+    pvcTemplate: {}
+
+    ## Allocate persistent volume
+    ## - for scenarios where the volume cannot be automatically created
+    ## - e.g. hostPath for test setups
+    ## - see Kubernetes documentation for details
+    ## - defines 'spec:' of PersistentVolume
+    ## - must not contain 'capacity:' property as it is set from database.embedded.size
+    persistentVolume: {}
+
+    ## MariaDB settings
+    mariadbSettings:
+      ## MariaDB configuration file
+      ## - if empty, a simple default is used (defined in templates/database/mariadb.yaml)
+      myCnf: ''
+
+      ## CPU & memory resource limits and requests
+      resources:
+        requests:
+          cpu: ''
+          ram: ''
+        limits:
+          cpu: ''
+          ram: ''
+
+      ## Enable metrics
+      metrics: false
+
+      ## Custom MariaDB Cluster settings
+      ## - for greater control over database setup
+      ## - see MariaDBSpec @ https://github.com/mariadb-operator/mariadb-operator/blob/main/docs/api_reference.md#mariadbspec
+      ## - must not contain
+      ##   - rootPasswordSecretKeyRef
+      ##   - username
+      ##   - passwordSecretKeyRef
+      ##   - database
+      ##   - replicas
+      ##   - port
+      ##   - storage
+      ##   - myCnf
+      ##   - resources
+      ##   - metrics
+      specAdditional: {}
+
+      ## Custom MariaDB Cluster settings
+      ## - for greater control over database setup
+      ## - see MariaDBSpec @ https://github.com/mariadb-operator/mariadb-operator/blob/main/docs/api_reference.md#mariadbspec
+      ## - overwrites template and must define full spec for kind: MariaDB
+      specFull: {}
+
+    ## PostgreSQL settings
+    postgresqlSettings:
+      ## Custom PostgreSQL Cluster settings
+      ## - for greater control over database setup
+      ## - see ClusterSpec @ https://cloudnative-pg.io/documentation/1.27/cloudnative-pg.v1/#postgresql-cnpg-io-v1-ClusterSpec
+      ## - must not contain 'instances:', 'bootstrap:' nor 'storage:' properties as they will be set by chart
+      specAdditional: {}
+
+      ## Custom PostgreSQL Cluster settings
+      ## - for greater control over database setup
+      ## - see ClusterSpec @ https://cloudnative-pg.io/documentation/1.27/cloudnative-pg.v1/#postgresql-cnpg-io-v1-ClusterSpec
+      ## - overwrites template and must define full spec for kind: Cluster
+      specFull: {}
+
+  ## Database access credentials
+  ## - specify username & password to access database
+  ## - preferably, use pre-existing secret
+  ## - if secretName is defined, it is expected to contain the specified key
+  credentials:
+    ## The datrabase account (and its password) to access the Airlock IAM database
+    user:
+      ## Username to access database
+      ## - ignored if existingSecret is set
+      value: 'airlock_iam'
+
+      ## Name of existing secret containing username
+      ## - overrides username setting
+      ## - if database.embedded.postgresql == true, must contain entries 'username' & 'password'
+      ## - currently not supported for database.embedded.mariadb == true
+      existingSecret: ''
+
+      ## Key for username in existing secret
+      ## - ignored if database.embedded.postgresql == true as the username key must be 'username'
+      key: 'db_user'
+
+    password:
+      ## Password to access database
+      ## - ignored if existingSecret is set
+      value: 'a very hush and absolutely not well known secret'
+
+      ## Name of existing secret containing password
+      ## - overrides password setting
+      ## - if database.embedded.postgresql == true, must contain entries 'username' & 'password'
+      existingSecret: ''
+
+      ## Key for password in existing secret
+      ## - ignored if database.embedded.postgresql == true as the username key must be 'password'
+      key: 'db_password'
+
+    ## A privileged datrabase account (and its password) authorized to create databases and define tables
+    ## - only required if database.initialisation.schema.operation=init
+    ## - properties are the same as documented for database.credentials.user & password (just above)
+    ## - ignored if database.embedded.postgresql == true - superuser access will be disabled
+    rootUser:
+      value: 'root'
+      existingSecret: ''
+      key: 'root_user'
+    rootPassword:
+      value: ''
+      existingSecret: ''
+      key: 'root_password'
+
   ## Initialisation
   initialisation:
     ## Java database connector
@@ -574,25 +661,25 @@ database:
     connector:
       ## Enable automatic download
       download: false
-  
+
       ## Select relevant connector
       mariadb:
         ## Version of connector to download
         ## - needs to be specified
-        version: "3.5.5"
-  
+        version: '3.5.5'
+
         ## Package mirror to download from
         ## - default is 'MvA Internet Services GmbH, Zurich'
-        mirrorHost: "https://mirror.mva-n.net"
-  
+        mirrorHost: 'https://mirror.mva-n.net'
+
       postgresql:
         ## Version of connector to download
         ## - needs to be specified
-        version: "42.7.7"
-  
+        version: '42.7.7'
+
         ## Package mirror to download from
         ## - default is 'MvA Internet Services GmbH, Zurich'
-        mirrorHost: "https://jdbc.postgresql.org"
+        mirrorHost: 'https://jdbc.postgresql.org'
 
     ## Schema
     ## - create or upgrade database schema
@@ -603,7 +690,7 @@ database:
       ## - init: create database if it does not yet exist
       ## - upgrade: apply schema upgrade scripts from https://docs.airlock.com when upgrading Airlock IAM
       ## - schema initialisation will use root user credentials to connect, see below
-      operation: "none"
+      operation: 'none'
 
     ## Adminapp administrator
     ## - only relevant for operation 'init'
@@ -619,54 +706,53 @@ database:
       ## - only relevant for database.initialisation.schema.operation=init and database.initialisation.schema.createAdministrator=true
       ## - preferably, use pre-existing secret
       ## - if secretName is defined, it is expected to contain the specified key
-      ## - properties are the same as documented for database.external.credentials.user & password
+      ## - properties are the same as documented for database.credentials.user & password
       credentials:
         name:
-          value: "admin"
-          existingSecret: ""
-          key: "admin_user"
+          value: 'admin'
+          existingSecret: ''
+          key: 'admin_user'
 
         ## Hash of administrator password
         ## - depends on Airlock IAM application configuration (which password hash?)
         ## - cannot be calculated by Helm chart
         ## - define the correct hash value, e.g. 'MedusaPwdHistoryAAAARjE2Mzg0fF1jjOhya0ZuJ5OrHXgSXznOBBLl6eJ70PTdFYerSYPwgrlK1uq6UCzc5cvN8t1xtgc+YBQO8UgWBYhzDgpkQGM='
         pwd_hash:
-          value: ""
-          existingSecret: ""
-          key: "admin_password"
-      
+          value: ''
+          existingSecret: ''
+          key: 'admin_pwdhash'
 
 ## Image Options
 images:
   ## Container image for Airlock IAM
   iam:
     ## Repository to retrieve the Airlock IAM image from.
-    repository: "quay.io/airlock/iam"
-  
+    repository: 'quay.io/airlock/iam'
+
     ## Tag that uniquely identifies the image.
-    tag: "8.4"
-  
+    tag: '8.4'
+
     ## When to pull the image.
-    pullPolicy: "IfNotPresent"
-  
+    pullPolicy: 'IfNotPresent'
+
     ## Name of secret for protected images
     ## - required to pull Airlock IAM from the Airlock-maintained repository at quay.io
     ## - if you don't want to maintain pull secrets, you must provide your own, internal-access-only repository
-    pullSecret: ""
+    pullSecret: ''
 
-  ## Container image for MariaDB initialisation
-  mariadb:
-    repository: "mariadb"
-    tag: "12-ubi"
-    pullPolicy: "IfNotPresent"
-    pullSecret: ""
-
-  ## Container image for MariaDB initialisation
-  postgresql:
-    repository: "postgres"
-    tag: "17"
-    pullPolicy: "IfNotPresent"
-    pullSecret: ""
+  ## Container image for database initialisation
+  ## - use official image like mariadb:12-ubi
+  ## - or check out https://github.com/airlock-presales/airlock-iam-helm-chart/helpers
+  ## - must provide the following CLI tools:
+  ##   - mariadb / mysql / psql - depending on database type
+  ##   - pg_isready for PostgreSQL
+  ##   - curl (!!! this is missing in the official PostgreSQL images)
+  ##   - ls, grep, sed, wc
+  initdb:
+    repository: 'mariadb'
+    tag: '12-ubi'
+    pullPolicy: 'IfNotPresent'
+    pullSecret: ''
 
 ## Environment variables for all deployments
 ## - can be used to define settings for the instance.properties file by using the parameter name in all caps,
@@ -675,92 +761,8 @@ images:
 ## - these settings are overwritten by environment variable settings for iam.instanceProperties.env, iam.combined.env, and iam.apps.<app>.dedicatedDeployment.env
 env: {}
 
-
-## Sub-chart configurations
-
-## Definition of MariaDB settings have to be at top-level, due to Helm limitations
-##
-mariadb:
-  ## Source for deployment
-  ## - valid values: chart, operator
-  ## - chart: use the chart dependency - see https://github.com/bitnami/charts/tree/main/bitnami/mariadb
-  ## - operator: prepare manifests for MariaDB Operator - see https://github.com/mariadb-operator/mariadb-operator/
-  source: "chart"
-
-  auth:
-    ## Database name
-    database: "airlock-iam"
-
-    ## Username to connect to database
-    username: "airlock-iam"
-
-    ## Use existing secret for credentials
-    ## - you must create this secret before installing the Helm chart
-    ## - it must contain the keys mariadb-password, mariadb-root-password, and mariadb-replication-password
-    ## - pay special consideration to have different secret names for different instantiations of this Helm chart
-    ##   (different runs of helm install)
-    ## - if you set database.deploymentType=mariadb and database.mariadb.source=chart, you almost always will have to also
-    ##   specify this property in your "custom.yaml"
-    existingSecret: "airlock-iam-db"
-
-  architecture: "standalone"
-
-  ## Enable persistence using Persistent Volume Claims
-  primary:
-    persistence:
-      enabled: true
-      existingClaim: "iam-db-storage"
-      storageClass: ""
-      accessMode: "ReadWriteOnce"
-      size: "8Gi"
-
-## Definition of PostgreSQL settings have to be at top-level, due to Helm limitations
-##
-postgresql:
-  global:
-    ## Overwrites database.mariadb.primary.persistence.storageClass
-    defaultStorageClass: ""
-
-  ## Source for deployment
-  ## - valid values: chart, operator
-  ## - chart: use the chart dependency - see https://github.com/bitnami/charts/tree/main/bitnami/postgresql
-  ## - operator: prepare manifests for CloudNativePG - see https://github.com/cloudnative-pg/cloudnative-pg
-  source: "chart"
-
-  global:
-    postgresql:
-      # global.postgresql.auth overrides postgresql.auth
-      auth:
-        ## Database name
-        database: "airlock-iam"
-
-        ## Username to connect to database
-        username: "airlock-iam"
-
-        ## Use secret created by this Helm chart
-        ## - you must create this secret before installing the Helm chart
-        ## - it must contain the keys as secified below (database.postgresql.global.postgresql.auth.secretKeys)
-        ## - pay special consideration to have different secret names for different instantiations of this Helm chart
-        ##   (different runs of helm install)
-        ## - if you set database.deploymentType=mariadb and database.mariadb.source=chart, you almost always will have to also
-        ##   specify this property in your "custom.yaml"
-        existingSecret: "airlock-iam-db"
-
-        ## Names of keys in existing secret to use for PostgreSQL credentials
-        secretKeys:
-          adminPasswordKey: "postgresql-root-password"
-          userPasswordKey: "postgresql-password"
-          replicationPasswordKey: "postgresql-replication-password"
-
-  ## Enable persistence using Persistent Volume Claims
-  primary:
-    persistence:
-      enabled: false
-      existingClaim: ""
-      storageClass: ""
-
 ## Annotations that are added to the Airlock IAM Pod.
-annotations: { }
+annotations: {}
 
 ## Deployment settings
 deployment:
@@ -768,11 +770,10 @@ deployment:
   revisionHistoryLimit: 3
 
 ## Restart policy for the Airlock IAM deployment.
-restartPolicy: "Always"
+restartPolicy: 'Always'
 
 ## Where the Helm chart originates
-chartSource: "https://github.com/airlock-presales/airlock-iam-helm-chart"
+chartSource: 'https://github.com/airlock-presales/airlock-iam-helm-chart'
 
 global:
-  timezone: "Europe/Zurich"
-
+  timezone: 'Europe/Zurich'

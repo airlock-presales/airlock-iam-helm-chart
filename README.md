@@ -110,11 +110,11 @@ For many settings in <code>instance.properties</code>, the Helm chart provides e
 
 ## Database setup
 
-With the exception of a few specific use cases, Airlock IAM requires a SQL database. The Helm chart supports embedded provisioning of two different database engines, MariaDB and PostgreSQL. In addition, it can interface with exisiting, previously deployed database systems. In this case, MySQL, MS SQL and Oracle are also supported.
+With the exception of a few specific use cases, Airlock IAM requires a SQL database. The Helm chart supports embedded provisioning of two different database engines, MariaDB and PostgreSQL (see [below](#installing-airlock-iam) for details). In addition, it can interface with exisiting, previously deployed database systems. In this case, MySQL, MS SQL and Oracle are also supported.
 
-How Airlock IAM accesses this database is defined in the application configuration. By default, this configuraion is maintained with the built-in Config Editor. However, using environment variables, the Helm chart can provide the necessary configuration information for its database setup to Airlock IAM.
+How Airlock IAM accesses this database is defined in the application configuration. By default, this configuration is maintained with the built-in Config Editor. However, using environment variables, the Helm chart can provide the necessary configuration information for its database setup to Airlock IAM.
 
-The Helm chart sets the following environment variables:
+The chart sets the following environment variables:
 
 * IAM_CFG_DB_DRIVER_CLASS
 * IAM_CFG_DB_URL
@@ -162,7 +162,48 @@ To ensure Airlock IAM respects these variables, search for the key sqlDataSource
 ```
   * You must setup the correct settings for section 'ingress:'
   * You very probably should check the settings for sections 'persistence:' and 'database:'
-  * Currently, the Helm chart still references Bitnami charts which will soon stop working. We are searching for alternatives but, as for everybody else, this prooves to be quite difficult.
+
+## Embedded database
+
+In your <code>custom.yaml</code>, you have the option to concurrently deploy a database. If you uninstall Airlock IAM using <code>helm uninstall ...</code>, the database will also be stopped.
+
+Due to the Bitnami situation embedding can no longer rely on sub-charts. Instead, the requested database is deployed using its appropriate operator which must be installed and setup beforehand.
+
+* MariaDB
+  * Setup [MariaDB Community Operator](https://github.com/mariadb-operator/mariadb-operator)
+  * Installation [documentation](https://github.com/mariadb-operator/mariadb-operator/blob/main/docs/helm.md)
+  * As of 2025-09-11, the following worked
+    ```
+    helm repo add mariadb-operator https://helm.mariadb.com/mariadb-operator
+    helm install mariadb-operator-crds mariadb-operator/mariadb-operator-crds
+
+    helm install mariadb-operator mariadb-operator/mariadb-operator \
+    --set webhook.cert.certManager.enabled=true -n mariadb-system --create-namespace
+    ```
+
+* PostgreSQL
+  * Setup [CloudNativePG](https://cloudnative-pg.io/)
+  * Installation [documentation](https://cloudnative-pg.io/documentation/1.27/installation_upgrade/)
+  * As of 2025-09-11, the following worked
+    ```
+    curl -sSfL https://github.com/cloudnative-pg/cloudnative-pg/raw/main/hack/install-cnpg-plugin.sh | \
+    sudo sh -s -- -b /usr/local/bin
+
+    kubectl apply --server-side -f \
+    https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.27/releases/cnpg-1.27.0.yaml
+    
+    kubectl rollout status deployment -n cnpg-system cnpg-controller-manager
+
+    kubectl apply -f \
+    https://raw.githubusercontent.com/cloudnative-pg/postgres-containers/main/Debian/ClusterImageCatalog-bookworm.yaml
+    ```
+  * **WARNING --- Possible Data Loss**
+
+    Please note: as of the time of writing, CloudNativePG forcibly removes an existing database upon (re-)start of the engine. The Internet mentions workarounds which are, however, rather cumbersome and require lots of manual interventions to get an existing database safely up and running again.
+
+    The possibility to use an embedded PostgreSQL database managed by the CloudNativePG operator is still maintained in the Helm chart. Due to the above-mentioned shortcoming, it is very strongly recommended to define it as "external" (<code>database.external.enable</code>). The CloudNativePG operatot can still be used for this but the manifests must be defined and deployed outside of this Helm chart. This way, data loss inadvertently caused by <code>helm upgrade</code> can be avoided.
+
+    You have been warned!
 
 ## Installation
 

@@ -1,0 +1,34 @@
+{{- $fullName := include "airlock-iam.fullname" . -}}
+{{- if .Values.database.embedded.postgresql }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ $fullName }}-postgresql
+spec:
+{{-   if .Values.database.embedded.postgresqlSettings.specFull }}
+  {{- toYaml .Values.database.embedded.postgresqlSettings.specFull | nindent 2 }}
+{{-   else }}
+  instances: {{ .Values.database.embedded.instances }}
+  {{- if .Values.database.embedded.postgresqlSettings.specAdditional }}
+    {{- toYaml .Values.database.embedded.postgresqlSettings.specAdditional | nindent 2 }}
+  {{- end }}
+  {{- if eq .Values.database.initialisation.schema.operation "init" }}
+  bootstrap:
+    initdb:
+      database: iam
+      owner: {{ .Values.database.credentials.user.value }}
+      secret:
+        name: {{ $fullName }}
+  {{- end }}
+  storage:
+    size: {{ .Values.database.embedded.size }}
+    {{- if and (ne .Values.database.embedded.storageClass "") .Values.database.embedded.pvcTemplate }}
+    storageClass: {{ .Values.database.embedded.storageClass }}
+    {{- end }}
+    {{- if .Values.database.embedded.pvcTemplate }}
+    pvcTemplate:
+      {{- toYaml .Values.database.embedded.pvcTemplate | nindent 6 }}
+    {{- end }}
+{{-   end }}
+{{- end }}

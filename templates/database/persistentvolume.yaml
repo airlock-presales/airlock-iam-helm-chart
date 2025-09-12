@@ -1,0 +1,12 @@
+{{- $fullName := include "airlock-iam.fullname" . -}}
+{{- if .Values.database.embedded.persistentVolume }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ $fullName }}
+spec:
+  {{- toYaml .Values.database.embedded.persistentVolume | nindent 2 }}
+  capacity:
+    storage: {{ .Values.database.embedded.size }}
+{{- end }}
