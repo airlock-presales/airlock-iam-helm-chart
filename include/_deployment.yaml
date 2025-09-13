@@ -79,7 +79,7 @@ spec:
             - name: INIT_INSTANCE_CREATE
               value: {{ ternary "true" "false" (contains "adminapp" $.IAM.module) | quote }}
             - name: INIT_CONFIG_FORMAT
-              value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.configFormat) "xml") }}
+              value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.config.format) "xml") }}
           volumeMounts:
             {{- if $persistenceProp.config.enable }}
             - mountPath: /home/airlock/iam/instances
@@ -90,6 +90,57 @@ spec:
               subPath: license.txt
             - mountPath: /var/tmp/scripts
               name: init
+        {{- end }}
+        {{- if and $.Values.iam.config.source.url (eq $.Values.iam.config.format "yaml") }}
+        - name: "init-config"
+          image: "{{ $.Values.images.initConfig.repository }}:{{ $.Values.images.initConfig.tag }}"
+          imagePullPolicy: {{ quote $.Values.images.initConfig.pullPolicy }}
+          command: ["/bin/bash", "/var/tmp/scripts/init_config"]
+          env:
+            - name: INSTANCE_DIR
+              value: "/home/airlock/iam/instances"
+            - name: INIT_INSTANCE
+              value: {{ $.Values.iam.instanceName }}
+            - name: IAM_CONFIG_FORMAT
+              value: {{ $.Values.iam.config.format }}
+            - name: INIT_CONFIG_URL
+              value: {{ $.Values.iam.config.source.url }}
+            - name: INIT_CONFIG_TYPE
+              value: {{ $.Values.iam.config.source.type }}
+            {{- if eq $.Values.iam.config.source.type "git" }}
+            - name: INIT_CONFIG_FILE
+              value: {{ $.Values.iam.config.source.git.configFile }}
+            - name: INIT_CONFIG_COMMAND
+              value: {{ $.Values.iam.config.source.git.buildCommand }}
+            - name: INIT_CONFIG_PROTOCOL
+              value: {{ $.Values.iam.config.source.git.protocol }}
+            {{-   if ne $.Values.iam.config.source.git.credentials.httpsSecret "" }}
+            - name: GIT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: {{ $.Values.iam.config.source.git.credentials.httpsSecret }}
+            - name: GIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: {{ $.Values.iam.config.source.git.credentials.httpsSecret }}
+            {{-   end }}
+            {{- end }}
+          volumeMounts:
+            {{- if $persistenceProp.config.enable }}
+            - mountPath: /home/airlock/iam/instances
+              name: config
+            {{- end }}
+            - mountPath: /home/airlock/iam/license.txt
+              name: license
+              subPath: license.txt
+            - mountPath: /var/tmp/scripts
+              name: init
+            {{- if and (eq $.Values.iam.config.source.type "git") (eq $.Values.iam.config.source.git.protocol "git") }}
+            - mountPath: /home/airlock/.ssh
+              name: ssh_config
+            {{- end }}
         {{- end }}
         {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
         - name: "init-db"
@@ -237,7 +288,7 @@ spec:
               value: {{ $.Values.iam.environmentId }}
             {{- end }}
             - name: IAM_CONFIG_FORMAT
-              value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.configFormat) "xml") }}
+              value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.config.format) "xml") }}
             {{- if $.Values.iam.apps.adminapp.path }}
             - name: IAM_ADMINAPP_URL_PATH
               value: {{ $.Values.iam.apps.adminapp.path }}
@@ -532,3 +583,11 @@ spec:
         {{- end }}
         - name: work
           emptyDir: {}
+        {{- if $.Values.iam.config.source.url }}
+        {{-   if and (eq $.Values.iam.config.source.type "git") (eq $.Values.iam.config.source.git.protocol "git") }}
+        - name: ssh_config
+          secret:
+            secretName: {{ $.Values.iam.config.source.git.credentials.sshSecret }}
+        {{-   end }}
+        {{- end }}
+

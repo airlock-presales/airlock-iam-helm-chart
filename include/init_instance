@@ -42,7 +42,7 @@ function supportsYaml ()
 }
 
 # sanity checks
-# - not checking INSTANCE_DIR, INIT_DB_MIRROR
+# - not checking INSTANCE_DIR
 for f in INIT_INSTANCE INIT_INSTANCE_CREATE INIT_INSTANCE_VERSION
 do
   [[ -z "${!f}" ]] && die "${f} not set"

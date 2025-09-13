@@ -1,0 +1,72 @@
+#! /bin/bash
+
+tmpdir=/var/tmp
+if [[ -r "${INIT_ENV_PATH:-.}"/env.init ]]; then
+    echo "Loading variables from '${INIT_ENV_PATH:-.}/env.init'"
+    source "${INIT_ENV_PATH:-.}"/env.init
+    tmpdir="${TMPDIR:-.}"
+fi
+
+function die ()
+{
+    echo $@
+    # do not exit to indicate problem
+    while true
+    do
+        sleep 10
+    done
+}
+
+# sanity checks
+# - not checking INSTANCE_DIR
+for f in INIT_INSTANCE INIT_CONFIG_FORMAT INIT_CONFIG_URL INIT_CONFIG_TYPE
+do
+  [[ -z "${!f}" ]] && die "${f} not set"
+done
+[[ "${INIT_CONFIG_FORMAT}" != "yaml" ]] && exit
+
+echo "Variables checked"
+
+instance_dir="${INSTANCE_DIR:-/home/airlock/iam/instances}/${INIT_INSTANCE}"
+
+
+# ###########
+# Download config file
+# ###########
+
+if [[ "${INIT_CONFIG_TYPE}" == "download" ]]; then
+    curl -s -L "${INIT_CONFIG_URL}" --output "${tmpdir}"/iam-config.yaml || die "Failed to download IAM configuration file"
+    [[ -f "${instance_dir}"/iam-config.yaml ]] && sha_org="$(md5sum < "${instance_dir}"/iam-config.yaml)" || sha_org=""
+    sha_new="$(md5sum < "${tmpdir}"/iam-config.yaml)"
+    if [[ "${sha_org}" != "${sha_new}" ]]; then
+        mv "${tmpdir}"/iam-config.yaml "${instance_dir}"/iam-config.yaml || die "Failed to install new configuration"
+        echo "New config downloaded from '${INIT_CONFIG_URL}'"
+    else
+        echo "Config unchanged"
+    fi
+fi
+
+
+# ###########
+# Build configuration from git
+# ###########
+
+if [[ "${INIT_CONFIG_TYPE}" == "git" ]]; then
+    # clone repository
+    url="$(eval echo ${INIT_CONFIG_URL})"
+    git clone "${url}" "${tmpdir}"/repo || die "Unable to clone git repository '${INIT_CONFIG_URL}'"
+
+    # build config file
+    if [[ -n "${INIT_CONFIG_COMMAND}" ]]; then
+        bash "${tmpdir}"/repo/"${INIT_CONFIG_COMMAND}" "${tmpdir}"/repo "${instance_dir}" || die "Failed to build config file using '${INIT_CONFIG_COMMAND}'"
+        echo "Config built using '${INIT_CONFIG_COMMAND}'"
+    fi
+
+    # copy config file
+    if [[ -z "${INIT_CONFIG_COMMAND}" ]]; then
+        fname="${INIT_CONFIG_FILE:-iam-config.yaml}"
+        cp "${tmpdir}"/repo/"${fname}" "${instance_dir}"/iam-config.yaml || die "Failed to copy '${fname}' to '${instance_dir}/iam-config.yaml'"
+        echo "Config copied from '${fname}'"
+    fi
+fi
+
