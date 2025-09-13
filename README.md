@@ -18,6 +18,10 @@ This is not an official chart. It is maintained by the Airlock Pre-Sales team, a
 
 Also note, the chart is work in progress. Not all features and possible configurations have been tested and the structure of the configuration parameters may always change.
 
+## WHo is this for?
+
+This Helm chart is for anybody who is tasked with bringing up a running, ready-to-use (or at least ready-to-configure) instance of Airlock IAM on a Kubernetes/OpenShift cluster. This encompasses proof-of-concepts, test and production instances.
+
 ## Cluster requirements
 
 The Kubernetes cluster must comply with the following requirements:
