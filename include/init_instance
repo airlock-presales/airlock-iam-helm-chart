@@ -15,13 +15,41 @@ function die ()
     done
 }
 
+function existsInstance ()
+{
+    # 1-n: aspects to check for
+
+    result="yes"
+    for aspect in $@
+    do
+        if [[ "${aspect}" == "properties" ]]; then
+            [[ -f "${instance_dir}"/instance.properties ]] || result="no"
+        elif [[ "${aspect}" == "config" ]]; then
+            if [[ "${INIT_CONFIG_FORMAT}" == "yaml" ]]; then
+                [[ -f "${instance_dir}"/iam-config.yaml ]] || result="no"
+            else
+                [[ -f "${instance_dir}"/medusa-configuration.xml ]] || result="no"
+            fi
+        fi
+    done
+    echo "${result}"
+}
+
+function supportsYaml ()
+{
+    # 1: IAM version
+    [[ "$1" == "8.0" || "$1" == "8.1" || "$1" == "8.2" || "$1" == "8.3" ]] && echo "no" || echo "yes"
+}
+
 # sanity checks
 # - not checking INSTANCE_DIR, INIT_DB_MIRROR
-for f in INIT_INSTANCE INIT_INSTANCE_CREATE
+for f in INIT_INSTANCE INIT_INSTANCE_CREATE INIT_INSTANCE_VERSION
 do
   [[ -z "${!f}" ]] && die "${f} not set"
 done
 echo "Variables checked"
+
+[[ ${INIT_INSTANCE_VERSION} =~ 8.* ]] || die "IAM versions before 8.0 are a long time out of support"
 
 instance_dir="${INSTANCE_DIR:-/home/airlock/iam/instances}/${INIT_INSTANCE}"
 
@@ -31,19 +59,25 @@ instance_dir="${INSTANCE_DIR:-/home/airlock/iam/instances}/${INIT_INSTANCE}"
 # ###########
 
 if [[ "${INIT_INSTANCE_CREATE}" == "true" ]]; then
-    if [[ -d "${instance_dir}" ]]; then
-        echo "Instance ${INIT_INSTANCE} exists - doing nothing"
-    else
+    exists="$(existsInstance properties config)"
+    if [[ ${exists} == "no" ]]; then
         /opt/airlock-iam/bin/iam init -i "${INIT_INSTANCE}" || die "Failed to create instance '${INIT_INSTANCE}'"
-        if [[ -d "${instance_dir}" ]]; then
+        exists="$(existsInstance properties)"
+        if [[ ${exists} == "yes" ]]; then
+            yaml_ok="$(supportsYaml "${INIT_INSTANCE_VERSION}")"
+            if [[ "${yaml_ok}" == "yes" && "${INIT_CONFIG_FORMAT}" == "yaml" ]]; then
+                /opt/airlock-iam/bin/iam config convert -i "${INIT_INSTANCE}" || die "Failed to convert instance '${INIT_INSTANCE}' to YAML config format"
+                rm -f "${instance_dir}"/medusa-configuration.xml
+            fi
+            exists="$(existsInstance config)"
+        fi
+        if [[ ${exists} == "yes" ]]; then
             echo "Instance ${INIT_INSTANCE} created"
         else
             die "Failed to create instance '${INIT_INSTANCE}'"
         fi
-        if [[ "${INIT_CONFIG_FORMAT}" == "yaml" ]]; then
-            /opt/airlock-iam/bin/iam config convert -i "${INIT_INSTANCE}" || die "Failed to convert instance '${INIT_INSTANCE}' to YAML config format"
-            rm -f "${instance_dir}"/medusa-configuration.xml
-        fi
+    else
+        echo "Instance ${INIT_INSTANCE} exists - doing nothing"
     fi
 fi
 

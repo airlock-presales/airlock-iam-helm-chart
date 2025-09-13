@@ -103,6 +103,8 @@ spec:
               value: {{ $databaseType | quote }}
             - name: INIT_INSTANCE
               value: {{ $.Values.iam.instanceName }}
+            - name: INIT_INSTANCE_VERSION
+              value: {{ $.Values.images.iam.tag | quote }}
             - name: INIT_DL
               value: {{ ternary "true" "false" (and $.Values.database.initialisation.connector.download $persistenceProp.config.enable) | quote }}
             - name: INIT_DL_VERSION
