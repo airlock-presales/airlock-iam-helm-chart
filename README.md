@@ -50,7 +50,7 @@ Foremost, the web applications can either be kept together, as a single deployme
   <img src="media/sandboxed_white.png" alt="sandboxed deployment" height="400">
 </p>
 
-For a production environment, it is paramount to be able to freely scale the customer-facing loginapp and, potnetially also, transaction approval while, for example, there always must only be one replica of the service container.
+For a production environment, it is paramount to be able to freely scale the customer-facing loginapp and, potentially also, transaction approval while, for example, there always must only be one replica of the service container.
 
 By the way, using the new YAML config format, configuration environments, and GitOps, config changes can also be easily and automatically distributed across your whole setup, even with multiple deployments.
 
@@ -87,7 +87,7 @@ To alleviate this challenge, the Helm chart forces an emptyDir() volume on the l
 
 ### <code>instance.properties</code>
 
-For many settings in <code>instance.properties</code>, the Helm chart provides easy configuration possibilities, in <code>iam.apps.\<application-name\>.path</code> and <code>iam.instanceProperties[]</code>. There are also multiple sections to define environment variables which can be used to adjust almost all other settings, e.g. in <code>iam.apps.\<application-name\>.dedicatedDeployment.env</code>, <code>iam.instanceProperties[].env</code>, and <code>env</code>. Finally, a few settings are pre-defined in the Helm chart and should not be overwritten:
+For many settings in <code>instance.properties</code>, the Helm chart provides easy configuration possibilities, in <code>iam.apps.\<application-name\></code> and <code>iam.instanceProperties[]</code>. There are also multiple sections to define environment variables which can be used to adjust almost all other settings, e.g. in <code>iam.apps.\<application-name\>.dedicatedDeployment.env</code>, <code>iam.instanceProperties[].env</code>, and <code>env</code>. Finally, a few settings are pre-defined in the Helm chart and should not be overwritten:
 
 * IAM_CONFIG_FORMAT
 * IAM_HEALTH_PORT
@@ -98,7 +98,7 @@ For many settings in <code>instance.properties</code>, the Helm chart provides e
 ## Other important settings
 
 * Hostname and TLS certificate in <code>ingress.dns.hostname</code> and <code>ingress.tls.secretName</code>, respectively.
-* The required version of Airlock in <code>image.tag</code>
+* The required version of Airlock in <code>images.iam.tag</code>
 * If any application has more than one replica, it is strongly recommended to enable Redis in <code>redis.enable</code> and configure an <code>Expert Mode Redis State Repository</code> in Airlock IAM.
   * Due to limitations in the Helm dependency condition syntax, this can unfortunately not be automated.
   * For simplification, the Helm charts sets the following environment variable:
