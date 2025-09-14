@@ -6,7 +6,7 @@
 {{- end -}}
 {{- range $key, $vol := $persistenceProp -}}
 {{-   if and $vol.enable (eq $vol.type "request") }}
-
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
