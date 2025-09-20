@@ -1,0 +1,32 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $app := "loginapp" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   $app_values := get .Values.iam.apps $app -}}
+{{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
+{{-   $moduleName := print $fullName "-" $suffix | lower -}}
+{{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   if $app_values.enable }}
+apiVersion: microgateway.airlock.com/v1alpha1
+kind: Parser
+metadata:
+  name: {{ $moduleName }}-rest-public
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  request:
+    defaultContentType: "application/json"
+    custom:
+      rules:
+        - requestConditions:
+            path:
+              matcher:
+                suffix: /access
+          action:
+            skip: {}
+{{-   end }}
+{{- end }}
+

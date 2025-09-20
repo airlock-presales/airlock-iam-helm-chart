@@ -130,7 +130,7 @@ spec:
       name: {{ $moduleName }}-rest-public
   secured:
     parserRef:
-      name: {{ $fullName }}
+      name: {{ $moduleName }}-rest-public
     limitsRef:
       name: {{ $fullName }}
     filter:
