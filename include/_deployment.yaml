@@ -452,6 +452,8 @@ spec:
           ports:
             - containerPort: 8080
               name: http
+            - containerPort: 8443
+              name: https
             - containerPort: 8081
               name: health
           {{- if $healthChecksProp.liveness.enable }}

@@ -20,7 +20,14 @@ spec:
   externalTrafficPolicy: {{ quote $.IAM.service.externalTrafficPolicy }}
 {{- end }}
   ports:
+    {{- if $.IAM.app_values.backendTLS.enable }}
+    - name: https
+      port: 443
+      targetPort: https
+      protocol: TCP
+    {{- else }}
     - name: http
       port: 80
       targetPort: http
       protocol: TCP
+    {{- end }}

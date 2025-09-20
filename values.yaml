@@ -156,6 +156,23 @@ iam:
         ## If name is not set here, persistence.default is used.
         persistenceRef: ''
 
+        ## Enable TLS on backend connection to IAM app
+        backendTLS:
+          enable: true
+
+          ## Backend TLS certificate verification
+          verify:
+            ## Verify backend TLS certificate
+            enable: false
+
+            ## Verify against list of well-known certificates
+            useWellKnownCACertificates: false
+
+            ## Verify against list of issuer certificates
+            ## - specify name of configmap containing certificate
+            ## - individual list entry must be map: name, kind (e.g. configmap or secret)
+            caCertificates: []
+
         ## Health checks
         ## Settings are defined in their own section, under healthChecks (see further down).
         ## Each set of settings is combined under their own name (dict key) which can be referenced here.
@@ -185,6 +202,12 @@ iam:
         replicas: 1
         instancePropertiesRef: ''
         persistenceRef: ''
+        backendTLS:
+          enable: true
+          verify:
+            enable:
+            useWellKnownCACertificates: false
+            caCertificates: []
         healthChecksRef: ''
         resources:
           requests:
@@ -202,6 +225,12 @@ iam:
         replicas: 1
         instancePropertiesRef: ''
         persistenceRef: ''
+        backendTLS:
+          enable: true
+          verify:
+            enable:
+            useWellKnownCACertificates: false
+            caCertificates: []
         healthChecksRef: ''
         resources:
           requests:
@@ -219,6 +248,12 @@ iam:
         replicas: 1
         instancePropertiesRef: ''
         persistenceRef: ''
+        backendTLS:
+          enable: true
+          verify:
+            enable:
+            useWellKnownCACertificates: false
+            caCertificates: []
         healthChecksRef: ''
         resources:
           requests:
@@ -236,6 +271,12 @@ iam:
         replicas: 1
         instancePropertiesRef: ''
         persistenceRef: ''
+        backendTLS:
+          enable: true
+          verify:
+            enable:
+            useWellKnownCACertificates: false
+            caCertificates: []
         healthChecksRef: ''
         resources:
           requests:
@@ -250,6 +291,12 @@ iam:
   combined:
     instancePropertiesRef: ''
     persistenceRef: ''
+    backendTLS:
+      enable: true
+      verify:
+        enable:
+        useWellKnownCACertificates: false
+        caCertificates: []
     healthChecksRef: ''
 
     ## CPU & memory resource limits and requests

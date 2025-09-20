@@ -1,0 +1,37 @@
+{{- if $.IAM.app_values.backendTLS.enable }}
+{{-   $fullName := ternary $.IAM.fullName (print $.IAM.fullName "-" $.IAM.suffix) (eq $.Values.iam.appDeploymentStrategy "single") }}
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: BackendTLSPolicy
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  targetRefs:
+    - name: {{ $fullName }}
+      kind: Service
+      group: ''
+  {{- if $.IAM.app_values.backendTLS.verify.enable }}
+  validation:
+    {{-   if $.IAM.app_values.backendTLS.verify.useWellKnownCACertificates }}
+    wellKnownCACertificates: "System"
+    {{-   else }}
+    caCertificateRefs:
+      {{-   with $.IAM.app_values.backendTLS.verify.caCertificates }}
+      - name: {{ .name }}
+        {{-   if eq (.kind | lower) "configmap" }}
+        kind: ConfigMap
+        {{-   else if eq (.kind | lower) "secret" }}
+        kind: Secret
+        {{-   end }}
+        group: ""
+      {{-   end -}}
+    {{-   end }}
+    hostname: {{ $fullName }}
+  {{- end }}
+{{- end }}
+

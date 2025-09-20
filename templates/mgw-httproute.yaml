@@ -62,7 +62,7 @@ spec:
         {{- else if eq $.Values.iam.appDeploymentStrategy "multi" }}
         - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
         {{- end }}
-          port: 80
+          port: {{ ternary 443 80 $app_values.dedicatedDeployment.backendTLS.enable }}
           weight: 1
           group: ''
           kind: Service

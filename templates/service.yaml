@@ -3,7 +3,8 @@
 {{-   $_ := set . "IAM" (dict "fullName" $fullName
                               "suffix" ""
                               "module" ""
-                              "service" .Values.service) -}}
+                              "service" .Values.service
+                              "app_values" .Values.iam.combined ) -}}
 ---
 {{-   tpl ($.Files.Get "include/_service.yaml") . -}}
 
@@ -13,7 +14,8 @@
 {{-       $_ := set $ "IAM" (dict "fullName" $fullName
                                   "suffix" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app))
                                   "module" (include "airlock-iam.mapAppName" $app)
-                                  "service" $.Values.service) -}}
+                                  "service" $.Values.service
+                                  "app_values" $app_values.dedicatedDeployment ) -}}
 ---
 {{-       tpl ($.Files.Get "include/_service.yaml") $ -}}
 {{-     end -}}

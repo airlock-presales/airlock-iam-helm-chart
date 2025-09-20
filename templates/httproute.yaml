@@ -38,7 +38,7 @@ spec:
     {{- if eq .Values.iam.appDeploymentStrategy "single" }}
     - backendRefs:
         - name: {{ $fullName }}
-          port: 80
+          port:  {{ ternary 443 80 .Values.iam.combined.backendTLS.enable }}
           weight: 1
           group: ''
           kind: Service
@@ -55,7 +55,7 @@ spec:
     {{-     if $app_values.enable }}
     - backendRefs:
         - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
-          port: 80
+          port: {{ ternary 443 80 $app_values.dedicatedDeployment.backendTLS.enable }}
       matches:
         - path:
             value: {{ print ($app_values.path | default (print "/" $.Values.iam.instanceName "-" $app)) }}
