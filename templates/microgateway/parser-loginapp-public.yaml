@@ -28,8 +28,12 @@ spec:
                 ignoreCase: false
             invert: false
             header:
-              name: "Content-Length"
-              value: 0
+              name:
+                matcher:
+                  exact: "Content-Length"
+              value:
+                matcher:
+                  exact: 0
             mediaType: "application/json"
           action:
             skip: {}
