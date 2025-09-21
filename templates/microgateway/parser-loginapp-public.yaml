@@ -25,6 +25,12 @@ spec:
             path:
               matcher:
                 suffix: /access
+                ignoreCase: false
+            invert: false
+            header:
+              name: "Content-Length"
+              value: 0
+            mediaType: "application/json"
           action:
             skip: {}
 {{-   end }}
