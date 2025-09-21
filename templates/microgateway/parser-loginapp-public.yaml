@@ -34,7 +34,9 @@ spec:
               value:
                 matcher:
                   exact: "0"
-            mediaType: "application/json"
+            mediaType:
+              matcher:
+                exact: "application/json"
           action:
             skip: {}
 {{-   end }}
