@@ -34,6 +34,7 @@ spec:
               value:
                 matcher:
                   exact: "0"
+                  ignoreCase: false
             mediaType:
               matcher:
                 exact: "application/json"
