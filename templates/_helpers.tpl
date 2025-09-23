@@ -89,6 +89,25 @@ api-policy-service
 {{- end }}
 
 {{/*
+Map application name to module path
+*/}}
+{{- define "airlock-iam.mapAppPath" -}}
+{{- if eq . "adminapp" -}}
+admin
+{{- else if eq . "loginapp" -}}
+login
+{{- else if eq . "transactionApproval" -}}
+transaction-approval
+{{- else if eq . "serviceContainer" -}}
+servicecontainer
+{{- else if eq . "apiPolicyService" -}}
+api-policy-service
+{{- else -}}
+{{ . }}
+{{- end -}}
+{{- end }}
+
+{{/*
 Get list of modules for combined deployment
 */}}
 {{- define "airlock-iam.listActiveModules" -}}
