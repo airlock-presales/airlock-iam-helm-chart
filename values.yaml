@@ -15,7 +15,6 @@ iam:
 
   ## Config management
   config:
-
     ## Format of the configuration file
     ## - valid values: yaml, xml
     ## - it is very strongly recommended to use the yaml format unless you have existing tooling
@@ -28,33 +27,30 @@ iam:
     ## - fetching the configuration is handled by init container - see images.initConfig
     ## - only supported for format 'yaml', for 'xml' it is silently ignored
     source:
-
       ## URL where config is fetched from
       ## - if unset, disables source fetching
       ## - for type 'download', specifies config file URI which is downloaded to 'iam-config.yaml'
       ## - for type 'git', specifies repository URL for clone operation
-      url: ""
+      url: ''
 
       ## Type of configuration provider
       ## - valid values: download, git
       ## - git: allows to apply configuration pipeline
-      type: "git"
+      type: 'git'
 
       ## Git specific settings
       git:
-
         ## Protocol to use for cloning
         ## - valid values: https, git
-        protocol: "https"
+        protocol: 'https'
 
         ## Credentials for private repositories
         ## - for public repos, this section can be ignored
         credentials:
-
           ## SSH secrets for protocol git
           ## - will be mounted as ~/.ssh directory in init container
           ## - should contain 'config' and private key files
-          sshSecret: ""
+          sshSecret: ''
 
           ## The username and password to access private git repository
           user:
@@ -87,13 +83,13 @@ iam:
         ##   - path to cloned repo
         ##   - path to instance directory
         ## - command must create 'iam-config.yaml' in instance
-        buildCommand: ""
+        buildCommand: ''
 
         ## Name of config file
         ## - if buildCommand is unset, git repository is assumed to contain final configuration in one file
         ## - file will be copied to <instance>/iam-config.yaml
         ## - default: iam-config.yaml
-        configFile: ""
+        configFile: ''
 
   ## Active configuration environment
   ## - must match an environment identifier in the configuration file
@@ -160,7 +156,7 @@ iam:
         backendTLS:
           enable: true
 
-          ## Backend TLS certificate verification
+          ## Backend TLS certificate validation
           verify:
             ## Verify backend TLS certificate
             enable: false
@@ -172,6 +168,13 @@ iam:
             ## - specify name of configmap containing certificate
             ## - individual list entry must be map: name, kind (e.g. configmap or secret)
             caCertificates: []
+
+          ## Rules to create IAM server TLS certificate
+          ## Applications can share the same certificate creation settings or use individual ones.
+          ## Certificate creation settings are defined in their own section, under backendCertificate (see further down).
+          ## Each set of settings is combined under their own name (dict key) which can be referenced here.
+          ## If name is not set here, backendCertificate.default is used.
+          certificateRef: ''
 
         ## Health checks
         ## Settings are defined in their own section, under healthChecks (see further down).
@@ -205,9 +208,10 @@ iam:
         backendTLS:
           enable: true
           verify:
-            enable:
+            enable: true
             useWellKnownCACertificates: false
             caCertificates: []
+          certificateRef: ''
         healthChecksRef: ''
         resources:
           requests:
@@ -228,9 +232,10 @@ iam:
         backendTLS:
           enable: true
           verify:
-            enable:
+            enable: true
             useWellKnownCACertificates: false
             caCertificates: []
+          certificateRef: ''
         healthChecksRef: ''
         resources:
           requests:
@@ -251,9 +256,10 @@ iam:
         backendTLS:
           enable: true
           verify:
-            enable:
+            enable: true
             useWellKnownCACertificates: false
             caCertificates: []
+          certificateRef: ''
         healthChecksRef: ''
         resources:
           requests:
@@ -274,9 +280,10 @@ iam:
         backendTLS:
           enable: true
           verify:
-            enable:
+            enable: true
             useWellKnownCACertificates: false
             caCertificates: []
+          certificateRef: ''
         healthChecksRef: ''
         resources:
           requests:
@@ -294,9 +301,10 @@ iam:
     backendTLS:
       enable: true
       verify:
-        enable:
+        enable: true
         useWellKnownCACertificates: false
         caCertificates: []
+      certificateRef: ''
     healthChecksRef: ''
 
     ## CPU & memory resource limits and requests
@@ -484,6 +492,67 @@ healthChecks:
       timeout: 1
       failures: 150
       initialDelay: 10
+
+## IAM server TLS certificate
+## Applications can share the same certificate settings or use individual ones.
+## Here, you set up different variants of certificate configurations, referenced by the applications using certificateRef
+backendCertificate:
+  ## Certificate creation properties settings collection
+  ## - key referenced by certificateRef in the application configuration, see e.g. iam.apps.loginapp.dedicatedDeployment.backendTLS
+  ## - you should probably not overwrite the 'default' dict but create a custom dict
+  ## - missing information in a custom dict is back-filled with settings from 'default'
+  default:
+    ## Enable creation of certificate
+    enable: true
+
+    ## Private key size
+    ## - RSA private key
+    ## - valid values: 2048, 4096
+    keySize: 2048
+
+    ## Validity period
+    ## - time until certificate expires
+    ## - value must be valid as per https://golang.org/pkg/time/#ParseDuration
+    ## - certificate will automatically be renewed after 80% of its lifetime
+    duration: '2160h'
+
+    ## Certificate issuer
+    issuer:
+      ## Kind of referenced issuer
+      ## - valid values: Issuer, ClusterIssuer
+      kind: Issuer
+
+      ## Name of issuer
+      name: ca-issuer
+
+      ## API group
+      ## - optional
+      ## - default uses cert-manager group
+      ## - if you are using an external issuer, change this to that issuer group
+      group: ''
+
+    ## PKCS12 settings
+    ## - Airlock IAM requires certificate to be PKCS12
+    pkcs12:
+      ## Profile specifying key and certificate encryption algorithm
+      ## - valid values: LegacyDES, Modern2023
+      ## - default: LegacyDES for maximal compatibility
+      ## - security of the algorithm is not that important in reality,
+      ##   because the unencrypted certificate and private key are also stored in the Secret
+      profile: 'LegacyDES'
+
+      ## Password used to secure PKCS12 store and private key
+      password:
+        ## Password to access PKCS12 private key
+        ## - ignored if existingSecret is set
+        value: ''
+
+        ## Name of existing secret containing password
+        ## - overrides password setting
+        existingSecret: ''
+
+        ## Key for password in existing secret
+        key: 'pkcs12_password'
 
 ## Airlock IAM uses an instance directory from which it reads the configuration and other resources.
 ## Applications can share the same volume or use individual ones.

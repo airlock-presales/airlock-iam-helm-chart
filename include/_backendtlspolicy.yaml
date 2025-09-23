@@ -1,7 +1,13 @@
 {{- if $.IAM.app_values.backendTLS.enable }}
 {{-   $fullName := ternary $.IAM.fullName (print $.IAM.fullName "-" $.IAM.suffix) (eq $.Values.iam.appDeploymentStrategy "single") }}
 
-apiVersion: gateway.networking.k8s.io/v1
+{{-   $certificateProp := deepCopy $.Values.backendCertificate.default -}}
+{{-   $certificateRef := $.IAM.app_values.backendTLS.certificateRef | default "default" -}}
+{{-   if hasKey $.Values.backendCertificate $certificateRef -}}
+{{-     $certificateProp = mergeOverwrite $certificateProp (get $.Values.backendCertificate $certificateRef) -}}
+{{-   end -}}
+
+apiVersion: gateway.networking.k8s.io/v1alpha3
 kind: BackendTLSPolicy
 metadata:
   name: {{ $fullName }}
@@ -30,6 +36,11 @@ spec:
         {{-   end }}
         group: ""
       {{-   end -}}
+    {{-   end }}
+    {{- if $certificateProp.enable }}
+      - name: {{ $fullName }}-tls
+        kind: Secret
+        group: ""
     {{-   end }}
     hostname: {{ $fullName }}
   {{- end }}

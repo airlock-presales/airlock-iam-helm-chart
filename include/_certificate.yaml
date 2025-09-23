@@ -1,0 +1,64 @@
+{{- if $.IAM.app_values.backendTLS.enable }}
+{{-   $fullName := ternary $.IAM.fullName (print $.IAM.fullName "-" $.IAM.suffix) (eq $.Values.iam.appDeploymentStrategy "single") }}
+
+{{-   $certificateProp := deepCopy $.Values.backendCertificate.default -}}
+{{-   $certificateRef := $.IAM.app_values.backendTLS.certificateRef | default "default" -}}
+{{-   if hasKey $.Values.backendCertificate $certificateRef -}}
+{{-     $certificateProp = mergeOverwrite $certificateProp (get $.Values.backendCertificate $certificateRef) -}}
+{{-   end -}}
+
+{{-   if $certificateProp.enable }}
+{{-     if and (eq $certificateProp.pkcs12.password.existingSecret "") (ne $certificateProp.pkcs12.password.value "") }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $fullName }}-pkcs12
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+type: Opaque
+stringData:
+  {{ $certificateProp.pkcs12.password.key }}: {{ $certificateProp.pkcs12.password.value | quote }}
+---
+{{-     else }}
+{{-       fail (print "Backend certificate settings '" $certificateRef "': password or existingSecret missing, one must be defined") }}
+{{-     end }}
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "airlock-iam.annotations" $ | nindent 4 }}
+spec:
+  secretName: {{ $fullName }}-tls
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: {{ $certificateProp.keySize }}
+  keystores:
+    pkcs12:
+      create: true
+      passwordSecretRef:
+        name: {{ $fullName }}-pkcs12
+        key: {{ $certificateProp.pkcs12.password.key }}
+      profile: {{ $certificateProp.pkcs12.profile }}
+
+  duration: {{ $certificateProp.duration }}
+  renewBeforePercentage: 20
+  isCA: false
+  usages:
+    - server auth
+  dnsNames:
+    - {{ $fullName }}
+  issuerRef:
+    kind: {{ $certificateProp.issuer.kind }}
+    name: {{ $certificateProp.issuer.name }}
+    group: {{ ternary "cert-manager.io" $certificateProp.issuer.group (eq $certificateProp.issuer.group "") }}
+{{-   end -}}
+{{- end -}}

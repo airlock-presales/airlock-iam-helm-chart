@@ -1,0 +1,24 @@
+{{- if has .Values.ingress.type (list "gatewayAPI" "httproute" "microgateway") -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   if eq .Values.iam.appDeploymentStrategy "single" -}}
+{{-     $_ := set . "IAM" (dict "fullName" $fullName
+                              "suffix" ""
+                              "app_values" .Values.iam.combined) }}
+---
+{{-     tpl ($.Files.Get "include/_certificate.yaml") . -}}
+
+{{-   else if eq .Values.iam.appDeploymentStrategy "multi" -}}
+{{-     range $app, $app_values := .Values.iam.apps -}}
+{{-       if $app_values.enable -}}
+{{-         $_ := set $ "IAM" (dict "fullName" $fullName
+                                    "suffix" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app))
+                                    "app_values" $app_values.dedicatedDeployment) }}
+---
+{{-         tpl ($.Files.Get "include/_certificate.yaml") $ -}}
+{{-       end -}}
+{{-     end -}}
+
+{{-   else -}}
+{{-     fail "Invalid value for iam.appDeploymentStrategy" }}
+{{-   end -}}
+{{- end -}}
