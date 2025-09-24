@@ -16,6 +16,11 @@
 {{- if hasKey $.Values.healthChecks $reference -}}
 {{-   $healthChecksProp = mergeOverwrite $healthChecksProp (get $.Values.healthChecks $reference) -}}
 {{- end -}}
+{{- $certificateProp := deepCopy $.Values.backendCertificate.default -}}
+{{- $certificateRef := $.IAM.app_values.backendTLS.certificateRef | default "default" -}}
+{{- if hasKey $.Values.backendCertificate $certificateRef -}}
+{{-   $certificateProp = mergeOverwrite $certificateProp (get $.Values.backendCertificate $certificateRef) -}}
+{{- end }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -447,6 +452,19 @@ spec:
             - name: {{ quote $name }}
               value: {{ quote $value }}
             {{- end }}
+            {{- if $.IAM.app_values.backendTLS.enable }}
+            {{-   if $certificateProp.enable }}
+            - name: IAM_WEB_SERVER_HTTPS_KEYSTORE_TYPE
+              value: "PKCS12"
+            - name: IAM_WEB_SERVER_HTTPS_KEYSTORE_FILE
+              value: {{ print "/home/airlock/iam/instances/" $.Values.iam.instanceName "/certificates/keystore.p12" }}
+            - name: IAM_WEB_SERVER_HTTPS_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fullName }}-pkcs12
+                  key: {{ $certificateProp.pkcs12.password.key }}
+            {{-   end }}
+            {{- end }}
             - name: TZ
               value: {{ $.Values.global.timezone }}
           ports:
@@ -524,6 +542,12 @@ spec:
               subPath: license.txt
             - mountPath: /home/airlock/work
               name: work
+            {{- if $.IAM.app_values.backendTLS.enable }}
+            {{-   if $certificateProp.enable }}
+            - mountPath: {{ print "/home/airlock/iam/instances/" $.Values.iam.instanceName "/certificates" }}
+              name: certificates
+            {{-   end }}
+            {{- end }}
       restartPolicy: {{ quote $.Values.restartPolicy }}
       volumes:
         {{- if $persistenceProp.config.enable }}
@@ -584,6 +608,13 @@ spec:
         - name: init
           configMap:
             name: {{ $.IAM.fullName }}-init
+        {{- end }}
+        {{- if $.IAM.app_values.backendTLS.enable }}
+        {{-   if $certificateProp.enable }}
+        - name: certificates
+          secret:
+            secretName: {{ $fullName }}-tls
+        {{-   end }}
         {{- end }}
         - name: work
           emptyDir: {}

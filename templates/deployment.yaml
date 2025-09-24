@@ -6,7 +6,7 @@
                               "instanceRef" .Values.iam.combined.instancePropertiesRef
                               "persistenceRef" .Values.iam.combined.persistenceRef
                               "healthChecksRef" .Values.iam.combined.healthChecksRef
-                              "app_values" .Values.iam.combined ) -}}
+                              "app_values" .Values.iam.combined ) }}
 ---
 {{-   tpl ($.Files.Get "include/_deployment.yaml") . -}}
 
@@ -19,7 +19,7 @@
                                   "instanceRef" $app_values.dedicatedDeployment.instancePropertiesRef
                                   "persistenceRef" $app_values.dedicatedDeployment.persistenceRef
                                   "healthChecksRef" $app_values.dedicatedDeployment.healthChecksRef
-                                  "app_values" $app_values.dedicatedDeployment ) -}}
+                                  "app_values" $app_values.dedicatedDeployment ) }}
 ---
 {{-       tpl ($.Files.Get "include/_deployment.yaml") $ -}}
 {{-     end -}}
