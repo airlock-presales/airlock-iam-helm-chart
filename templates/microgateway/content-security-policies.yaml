@@ -48,7 +48,7 @@ spec:
       name: {{ $moduleName }}-rest
   secured:
     parserRef:
-      name: {{ $fullName }}
+      name: {{ $moduleName }}-rest
     limitsRef:
       name: {{ $fullName }}
     filter:
