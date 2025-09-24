@@ -108,6 +108,14 @@ api-policy-service
 {{- end }}
 
 {{/*
+Get module path
+*/}}
+{{- define "airlock-iam.modulePath" -}}
+{{- $path := include "airlock-iam.mapAppPath" .app -}}
+{{ print (.app_values.path | default (print "/" .instanceName "-" $path)) }}
+{{- end }}
+
+{{/*
 Get list of modules for combined deployment
 */}}
 {{- define "airlock-iam.listActiveModules" -}}

@@ -5,11 +5,12 @@
 {{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
 {{-   $moduleName := print $fullName "-" $suffix | lower -}}
 {{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   $path := include "airlock-iam.modulePath" (dict "app" $app "app_values" $app_values "instanceName" $.Values.iam.instanceName) -}}
 {{-   if $app_values.enable }}
 apiVersion: v1
 data:
   openapi.json: '{"openapi":"3.0.1","info":{"title":"Airlock IAM Adminapp REST API","version":"8.4.2","x-jerseyapp":"base","x-logo":{"url":"./airlock-logo.png","backgroundColor":"#39373A"}},"servers":[{"url":"{{
-    $app_values.path }}/rest"}],"tags":[{"name":"/_other","x-displayName":"other"},{"name":"/_Passwords","x-displayName":"Passwords"},{"name":"/_License","x-displayName":"License"},{"name":"/_Logs","x-displayName":"Logs"},{"name":"/_Maintenance
+    $path }}/rest"}],"tags":[{"name":"/_other","x-displayName":"other"},{"name":"/_Passwords","x-displayName":"Passwords"},{"name":"/_License","x-displayName":"License"},{"name":"/_Logs","x-displayName":"Logs"},{"name":"/_Maintenance
     Messages","x-displayName":"Maintenance Messages"},{"name":"/_SMS/mTAN","x-displayName":"SMS/mTAN"},{"name":"/_System","x-displayName":"System"},{"name":"/_Administrators","x-displayName":"Administrators"},{"name":"/_Context
     Data","x-displayName":"Context Data"},{"name":"/_User Locking","x-displayName":"User
     Locking"},{"name":"/_User Roles","x-displayName":"User Roles"},{"name":"/_Analytics","x-displayName":"Analytics"},{"name":"/_API

@@ -5,6 +5,7 @@
 {{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
 {{-   $moduleName := print $fullName "-" $suffix | lower -}}
 {{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   $path := include "airlock-iam.modulePath" (dict "app" $app "app_values" $app_values "instanceName" $.Values.iam.instanceName) -}}
 {{-   if $app_values.enable }}
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: DenyRules
@@ -61,7 +62,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig$"
+              regex: "^{{ $path }}/editConfig$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -69,7 +70,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -109,7 +110,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/logs/.*$"
+              regex: "^{{ $path }}/rest/logs/.*$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -117,7 +118,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -164,7 +165,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig$"
+              regex: "^{{ $path }}/editConfig$"
               ignoreCase: false
       - ruleKeys:
         - "TEMPLATE"
@@ -177,7 +178,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "HTML"
@@ -193,7 +194,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              regex: "^{{ $path }}/rest/maintenance-messages.*"
               ignoreCase: false
       - ruleKeys:
         - "HTML"
@@ -204,7 +205,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              regex: "^{{ $path }}/rest/maintenance-messages.*"
               ignoreCase: false
       - ruleKeys:
         - "HTML"
@@ -215,7 +216,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              regex: "^{{ $path }}/rest/maintenance-messages.*"
               ignoreCase: false
       - ruleKeys:
         - "HTML"
@@ -226,7 +227,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/maintenance-messages.*"
+              regex: "^{{ $path }}/rest/maintenance-messages.*"
               ignoreCase: false
       - ruleKeys:
         - "HTML"
@@ -234,7 +235,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "UNIXCMD"
@@ -247,7 +248,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "WINCMD"
@@ -260,7 +261,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "LDAP"
@@ -273,7 +274,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "PHP"
@@ -286,7 +287,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "OGNL"
@@ -299,7 +300,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -321,7 +322,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "NOSQL"
@@ -334,7 +335,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "SANITY"
@@ -347,7 +348,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "ENCODING"
@@ -360,7 +361,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "PROTOCOL"
@@ -373,7 +374,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -393,7 +394,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig$"
+              regex: "^{{ $path }}/editConfig$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -401,7 +402,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -427,7 +428,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       - ruleKeys:
         - "SCANNING"
@@ -440,7 +441,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig/UIDL/.*$"
+              regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
       {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
       - ruleKeys:
@@ -470,7 +471,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/editConfig$"
+              regex: "^{{ $path }}/editConfig$"
               ignoreCase: false
       - ruleKeys:
         - "SSRF"

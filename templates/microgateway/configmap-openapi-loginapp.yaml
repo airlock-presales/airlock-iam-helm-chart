@@ -5,11 +5,12 @@
 {{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
 {{-   $moduleName := print $fullName "-" $suffix | lower -}}
 {{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   $path := include "airlock-iam.modulePath" (dict "app" $app "app_values" $app_values "instanceName" $.Values.iam.instanceName) -}}
 {{-   if $app_values.enable }}
 apiVersion: v1
 data:
   openapi.json: '{"openapi":"3.0.1","info":{"title":"Airlock IAM Loginapp REST API","version":"8.4.2","x-jerseyapp":"base","x-logo":{"url":"./airlock-logo.png","backgroundColor":"#39373A"},"x-comp-prefix":"Basic"},"servers":[{"url":"{{
-    $app_values.path }}/rest"}],"tags":[{"name":"/protected_Secret Questions","x-displayName":"Secret
+    $path }}/rest"}],"tags":[{"name":"/protected_Secret Questions","x-displayName":"Secret
     Questions"},{"name":"/protected_other","x-displayName":"other"},{"name":"/protected_Cronto","x-displayName":"Cronto"},{"name":"/protected_Device
     Tokens","x-displayName":"Device Tokens"},{"name":"/protected_SMS/mTAN","x-displayName":"SMS/mTAN"},{"name":"/protected_Passwords","x-displayName":"Passwords"},{"name":"/protected_Users","x-displayName":"Users"},{"name":"/public_Flow
     Control","x-displayName":"Flow Control"},{"name":"/public_other","x-displayName":"other"},{"name":"/public_Signatures","x-displayName":"Signatures"},{"name":"/public_Maintenance

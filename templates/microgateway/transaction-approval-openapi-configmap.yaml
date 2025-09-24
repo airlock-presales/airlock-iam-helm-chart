@@ -5,12 +5,13 @@
 {{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
 {{-   $moduleName := print $fullName "-" $suffix | lower -}}
 {{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   $path := include "airlock-iam.modulePath" (dict "app" $app "app_values" $app_values "instanceName" $.Values.iam.instanceName) -}}
 {{-   if $app_values.enable }}
 apiVersion: v1
 data:
   openapi.json: '{"openapi":"3.0.1","info":{"title":"Airlock IAM Transaction Approval
     REST API","version":"8.4.2","x-logo":{"url":"./airlock-logo.png","backgroundColor":"#39373A"}},"servers":[{"url":"{{
-    $app_values.path }}/rest"}],"tags":[{"name":"transaction-approval-rest-docs-openapi-intermediate_other","x-displayName":"other"},{"name":"Flow
+    $path }}/rest"}],"tags":[{"name":"transaction-approval-rest-docs-openapi-intermediate_other","x-displayName":"other"},{"name":"Flow
     Control","x-displayName":"Flow Control"},{"name":"Message Parameters","x-displayName":"Message
     Parameters"},{"name":"Airlock 2FA","x-displayName":"Airlock 2FA"},{"name":"Cronto","x-displayName":"Cronto"},{"name":"Email
     OTP","x-displayName":"Email OTP"},{"name":"Users","x-displayName":"Users"},{"name":"Matrix

@@ -5,6 +5,7 @@
 {{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
 {{-   $moduleName := print $fullName "-" $suffix | lower -}}
 {{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   $path := include "airlock-iam.modulePath" (dict "app" $app "app_values" $app_values "instanceName" $.Values.iam.instanceName) -}}
 {{-   if $app_values.enable }}
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: DenyRules
@@ -47,7 +48,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/serviceContainer$"
+              regex: "^{{ $path }}/serviceContainer$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -62,7 +63,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/serviceContainer$"
+              regex: "^{{ $path }}/serviceContainer$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -77,7 +78,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/serviceContainer$"
+              regex: "^{{ $path }}/serviceContainer$"
               ignoreCase: false
       {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
       - ruleKeys:
@@ -93,7 +94,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/serviceContainer$"
+              regex: "^{{ $path }}/serviceContainer$"
               ignoreCase: false
       {{- end }}
 {{-   end }}

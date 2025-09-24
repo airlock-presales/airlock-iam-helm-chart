@@ -5,6 +5,7 @@
 {{-       $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
 {{-       $moduleName := print $fullName "-" $suffix | lower -}}
 {{-       $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-       $path := include "airlock-iam.modulePath" (dict "app" $app "app_values" $app_values "instanceName" $.Values.iam.instanceName) -}}
 {{-       $lst := list (dict "name" "" "path" "/") -}}
 {{-       if eq $app "adminapp" -}}
 {{-         $lst = append $lst (dict "name" "rest" "path" "/rest/") -}}
@@ -59,16 +60,17 @@ spec:
     - backendRefs:
         {{- if eq $.Values.iam.appDeploymentStrategy "single" }}
         - name: {{ $fullName }}
+          port:  {{ ternary 443 80 $.Values.iam.combined.backendTLS.enable }}
         {{- else if eq $.Values.iam.appDeploymentStrategy "multi" }}
         - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
-        {{- end }}
           port: {{ ternary 443 80 $app_values.dedicatedDeployment.backendTLS.enable }}
+        {{- end }}
           weight: 1
           group: ''
           kind: Service
       matches:
         - path:
-            value: {{ print ($app_values.path | default (print "/" $.Values.iam.instanceName "-" (include "airlock-iam.mapAppPath" $app))) $route.path }}
+            value: {{ print $path $route.path }}
             type: PathPrefix
       {{- if ne $.Values.ingress.timeout "" }}
       timeouts:

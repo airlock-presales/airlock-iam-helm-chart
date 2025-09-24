@@ -5,6 +5,7 @@
 {{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
 {{-   $moduleName := print $fullName "-" $suffix | lower -}}
 {{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   $path := include "airlock-iam.modulePath" (dict "app" $app "app_values" $app_values "instanceName" $.Values.iam.instanceName) -}}
 {{-   if $app_values.enable }}
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: DenyRules
@@ -49,7 +50,7 @@ spec:
           - "GET"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}(?:/oauth2/v3/[a-zA-Z0-9._\\-]+/authorize/?|/ui/app/auth/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?)"
+              regex: "^{{ $path }}(?:/oauth2/v3/[a-zA-Z0-9._\\-]+/authorize/?|/ui/app/auth/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?)"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -66,7 +67,7 @@ spec:
           - "GET"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/oauth2-client(?:/.*)?$"
+              regex: "^{{ $path }}/oauth2-client(?:/.*)?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -82,7 +83,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/cronto/devices/activation/complete/?$"
+              regex: "^{{ $path }}/rest/protected/my/tokens/cronto/devices/activation/complete/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -99,7 +100,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -116,7 +117,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -127,7 +128,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/mtan/[a-zA-Z0-9]+/verify-number-change/?$"
+              regex: "^{{ $path }}/rest/protected/my/tokens/mtan/[a-zA-Z0-9]+/verify-number-change/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -140,7 +141,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/device-tokens/?$"
+              regex: "^{{ $path }}/rest/protected/my/tokens/device-tokens/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -153,7 +154,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/device-tokens/?$"
+              regex: "^{{ $path }}/rest/protected/my/tokens/device-tokens/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -166,7 +167,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/oauth2/authorization-server/consent/remote/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-server/consent/remote/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -183,7 +184,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -200,7 +201,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -217,7 +218,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -234,7 +235,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -251,7 +252,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -268,7 +269,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -279,7 +280,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/(authentication|self-service)/device-token/check/?$"
+              regex: "^{{ $path }}/rest/public/(authentication|self-service)/device-token/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -303,7 +304,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
+              regex: "^{{ $path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -318,7 +319,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
+              regex: "^{{ $path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -333,7 +334,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
+              regex: "^{{ $path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -350,7 +351,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/oauth2-manage/?$"
+              regex: "^{{ $path }}/oauth2-manage/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -367,7 +368,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/account-registration-confirmation/?$"
+              regex: "^{{ $path }}/account-registration-confirmation/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -384,7 +385,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
+              regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -397,7 +398,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -414,7 +415,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -431,7 +432,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -448,7 +449,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -465,7 +466,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -497,7 +498,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/(?:location|default-application|applications/[a-z0-9_\\-]+)/access/?$"
+              regex: "^{{ $path }}/rest/public/authentication/(?:location|default-application|applications/[a-z0-9_\\-]+)/access/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -542,7 +543,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/(?:public|protected)/"
+              regex: "^{{ $path }}/rest/(?:public|protected)/"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -557,7 +558,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/oauth2-client(?:/.*)?$"
+              regex: "^{{ $path }}/oauth2-client(?:/.*)?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -572,7 +573,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
+              regex: "^{{ $path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -587,7 +588,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
+              regex: "^{{ $path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -602,7 +603,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
+              regex: "^{{ $path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -617,7 +618,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/account-link-management/?$"
+              regex: "^{{ $path }}/account-link-management/?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -639,7 +640,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -652,7 +653,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -663,7 +664,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/location/(access|interpret)/?$"
+              regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -676,7 +677,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -689,7 +690,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -702,7 +703,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/oauth2/client/authorization/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/client/authorization/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -715,7 +716,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -730,7 +731,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/ui/configuration/logout/?$"
+              regex: "^{{ $path }}/rest/public/authentication/ui/configuration/logout/?$"
               ignoreCase: false
       - ruleKeys:
         - "TEMPLATE"
@@ -753,7 +754,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/log(?:in|out)-oneshot/?$"
+              regex: "^{{ $path }}/log(?:in|out)-oneshot/?$"
               ignoreCase: false
       - ruleKeys:
         - "UNIXCMD"
@@ -791,7 +792,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
+              regex: "^{{ $path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
               ignoreCase: false
       - ruleKeys:
         - "UNIXCMD"
@@ -806,7 +807,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
+              regex: "^{{ $path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
               ignoreCase: false
       - ruleKeys:
         - "UNIXCMD"
@@ -821,7 +822,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
+              regex: "^{{ $path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
               ignoreCase: false
       - ruleKeys:
         - "UNIXCMD"
@@ -834,7 +835,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
               ignoreCase: false
       - ruleKeys:
         - "WINCMD"
@@ -898,7 +899,7 @@ spec:
           - "GET"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}(?:/oauth2/v3/[a-zA-Z0-9._\\-]+/authorize/?|/ui/app/auth/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?)"
+              regex: "^{{ $path }}(?:/oauth2/v3/[a-zA-Z0-9._\\-]+/authorize/?|/ui/app/auth/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?)"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -915,7 +916,7 @@ spec:
           - "GET"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/oauth2-client(?:/.*)?$"
+              regex: "^{{ $path }}/oauth2-client(?:/.*)?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -935,7 +936,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/location/(access|interpret)/?$"
+              regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -950,7 +951,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/ui/configuration/logout/?$"
+              regex: "^{{ $path }}/rest/public/authentication/ui/configuration/logout/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -968,7 +969,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/device-tokens/?$"
+              regex: "^{{ $path }}/rest/protected/my/tokens/device-tokens/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -981,7 +982,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/device-tokens/?$"
+              regex: "^{{ $path }}/rest/protected/my/tokens/device-tokens/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -994,7 +995,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1007,7 +1008,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1018,7 +1019,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/oauth2/authorization-server/consent/remote/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-server/consent/remote/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1031,7 +1032,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1044,7 +1045,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1057,7 +1058,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1070,7 +1071,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1083,7 +1084,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1096,7 +1097,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1107,7 +1108,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/(authentication|self-service)/device-token/check/?$"
+              regex: "^{{ $path }}/rest/public/(authentication|self-service)/device-token/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1120,7 +1121,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/assertion-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1133,7 +1134,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1146,7 +1147,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/oauth2/client/authorization/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/client/authorization/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1159,7 +1160,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1174,7 +1175,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/saml2/idp/slo/init/?$"
+              regex: "^{{ $path }}/saml2/idp/slo/init/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1189,7 +1190,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/ui/app/.*"
+              regex: "^{{ $path }}/ui/app/.*"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1204,7 +1205,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/saml2/sp/slo/init/?$"
+              regex: "^{{ $path }}/saml2/sp/slo/init/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1221,7 +1222,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
+              regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1236,7 +1237,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/ui/app/[a-z0-9_\\-]+/logout/?$"
+              regex: "^{{ $path }}/ui/app/[a-z0-9_\\-]+/logout/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1251,7 +1252,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/ui/app/protected/representation/(start|resume)/?$"
+              regex: "^{{ $path }}/ui/app/protected/representation/(start|resume)/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1266,7 +1267,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}(?:/check-login|/login|/logout)?/?$"
+              regex: "^{{ $path }}(?:/check-login|/login|/logout)?/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1277,7 +1278,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/self-service/representation/start/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/representation/start/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -1290,7 +1291,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/my/tokens/cronto/devices/activation/complete/?$"
+              regex: "^{{ $path }}/rest/protected/my/tokens/cronto/devices/activation/complete/?$"
               ignoreCase: false
       - ruleKeys:
         - "NOSQL"
@@ -1313,7 +1314,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/log(?:in|out)-oneshot/?$"
+              regex: "^{{ $path }}/log(?:in|out)-oneshot/?$"
               ignoreCase: false
       - ruleKeys:
         - "ENCODING"
@@ -1349,7 +1350,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
+              regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -1366,7 +1367,7 @@ spec:
           - "GET"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}(?:/oauth2/v3/[a-zA-Z0-9._\\-]+/authorize/?|/ui/app/auth/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?)"
+              regex: "^{{ $path }}(?:/oauth2/v3/[a-zA-Z0-9._\\-]+/authorize/?|/ui/app/auth/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?)"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -1397,7 +1398,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -1412,7 +1413,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/ui/configuration/logout/?$"
+              regex: "^{{ $path }}/rest/public/authentication/ui/configuration/logout/?$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -1423,7 +1424,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/location/(access|interpret)/?$"
+              regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -1436,7 +1437,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/oauth2/client/authorization/check/?$"
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/client/authorization/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -1449,7 +1450,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -1482,7 +1483,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
+              regex: "^{{ $path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -1497,7 +1498,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
+              regex: "^{{ $path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -1512,7 +1513,7 @@ spec:
           invert: false
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
+              regex: "^{{ $path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
               ignoreCase: false
       - ruleKeys:
         - "EXPLOIT"
@@ -1545,7 +1546,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/public/authentication/location/(access|interpret)/?$"
+              regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
               ignoreCase: false
       - ruleKeys:
         - "SSRF"
@@ -1562,7 +1563,7 @@ spec:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $app_values.path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
+              regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
               ignoreCase: false
       {{- end }}
 {{-   end }}

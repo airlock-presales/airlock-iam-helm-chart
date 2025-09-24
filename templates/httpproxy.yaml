@@ -36,9 +36,10 @@ spec:
       {{- end }}
     {{- else if eq .Values.iam.appDeploymentStrategy "multi" }}
     {{-   range $app, $app_values := .Values.iam.apps }}
+    {{-     $path := include "airlock-iam.modulePath" (dict "app" $app "app_values" $app_values "instanceName" $.Values.iam.instanceName) -}}
     {{-     if $app_values.enable }}
     - conditions:
-      - prefix: {{ print ($app_values.path | default (print "/" $.Values.iam.instanceName "-" $app)) }}
+      - prefix: {{ $path }}
       {{- if eq $.Values.ingress.tls.secretName "" }}
       permitInsecure: true
       {{- end }}
