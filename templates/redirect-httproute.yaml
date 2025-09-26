@@ -44,18 +44,7 @@ spec:
   hostnames:
     - {{ $.Values.ingress.dns.hostname }}
   rules:
-    - backendRefs:
-        {{- if eq $.Values.iam.appDeploymentStrategy "single" }}
-        - name: {{ $fullName }}
-          port:  {{ ternary 443 80 $.Values.iam.combined.backendTLS.enable }}
-        {{- else if eq $.Values.iam.appDeploymentStrategy "multi" }}
-        - name: {{ print $fullName "-" ($app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app)) }}
-          port: {{ ternary 443 80 $app_values.dedicatedDeployment.backendTLS.enable }}
-        {{- end }}
-          weight: 1
-          group: ''
-          kind: Service
-      matches:
+    - matches:
         - path:
             type: Exact
             value: /
