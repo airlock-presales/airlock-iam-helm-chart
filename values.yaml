@@ -111,6 +111,12 @@ iam:
   ## - multi: separate every app into its own deployment for greater separation and control
   appDeploymentStrategy: 'single'
 
+  ## Default application
+  ## - redirected to from https://<fqdn>/
+  ## - valid values: '', loginapp, adminapp
+  ## - empty string: no redirect
+  defaultApp: ''
+
   ## IAM web applications
   ## - for tests, all applications can be part of one deployment
   ## - for production and production-like test environments, it is recommended to split the applications
