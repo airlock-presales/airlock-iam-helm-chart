@@ -22,6 +22,16 @@ Also note, the chart is work in progress. Not all features and possible configur
 
 This Helm chart is for anybody who is tasked with bringing up a running, ready-to-use (or at least ready-to-configure) instance of Airlock IAM on a Kubernetes/OpenShift cluster. This encompasses proof-of-concepts, test and production instances.
 
+## Versioning ##
+
+Each release version of this Helm chart is tagged according to following strategy:
+
+* Minor version of Airlock IAM it supports
+* Release counter of chart
+
+Current version: 8.4.0
+* Supported IAM versions: 8.4.0, 8.4.1 etc.
+
 ## Cluster requirements
 
 The Kubernetes cluster must comply with the following requirements:
