@@ -23,7 +23,7 @@
 {{- end }}
 
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ $fullName }}
   namespace: {{ $.Release.Namespace }}
@@ -41,8 +41,6 @@ spec:
   replicas: {{ $.IAM.app_values.replicas }}
   {{- end }}
   revisionHistoryLimit: {{ $.Values.deployment.revisionHistoryLimit }}
-  strategy:
-    type: RollingUpdate
   selector:
     matchLabels:
       {{- include "airlock-iam.selectorLabels" $ | nindent 6 }}
@@ -59,6 +57,16 @@ spec:
       annotations:
         {{- include "airlock-iam.annotations" $ | nindent 8 }}
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - {{ $fullName }}
+              topologyKey: "kubernetes.io/hostname"
       serviceAccountName: {{ $.IAM.fullName }}
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
@@ -71,9 +79,12 @@ spec:
         {{- end }}
       {{- end }}
       initContainers:
+        #
+        # Init Instance
+        #
         {{- if $.Values.iam.instanceCreate }}
         - name: "init-instance"
-          image: "{{ $.Values.images.iam.repository }}:{{ $.Values.images.iam.tag }}"
+          image: "{{ $.Values.images.iam.repository }}:{{ ($.Values.images.iam.tag | default .Chart.AppVersion) }}"
           imagePullPolicy: {{ quote $.Values.images.iam.pullPolicy }}
           command: ["/bin/bash", "/var/tmp/scripts/init_instance"]
           env:
@@ -82,15 +93,41 @@ spec:
             - name: INIT_INSTANCE
               value: {{ $.Values.iam.instanceName }}
             - name: INIT_INSTANCE_VERSION
-              value: {{ $.Values.images.iam.tag | quote }}
-            - name: INIT_INSTANCE_CREATE
-              value: {{ ternary "true" "false" (contains "adminapp" $.IAM.module) | quote }}
-            - name: INIT_CONFIG_FORMAT
+              value: {{ ($.Values.images.iam.tag | default .Chart.AppVersion) | quote }}
+            - name: IAM_CONFIG_FORMAT
               value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.config.format) "xml") }}
+            - name: IAM_ANALYTICS_MODE
+              {{- if eq $.Values.iam.analytics "license-only" }}
+              value: LICENSE_DATA
+              {{- else if eq $.Values.iam.analytics "usage-data" }}
+              value: USAGE_DATA
+              {{- else }}
+              {{-   fail "Invalid value for iam.analytics" }}
+              {{- end }}
+            {{- if $.Values.iam.apps.adminapp.path }}
+            - name: IAM_ADMINAPP_URL_PATH
+              value: {{ $.Values.iam.apps.adminapp.path }}
+            {{- end }}
+            {{- if $.Values.iam.apps.loginapp.path }}
+            - name: IAM_LOGINAPP_URL_PATH
+              value: {{ $.Values.iam.apps.loginapp.path }}
+            {{- end }}
+            {{- if $.Values.iam.apps.transactionApproval.path }}
+            - name: IAM_TRANSACTION_APPROVAL_URL_PATH
+              value: {{ $.Values.iam.apps.transactionApproval.path }}
+            {{- end }}
+            {{- if $.Values.iam.apps.serviceContainer.path }}
+            - name: IAM_SERVICE_CONTAINER_URL_PATH
+              value: {{ $.Values.iam.apps.serviceContainer.path }}
+            {{- end }}
+            {{- if $.Values.iam.apps.apiPolicyService.path }}
+            - name: IAM_API_POLICY_SERVICE_URL_PATH
+              value: {{ $.Values.iam.apps.apiPolicyService.path }}
+            {{- end }}
           volumeMounts:
             {{- if $persistenceProp.config.enable }}
             - mountPath: /home/airlock/iam/instances
-              name: config
+              name: {{ $fullName }}-config
             {{- end }}
             - mountPath: /home/airlock/iam/license.txt
               name: license
@@ -98,6 +135,9 @@ spec:
             - mountPath: /var/tmp/scripts
               name: init
         {{- end }}
+        #
+        # Init Config
+        #
         {{- if and $.Values.iam.config.source.url (eq $.Values.iam.config.format "yaml") }}
         - name: "init-config"
           image: "{{ $.Values.images.initConfig.repository }}:{{ $.Values.images.initConfig.tag }}"
@@ -109,7 +149,7 @@ spec:
             - name: INIT_INSTANCE
               value: {{ $.Values.iam.instanceName }}
             - name: IAM_CONFIG_FORMAT
-              value: {{ $.Values.iam.config.format }}
+              value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.config.format) "xml") }}
             - name: INIT_CONFIG_URL
               value: {{ $.Values.iam.config.source.url }}
             - name: INIT_CONFIG_TYPE
@@ -137,7 +177,7 @@ spec:
           volumeMounts:
             {{- if $persistenceProp.config.enable }}
             - mountPath: /home/airlock/iam/instances
-              name: config
+              name: {{ $fullName }}-config
             {{- end }}
             - mountPath: /home/airlock/iam/license.txt
               name: license
@@ -149,6 +189,46 @@ spec:
               name: ssh_config
             {{- end }}
         {{- end }}
+        #
+        # Upgrade Instance
+        #
+        {{- if $.Values.iam.config.upgrade }}
+        - name: "init-upgrade"
+          image: "{{ $.Values.images.iam.repository }}:{{ ($.Values.images.iam.tag | default .Chart.AppVersion) }}"
+          imagePullPolicy: {{ quote $.Values.images.iam.pullPolicy }}
+          command: ["/bin/bash", "/var/tmp/scripts/upgrade_instance"]
+          env:
+            - name: INSTANCE_DIR
+              value: "/home/airlock/iam/instances"
+
+            - name: INIT_INSTANCE
+              value: {{ $.Values.iam.instanceName }}
+            - name: INIT_INSTANCE_VERSION
+              value: {{ ($.Values.images.iam.tag | default .Chart.AppVersion) | quote }}
+            - name: IAM_CONFIG_FORMAT
+              value: {{ ternary "xml" "yaml" (eq (lower $.Values.iam.config.format) "xml") }}
+            - name: IAM_ANALYTICS_MODE
+              {{- if eq $.Values.iam.analytics "license-only" }}
+              value: LICENSE_DATA
+              {{- else if eq $.Values.iam.analytics "usage-data" }}
+              value: USAGE_DATA
+              {{- else }}
+              {{-   fail "Invalid value for iam.analytics" }}
+              {{- end }}
+          volumeMounts:
+            {{- if $persistenceProp.config.enable }}
+            - mountPath: /home/airlock/iam/instances
+              name: {{ $fullName }}-config
+            {{- end }}
+            - mountPath: /home/airlock/iam/license.txt
+              name: license
+              subPath: license.txt
+            - mountPath: /var/tmp/scripts
+              name: init
+        {{- end }}
+        #
+        # Init DB
+        #
         {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
         - name: "init-db"
           image: "{{ $.Values.images.initdb.repository }}:{{ $.Values.images.initdb.tag }}"
@@ -161,14 +241,14 @@ spec:
               value: {{ $databaseType | quote }}
             - name: INIT_INSTANCE
               value: {{ $.Values.iam.instanceName }}
-            - name: INIT_INSTANCE_VERSION
-              value: {{ $.Values.images.iam.tag | quote }}
             - name: INIT_DL
               value: {{ ternary "true" "false" (and $.Values.database.initialisation.connector.download $persistenceProp.config.enable) | quote }}
             - name: INIT_DL_VERSION
               value: {{ (ternary $.Values.database.initialisation.connector.mariadb.version $.Values.database.initialisation.connector.postgresql.version (eq $databaseType "mariadb")) | quote }}
-            - name: INIT_DB_SCHEMA
-              value: {{ ternary $.Values.database.initialisation.schema.operation "none" (contains "adminapp" $.IAM.module) }}
+            - name: INIT_DB_SCHEMA_MANAGE
+              value: "{{ ternary "true" "false" (and $.Values.database.schema.manage (contains "loginapp" $.IAM.module)) }}"
+            - name: INIT_DB_SCHEMA_UPGRADE
+              value: {{ $.Values.iam.config.upgrade | quote }}
             - name: INIT_DB_HOST
               {{- if eq $databaseDeployment "external" }}
               value: {{ $.Values.database.external.host }}
@@ -250,7 +330,7 @@ spec:
                   key: "password"
               {{- end }}
             - name: INIT_DB_VERSION
-              value: {{ $.Values.images.iam.tag | quote }}
+              value: {{ ($.Values.images.iam.tag | default .Chart.AppVersion) | quote }}
             - name: INIT_ADMIN_CREATE
               value: {{ ternary $.Values.database.initialisation.administrator.create "false" (contains "adminapp" $.IAM.module) | quote }}
             - name: INIT_ADMIN_CHANGE
@@ -279,14 +359,14 @@ spec:
           volumeMounts:
             {{- if $persistenceProp.config.enable }}
             - mountPath: /home/airlock/iam/instances
-              name: config
+              name: {{ $fullName }}-config
             {{- end }}
             - mountPath: /var/tmp/scripts
               name: init
         {{- end }}
       containers:
         - name: "iam"
-          image: "{{ $.Values.images.iam.repository }}:{{ $.Values.images.iam.tag }}"
+          image: "{{ $.Values.images.iam.repository }}:{{ ($.Values.images.iam.tag | default .Chart.AppVersion) }}"
           imagePullPolicy: {{ quote $.Values.images.iam.pullPolicy }}
           args: ["run", "-i", {{ quote $.Values.iam.instanceName }}]
           env:
@@ -356,7 +436,7 @@ spec:
             {{- if and (ne $databaseDeployment "none") (ne $databaseDeployment "") }}
             - name: IAM_CONFIG_EDITOR_SHOW_VARIABLES
               value: "true"
-            - name: IAM_CFG_DB_DRIVER_CLASS
+            - name: IAM_DB_DRIVER_CLASS
             {{-   if (eq $databaseType "mariadb") }}
               value: "org.mariadb.jdbc.Driver"
             {{-   else if (eq $databaseType "postgresql") }}
@@ -368,7 +448,7 @@ spec:
             {{-   else if (eq $databaseType "sqlserver") }}
               value: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
             {{-   end }}
-            - name: IAM_CFG_DB_URL
+            - name: IAM_DB_URL
             {{-   if eq $databaseDeployment "external" }}
               value: {{ print "jdbc:" $.Values.database.external.type "://" $.Values.database.external.host "/" $.Values.database.external.database }}
             {{-   else if eq $databaseDeployment "mariadb" }}
@@ -376,7 +456,7 @@ spec:
             {{-   else if eq $databaseDeployment "postgresql" }}
               value: {{ print "jdbc:postgres://" $.IAM.fullName "-postgresql-rw/" $.Values.postgresql.global.postgresql.auth.database }}
             {{-   end }}
-            - name: IAM_CFG_DB_USERNAME
+            - name: IAM_DB_USER
             {{-   if eq $databaseDeployment "external" }}
               {{- if ne $.Values.database.credentials.user.existingSecret "" }}
               valueFrom:
@@ -398,7 +478,7 @@ spec:
               value: {{ $.Values.database.credentials.user.value }}
               {{-   end }}
             {{-   end }}
-            - name: IAM_CFG_DB_PASSWORD
+            - name: IAM_DB_PASSWORD
             {{-   if eq $databaseDeployment "external" }}
               {{- if ne $.Values.database.credentials.password.existingSecret "" }}
               valueFrom:
@@ -530,7 +610,7 @@ spec:
           volumeMounts:
             {{- if $persistenceProp.config.enable }}
             - mountPath: /home/airlock/iam/instances
-              name: config
+              name: {{ $fullName }}-config
             {{- end }}
             {{- if or $persistenceProp.logs.enable (gt (int $.IAM.app_values.replicas) 1) }}
             #! With multiple replicas, ensure log buffers do not collide
@@ -550,15 +630,9 @@ spec:
             {{- end }}
       restartPolicy: {{ quote $.Values.restartPolicy }}
       volumes:
-        {{- if $persistenceProp.config.enable }}
-        - name: config
-          {{- if eq $persistenceProp.config.type "request" }}
-          persistentVolumeClaim:
-            claimName: {{ print $.IAM.fullName "-" ($persistenceProp.config.claim | default "config") }}
-          {{- else if eq $persistenceProp.config.type "existing" }}
-          persistentVolumeClaim:
-            claimName: {{ $persistenceProp.config.claim }}
-          {{- else if eq $persistenceProp.config.type "remote" }}
+        {{- if and $persistenceProp.config.enable (ne $persistenceProp.config.type "request") }}
+        - name: {{ $fullName }}-config
+          {{- if eq $persistenceProp.config.type "remote" }}
           {{ $persistenceProp.config.remote.type }}:
             server: {{ $persistenceProp.config.remote.server }}
             path: {{ $persistenceProp.config.remote.path }}
@@ -625,4 +699,18 @@ spec:
             secretName: {{ $.Values.iam.config.source.git.credentials.sshSecret }}
         {{-   end }}
         {{- end }}
+  {{- if and $persistenceProp.config.enable (eq $persistenceProp.config.type "request") }}
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: {{ $fullName }}-config
+    spec:
+      accessModes:
+      - {{ $persistenceProp.config.accessMode | default "ReadWriteOnce" }}
+      resources:
+        requests:
+          storage: {{ $persistenceProp.config.size }}
+      storageClassName: {{ $persistenceProp.config.storageClass }}
+  {{- end }}
 

@@ -8,7 +8,7 @@
                               "healthChecksRef" .Values.iam.combined.healthChecksRef
                               "app_values" .Values.iam.combined ) }}
 ---
-{{-   tpl ($.Files.Get "include/_deployment.yaml") . -}}
+{{-   tpl ($.Files.Get "include/_statefulset.yaml") . -}}
 
 {{- else if eq .Values.iam.appDeploymentStrategy "multi" -}}
 {{-   range $app, $app_values := .Values.iam.apps -}}
@@ -21,7 +21,7 @@
                                   "healthChecksRef" $app_values.dedicatedDeployment.healthChecksRef
                                   "app_values" $app_values.dedicatedDeployment ) }}
 ---
-{{-       tpl ($.Files.Get "include/_deployment.yaml") $ -}}
+{{-       tpl ($.Files.Get "include/_statefulset.yaml") $ -}}
 {{-     end -}}
 {{-   end -}}
 {{- else -}}

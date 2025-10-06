@@ -23,8 +23,6 @@ spec:
       settings:
         level: Strict
         threatHandlingMode: Block
-# SSRF deny rule introduced in Microgateway 4.4
-      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
       overrides:
         - conditions:
             ruleKeys:
@@ -33,19 +31,77 @@ spec:
               - JSON
           settings:
             level: Unfiltered
-      {{- end }}
       exceptions:
+      - ruleKeys:
+        - "SCANNING"
+        blockedData:
+          json:
+            jsonPath: "$['password','oldPassword','newPassword']"
+      - ruleKeys:
+        - "BOT"
+        blockedData:
+          header:
+            name:
+              matcher:
+                regex: "^User-Agent$"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "BOT"
+        blockedData:
+          header:
+            name:
+              matcher:
+                regex: "^User-Agent$"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/public/tech-client-registration/oauth2/[a-zA-Z0-9._\\-]+/register/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "BOT"
+        blockedData:
+          header:
+            name:
+              matcher:
+                regex: "^User-Agent$"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/public/tech-client-registration/dynamic-steps/(?:retrieve|([a-z0-9_\\-]+/(?:activate|deactivate)))/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "BOT"
+        blockedData:
+          header:
+            name:
+              matcher:
+                regex: "^User-Agent$"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/public/tech-client-registration/goto-targets/(?:retrieve|([a-z0-9_\\-]+/goto))/?$"
+              ignoreCase: false
       - ruleKeys:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:state|nonce|id_token_hint|login_hint|code_challenge|redirect_uri)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "GET"
           path:
@@ -56,13 +112,11 @@ spec:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:code|state)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "GET"
           path:
@@ -80,7 +134,6 @@ spec:
           json:
             jsonPath: "$.context"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/protected/my/tokens/cronto/devices/activation/complete/?$"
@@ -95,7 +148,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.id"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -112,7 +164,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.attestationObject"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -125,7 +176,6 @@ spec:
           json:
             jsonPath: "$.context"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/protected/my/tokens/mtan/[a-zA-Z0-9]+/verify-number-change/?$"
@@ -136,7 +186,6 @@ spec:
           json:
             jsonPath: "$.data.attributes.publicJwk.x"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -149,7 +198,6 @@ spec:
           json:
             jsonPath: "$.data.attributes.publicJwk.y"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -162,7 +210,6 @@ spec:
           json:
             jsonPath: "$.consentToken"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -179,7 +226,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.id"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -196,7 +242,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.attestationObject"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -213,7 +258,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.id"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -230,7 +274,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.userHandle"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -247,7 +290,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.signature"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -264,7 +306,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.authenticatorData"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -277,7 +318,6 @@ spec:
           json:
             jsonPath: "$.jwt"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/(authentication|self-service)/device-token/check/?$"
@@ -286,7 +326,6 @@ spec:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:sso|ticket|representation)$"
@@ -295,13 +334,11 @@ spec:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
@@ -310,13 +347,11 @@ spec:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
@@ -325,13 +360,11 @@ spec:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
@@ -340,13 +373,11 @@ spec:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^sessionIdToDelete$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -357,13 +388,11 @@ spec:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^STATE_PARAMETER$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -374,13 +403,11 @@ spec:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:subject_token|actor_token|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -393,7 +420,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -410,7 +436,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.id"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -427,7 +452,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.userHandle"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -444,7 +468,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.signature"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -461,7 +484,6 @@ spec:
                 ignoreCase: false
             jsonPath: "$.publicKeyCredential.response.authenticatorData"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -486,6 +508,39 @@ spec:
       - ruleKeys:
         - "SQL"
         blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(?:code|state)$"
+                ignoreCase: false
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $path }}/ui/app/(.*/)?oauth2/.*"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.queryString"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/public/authentication/oauth2/client/authorization/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            jsonPath: "$.queryString"
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
           header:
             name:
               matcher:
@@ -495,7 +550,6 @@ spec:
                 regex: "^[a-zA-Z0-9_.\\-]+$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/(?:location|default-application|applications/[a-z0-9_\\-]+)/access/?$"
@@ -516,7 +570,6 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:sso|ticket|representation)$"
@@ -525,7 +578,6 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
@@ -534,13 +586,11 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^filter$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/(?:public|protected)/"
@@ -549,13 +599,11 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^error_description$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/oauth2-client(?:/.*)?$"
@@ -564,13 +612,11 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
@@ -579,13 +625,11 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
@@ -594,13 +638,11 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
@@ -609,13 +651,11 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^LINK[a-zA-Z0-9]+$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/account-link-management/?$"
@@ -624,7 +664,6 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^filter$"
@@ -635,7 +674,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.clientDataJSON"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -648,7 +686,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -661,7 +698,6 @@ spec:
           json:
             jsonPath: "$.location"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
@@ -672,7 +708,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.clientDataJSON"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -685,7 +720,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.clientDataJSON"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -698,7 +732,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -711,7 +744,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -722,13 +754,11 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/ui/configuration/logout/?$"
@@ -751,7 +781,6 @@ spec:
               matcher:
                 regex: "^Signature$"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/log(?:in|out)-oneshot/?$"
@@ -765,7 +794,6 @@ spec:
         - "UNIXCMD"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:sso|ticket|representation)$"
@@ -774,7 +802,6 @@ spec:
         - "UNIXCMD"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
@@ -783,13 +810,11 @@ spec:
         - "UNIXCMD"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
@@ -798,13 +823,11 @@ spec:
         - "UNIXCMD"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
@@ -813,13 +836,11 @@ spec:
         - "UNIXCMD"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
@@ -830,7 +851,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -846,7 +866,6 @@ spec:
         - "WINCMD"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:sso|ticket|representation)$"
@@ -860,7 +879,6 @@ spec:
         - "LDAP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:sso|ticket|representation)$"
@@ -879,7 +897,6 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
@@ -888,13 +905,11 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:state|nonce|id_token_hint|login_hint|code_challenge|redirect_uri)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "GET"
           path:
@@ -905,13 +920,11 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:code|state)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "GET"
           path:
@@ -922,7 +935,6 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:sso|ticket|representation)$"
@@ -933,7 +945,6 @@ spec:
           json:
             jsonPath: "$.location"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
@@ -942,13 +953,11 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/ui/configuration/logout/?$"
@@ -964,7 +973,6 @@ spec:
           json:
             jsonPath: "$.data.attributes.publicJwk.x"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -977,7 +985,6 @@ spec:
           json:
             jsonPath: "$.data.attributes.publicJwk.y"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -990,7 +997,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.clientDataJSON"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1003,7 +1009,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1016,7 +1021,6 @@ spec:
           json:
             jsonPath: "$.consentToken"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-server/consent/remote/check/?$"
@@ -1027,7 +1031,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.id"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1040,7 +1043,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.attestationObject"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1053,7 +1055,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.id"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1066,7 +1067,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.userHandle"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1079,7 +1079,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.signature"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1092,7 +1091,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.authenticatorData"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1105,7 +1103,6 @@ spec:
           json:
             jsonPath: "$.jwt"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/(authentication|self-service)/device-token/check/?$"
@@ -1116,7 +1113,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.clientDataJSON"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1129,7 +1125,6 @@ spec:
           json:
             jsonPath: "$.publicKeyCredential.response.clientDataJSON"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1142,7 +1137,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1155,7 +1149,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1166,13 +1159,11 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/saml2/idp/slo/init/?$"
@@ -1181,13 +1172,11 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/ui/app/.*"
@@ -1196,13 +1185,11 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/saml2/sp/slo/init/?$"
@@ -1211,13 +1198,11 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:subject_token|actor_token|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1228,13 +1213,11 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/ui/app/[a-z0-9_\\-]+/logout/?$"
@@ -1243,13 +1226,11 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^target$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/ui/app/protected/representation/(start|resume)/?$"
@@ -1258,13 +1239,11 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}(?:/check-login|/login|/logout)?/?$"
@@ -1275,7 +1254,6 @@ spec:
           json:
             jsonPath: "$.targetLocation"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/protected/self-service/representation/start/?$"
@@ -1286,7 +1264,6 @@ spec:
           json:
             jsonPath: "$.context"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1311,7 +1288,6 @@ spec:
               matcher:
                 regex: "^Signature$"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/log(?:in|out)-oneshot/?$"
@@ -1320,7 +1296,6 @@ spec:
         - "ENCODING"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:sso|ticket|representation)$"
@@ -1339,13 +1314,11 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:subject_token|actor_token|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1356,13 +1329,11 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:state|nonce|id_token_hint|login_hint|code_challenge|redirect_uri)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "GET"
           path:
@@ -1373,7 +1344,6 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
@@ -1393,7 +1363,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1404,13 +1373,11 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/ui/configuration/logout/?$"
@@ -1421,7 +1388,6 @@ spec:
           json:
             jsonPath: "$.location"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
@@ -1432,7 +1398,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1445,7 +1410,6 @@ spec:
           json:
             jsonPath: "$.queryString"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1456,7 +1420,6 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:sso|ticket|representation)$"
@@ -1465,7 +1428,6 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
@@ -1474,13 +1436,11 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/(?:SSORedirect|SSOPOST|ArtifactResolver|IDPSloRedirect|SPAcs|SPSloResponder)(/.*)?$"
@@ -1489,13 +1449,11 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/saml2/idp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
@@ -1504,13 +1462,11 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/saml2/sp/(?:sso/metaAlias/.+|slo/metaAlias/.+)$"
@@ -1521,16 +1477,9 @@ spec:
           json:
             jsonPath: "$['password','oldPassword','newPassword']"
       - ruleKeys:
-        - "SCANNING"
-        blockedData:
-          json:
-            jsonPath: "$['password','oldPassword','newPassword']"
-      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
-      - ruleKeys:
         - "SSRF"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
@@ -1541,7 +1490,6 @@ spec:
           json:
             jsonPath: "$.location"
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
@@ -1552,19 +1500,16 @@ spec:
         - "SSRF"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^resource$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "POST"
           path:
             matcher:
               regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
               ignoreCase: false
-      {{- end }}
 {{-   end }}
 {{- end }}

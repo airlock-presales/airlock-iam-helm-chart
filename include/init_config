@@ -1,4 +1,7 @@
 #! /bin/bash
+# init_config
+# - runs sequentially for every pod as each may have its own instance directory (statefulset)
+# - does nothing if instance directory already exists
 
 tmpdir=/var/tmp
 if [[ -r "${INIT_ENV_PATH:-.}"/env.init ]]; then
@@ -19,11 +22,11 @@ function die ()
 
 # sanity checks
 # - not checking INSTANCE_DIR
-for f in INIT_INSTANCE INIT_CONFIG_FORMAT INIT_CONFIG_URL INIT_CONFIG_TYPE
+for f in INIT_INSTANCE INIT_CONFIG_URL INIT_CONFIG_TYPE IAM_CONFIG_FORMAT
 do
   [[ -z "${!f}" ]] && die "${f} not set"
 done
-[[ "${INIT_CONFIG_FORMAT}" != "yaml" ]] && exit
+[[ "${IAM_CONFIG_FORMAT}" != "yaml" ]] && exit
 
 echo "Variables checked"
 
@@ -56,13 +59,13 @@ if [[ "${INIT_CONFIG_TYPE}" == "git" ]]; then
     url="$(eval echo ${INIT_CONFIG_URL})"
     git clone "${url}" "${tmpdir}"/repo || die "Unable to clone git repository '${INIT_CONFIG_URL}'"
 
-    # build config file
+    # option 1: build config file
     if [[ -n "${INIT_CONFIG_COMMAND}" ]]; then
         bash "${tmpdir}"/repo/"${INIT_CONFIG_COMMAND}" "${tmpdir}"/repo "${instance_dir}" || die "Failed to build config file using '${INIT_CONFIG_COMMAND}'"
         echo "Config built using '${INIT_CONFIG_COMMAND}'"
     fi
 
-    # copy config file
+    # option 2: copy config file
     if [[ -z "${INIT_CONFIG_COMMAND}" ]]; then
         fname="${INIT_CONFIG_FILE:-iam-config.yaml}"
         cp "${tmpdir}"/repo/"${fname}" "${instance_dir}"/iam-config.yaml || die "Failed to copy '${fname}' to '${instance_dir}/iam-config.yaml'"

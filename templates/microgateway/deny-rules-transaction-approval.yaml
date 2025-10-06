@@ -5,6 +5,7 @@
 {{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
 {{-   $moduleName := print $fullName "-" $suffix | lower -}}
 {{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   $path := include "airlock-iam.modulePath" (dict "app" $app "app_values" $app_values "instanceName" $.Values.iam.instanceName) -}}
 {{-   if $app_values.enable }}
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: DenyRules
@@ -22,8 +23,6 @@ spec:
       settings:
         level: Strict
         threatHandlingMode: Block
-# SSRF deny rule introduced in Microgateway 4.4
-      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
       overrides:
         - conditions:
             ruleKeys:
@@ -32,7 +31,6 @@ spec:
               - JSON
           settings:
             level: Unfiltered
-      {{- end }}
       exceptions:
       - ruleKeys:
         - "SQL"
@@ -40,13 +38,252 @@ spec:
           json:
             jsonPath: "$.username"
       - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.id"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.clientDataJSON"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.userHandle"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.signature"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.authenticatorData"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^filter$"
                 ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.id"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.clientDataJSON"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.userHandle"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.signature"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.authenticatorData"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.id"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.clientDataJSON"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.userHandle"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.signature"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
+            value:
+              matcher:
+                regex: "^[a-zA-Z0-9_\\-]*$"
+                ignoreCase: false
+            jsonPath: "$.publicKeyCredential.response.authenticatorData"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/transaction-approval/fido/assertion-response/check/?$"
+              ignoreCase: false
 {{-   end }}
 {{- end }}

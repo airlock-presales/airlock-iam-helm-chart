@@ -1,0 +1,467 @@
+{{- if eq .Values.ingress.type "microgateway" -}}
+{{-   $app := "loginapp" -}}
+{{-   $fullName := include "airlock-iam.fullname" . -}}
+{{-   $app_values := get .Values.iam.apps $app -}}
+{{-   $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
+{{-   $moduleName := print $fullName "-" $suffix | lower -}}
+{{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
+{{-   $path := include "airlock-iam.modulePath" (dict "app" $app "app_values" $app_values "instanceName" $.Values.iam.instanceName) -}}
+{{-   if $app_values.enable }}
+apiVersion: v1
+data:
+  openapi.json: '{"openapi":"3.0.1","info":{"title":"Airlock IAM Loginapp REST API","version":"8.5.0","x-jerseyapp":"base","x-comp-prefix":"Basic"},"servers":[{"url":"{{
+    $path }}/rest"}],"tags":[{"name":"/oauth2_OAuth 2.0/OIDC","description":"OAuth
+    2.0 is an authorization framework that allows target applications (OAuth 2.0 clients)
+    to securely access protected HTTP resources—such as user data—on behalf of a user.
+    OpenID Connect 1.0 extends OAuth 2.0 with an identity layer, enabling clients
+    to verify a user''s identity and often reducing the number of required HTTP roundtrips.","x-displayName":"OAuth
+    2.0/OIDC"},{"name":"/oauth2_Signing Keys","description":"Endpoints for retrieving
+    the JSON Web Key (JWK) Set document, which contains the public signing key(s)
+    used to validate digital signatures on issued tokens, such as ID tokens or SSO
+    tickets.","x-displayName":"Signing Keys"},{"name":"/oauth2_other","x-displayName":"other"}],"paths":{"/oauth2/authorization-servers/{authorizationServerId}/sessions/{sessionId}":{"delete":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Delete session","description":"Deletes the specified OAuth
+    2.0 session of a user for a given access token. An access token in the bearer
+    token\nformat must be provided as authorization.","operationId":"/oauth2/deleteSession","responses":{"204":{"description":"The
+    session has been deleted."},"400":{"description":"The request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"401":{"description":"The
+    access token is missing or invalid.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n<tr>\n<td>SESSION_NOT_FOUND</td>\n<td>The
+    user of the given access token does not have a session with the specified ID.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    session management endpoint is not configured."}}},"options":{"operationId":"/oauth2/deleteSessionCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"sessionId","in":"path","description":"The
+    session ID.","required":true,"schema":{"maxLength":1000,"minLength":1,"type":"string"}},{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/session":{"get":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Get session","description":"Retrieves the current OAuth
+    2.0 session. An access token in the bearer token format\nmust be provided as authorization.\n<div
+    class=\"iam-resource-return\">A document containing the OAuth 2.0 session.</div>","operationId":"/oauth2/retrieveSession","responses":{"200":{"description":"The
+    retrieved OAuth 2.0 session.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/OAuth2SessionDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2SessionDataResourceDocument"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"401":{"description":"The
+    access token is missing or invalid.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    session management endpoint is required."}}},"options":{"operationId":"/oauth2/retrieveSessionCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/.well-known/openid-configuration":{"get":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Get discovery info","description":"Returns the OpenID Connect
+    Discovery information about this authorization server.\nRefer to the <a href=\"https://openid.net/specs/openid-connect-discovery-1_0.html\"
+    target=\"_blank\">OpenID Connect Discovery</a> specification\nfor a more detailed
+    description of the endpoint.\n<div class=\"iam-resource-return\">The set of claims
+    about the OpenID Provider''s configuration.\n Depending on the supported specifications,
+    other claims may also be returned.</div>","operationId":"/oauth2/discoveryEndpoint","responses":{"200":{"description":"Retrieved
+    the discovery information.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2DiscoveryAndMetadataEndpointResponseData"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>-</td>\n<td>No discovery endpoint
+    available.</td>\n</tr>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n"},"500":{"description":"The
+    discovery endpoint is not configured correctly."},"501":{"description":"The active
+    configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"/oauth2/discoveryEndpointCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/jwks":{"get":{"tags":["/oauth2_Signing
+    Keys"],"summary":"Get JWK Set","description":"Returns the JSON Web Key (JWK) Set
+    document of the authorization server.\n<div class=\"iam-resource-return\">A JWK
+    Set document containing the signing key(s) the RP can use to validate signatures
+    (e.g. ID Token or\n JWT Access Token signatures) from the OP.</div>","operationId":"/oauth2/jwks","responses":{"200":{"description":"Retrieved
+    the JWK Set document.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2JwksResponseData"},"examples":{"A
+    JWK Set":{"description":"A JWK Set","value":{"keys":[{"kty":"EC","use":"sig","crv":"P-521","kid":"489600a1536e946749ed99e59105018d84713a90","x":"AQvgoB_NfBuBOWZE_3ONQUxLRiE02uekRxLgQTfTXZuEvYAOGUWZX2OHAyR-n9jM0gKEyQjArl7OhZEB8aNMmpqo","y":"Aftx9XvorV7I7tvfP1doqjzJLnFacSPGYDwNXA1icvGhtObjA1zsUHOQfzP5zeIzC9hSKgqcpdjmrEWipFiN9JTA","alg":"ES512"},{"kty":"RSA","e":"AQAB","use":"sig","kid":"729649aacb86a3af49f7bcfeeb2b018d83c410e4","alg":"RS256","n":"6NWRqi5AuwbjN8-PdkXHmH9Irtr8xlYZmAQtvXVPOX4Q6I_wQA05v2Zwpu8glm_cqHMRPUDywjDMFxCszoeFf9kViQ-bXt-xi-pZyfAo5Nu0KPtu1zaz1vF4aSqXybUV-6xq2L5P2uL_RSScUaJ-cqj09wHya6SXHEtl9WUqqYqcoP2as351PeguktunXxmqjVxfYuXzk6w5KuKunNfT1pgk9Z8hCgmaArHVc9Ane6xlMr4Nkz7hrJoBaoxi7MXBdGitpeBzNQhx5JR1ISN9CIbcsNaY5mJS4j7T6QbUXkNDKQz7cfKQQ5JHYl0gHTxDNvBVXNAXokCZlz_wutHdXw"}]}}}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"/oauth2/jwksCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/.well-known/oauth-authorization-server":{"get":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Get metadata","description":"Returns the metadata that an
+    OAuth 2.0 or OpenID Connect client can use to obtain the information needed\nto
+    interact with an authorization server, including its endpoint locations and authorization
+    server capabilities.\nRefer to the <a href=\"https://tools.ietf.org/html/rfc8414\"
+    target=\"_blank\">RFC 8414</a> specification\nfor a more detailed description
+    of the endpoint.\n<div class=\"iam-resource-return\">The set of claims about the
+    OAuth 2.0 or OpenID Provider''s configuration.\n Depending on the supported specifications,
+    other claims may also be returned.</div>","operationId":"/oauth2/metadataEndpoint","responses":{"200":{"description":"The
+    metadata information have been returned.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2DiscoveryAndMetadataEndpointResponseData"}}}},"400":{"description":"The
+    request was invalid.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>-</td>\n<td>No metadata endpoint available.</td>\n</tr>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    metadata endpoint is not configured correctly."},"501":{"description":"The active
+    configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"/oauth2/metadataEndpointCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/resources/{resourceName}":{"get":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Get resource","description":"Retrieves the specified OAuth
+    2.0 resource. An access token in the bearer token format must be provided as authorization.\n<div
+    class=\"iam-resource-return\">The resource.</div>","operationId":"/oauth2/retrieveResourceUsingGet","responses":{"200":{"description":"Retrieved
+    the OAuth 2.0 resource.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ResourceEndpointResponseData"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"401":{"description":"The
+    access token is missing or invalid.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>-</td>\n<td>No resource endpoint with
+    the specified name available.</td>\n</tr>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"post":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Get resource","description":"Retrieves the specified OAuth
+    2.0 resource. An access token in the bearer token format must be provided as authorization.\n<div
+    class=\"iam-resource-return\">The resource.</div>","operationId":"/oauth2/retrieveResourceUsingPost","responses":{"200":{"description":"Retrieved
+    the OAuth 2.0 resource.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ResourceEndpointResponseData"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"401":{"description":"The
+    access token is missing or invalid.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>-</td>\n<td>No resource endpoint with
+    the specified name available.</td>\n</tr>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"/oauth2/retrieveResourceUsingGetCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"resourceName","in":"path","description":"The
+    name to the resource.","required":true,"schema":{"type":"string"}},{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/sessions":{"get":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"List sessions","description":"Retrieves all valid OAuth
+    2.0 sessions of a user for a given access token. An access token in the bearer
+    token format\nmust be provided as authorization.\n<p>\n<ul>\n<li><b>filter</b>:
+    Restricts the sessions to be deleted. See <a href=\"#filtering\">Filtering</a>.\nThe
+    following filters are available:\n<ul>\n<li><tt>clientId==client1</tt>: Get all
+    sessions of a particular client.</li>\n</ul>\n</li>\n</ul>\n</p>\n<div class=\"iam-resource-return\">A
+    collection document with all OAuth 2.0 sessions.</div>","operationId":"/oauth2/retrieveSessions","responses":{"200":{"description":"The
+    retrieved OAuth 2.0 sessions.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/OAuth2SessionDataCollectionDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2SessionDataCollectionDocument"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"401":{"description":"The
+    access token is missing or invalid.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    session management endpoint is not configured."}}},"delete":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Delete sessions","description":"Deletes all sessions of
+    a user for a given access token. An access token in the bearer token format\nmust
+    be provided as authorization.\n<p>\n<ul>\n<li><b>filter</b>: Restricts the sessions
+    to be deleted. See <a href=\"#filtering\">Filtering</a>.\nThe following filters
+    are available:\n<ul>\n<li><tt>excludeCurrent==true</tt>: Delete all sessions except
+    the one of the given access token.</li>\n</ul>\n</li>\n</ul>\n</p>\n<div class=\"iam-resource-return\">A
+    response indicating whether the sessions were successfully deleted or not.</div>","operationId":"/oauth2/deleteAllSessions","responses":{"204":{"description":"All
+    sessions successfully deleted."},"400":{"description":"The request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"401":{"description":"The
+    access token is missing or invalid.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    session management endpoint is not configured."}}},"options":{"operationId":"/oauth2/retrieveSessionsCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"filter","in":"query","schema":{"type":"array","description":"Applies
+    filtering operations on the resource data set.","items":{"type":"string","description":"Applies
+    filtering operations on the resource data set."}}},{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/userinfo":{"get":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Get UserInfo","description":"Retrieves the OpenID Connect
+    UserInfo Endpoint resource with claims about the End-User. An access token in
+    the\nbearer token format must be provided as authorization.\nRefer to the <a href=\"https://openid.net/specs/openid-connect-core-1_0.html#UserInfo\"
+    target=\"_blank\">UserInfo Endpoint</a> specification\nfor a more detailed description
+    of the endpoint.\n<div class=\"iam-resource-return\">The standard claims about
+    the authenticated End-User.\n Depending on the configuration of the authorization
+    server, additional custom claims may also be present.</div>","operationId":"/oauth2/retrieveResourceUsingGet_1","responses":{"200":{"description":"Retrieved
+    the UserInfo claims.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OpenIdConnectUserInfoResponseData"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"401":{"description":"The
+    access token is missing or invalid.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>-</td>\n<td>No UserInfo Endpoint available.</td>\n</tr>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"post":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Get UserInfo","description":"Retrieves the OpenID Connect
+    UserInfo Endpoint resource with claims about the End-User. An access token in
+    the\nbearer token format must be provided as authorization.\nRefer to the <a href=\"https://openid.net/specs/openid-connect-core-1_0.html#UserInfo\"
+    target=\"_blank\">UserInfo Endpoint</a> specification\nfor a more detailed description
+    of the endpoint.\n<div class=\"iam-resource-return\">The standard claims about
+    the authenticated End-User.\n Depending on the configuration of the authorization
+    server, additional custom claims may also be present.</div>","operationId":"/oauth2/retrieveResourceUsingPost_1","responses":{"200":{"description":"Retrieved
+    the UserInfo claims.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OpenIdConnectUserInfoResponseData"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"401":{"description":"The
+    access token is missing or invalid.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>-</td>\n<td>No UserInfo Endpoint available.</td>\n</tr>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"/oauth2/retrieveResourceUsingGet_1CorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/session/custom-attributes":{"options":{"operationId":"/oauth2/updateSessionCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"patch":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Update attributes","description":"Updates custom attributes
+    of the current OAuth 2.0 session. The JSON:API request resource object must include\nthe
+    session ID as top-level <tt>id</tt> member. An access token in the bearer token
+    format\nmust be provided as authorization.\n<div class=\"iam-resource-return\">The
+    updated OAuth 2.0 session or an error document.</div>","operationId":"/oauth2/updateSession","requestBody":{"description":"The
+    document containing the custom attributes that should be updated. See example
+    for details.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/RequestDocumentOAuth2SessionUpdateRequest"},"examples":{"Session
+    data":{"description":"Session data","value":{"data":{"type":"oauth2-session-custom-attributes","id":"kr01EzwkLbEM9mOyz5yRQQp3foUmxpCnfkyPw6sQ","attributes":{"UpdatableAttribute":"someAllowedValue","NotUpdatableAttribute":"someAllowedValue"}}}}}},"application/json":{"schema":{"$ref":"#/components/schemas/RequestDocumentOAuth2SessionUpdateRequest"},"examples":{"Session
+    data":{"description":"Session data","value":{"data":{"type":"oauth2-session-custom-attributes","id":"kr01EzwkLbEM9mOyz5yRQQp3foUmxpCnfkyPw6sQ","attributes":{"UpdatableAttribute":"someAllowedValue","NotUpdatableAttribute":"someAllowedValue"}}}}}}}},"responses":{"200":{"description":"The
+    OAuth 2.0 session was updated successfully.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/OAuth2CustomAttributesDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2CustomAttributesDataResourceDocument"}}}},"204":{"description":"The
+    OAuth 2.0 session has not been changed."},"400":{"description":"The request was
+    invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"401":{"description":"The
+    access token is missing or invalid."},"404":{"description":"<div class=\"iam-error-code\"><table>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n"},"409":{"description":"The
+    given session ID in the request document does not match the session of the access
+    token."},"500":{"description":"The service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    session management endpoint is not configured."}}},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/par":{"post":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Start PAR","description":"The endpoint used by the client
+    to start a Pushed Authorization Requests (PAR).\nSee also <a href=\"https://datatracker.ietf.org/doc/html/rfc9126\"
+    target=\"_blank\">RFC 9126, OAuth 2.0 Pushed Authorization Requests</a>","operationId":"/oauth2/parEndpoint","requestBody":{"description":"A
+    PAR request according to <a href=\"https://datatracker.ietf.org/doc/html/rfc9126\"
+    target=\"_blank\">RFC 9126, OAuth 2.0 Pushed Authorization Requests</a>","content":{"application/x-www-form-urlencoded":{"schema":{"type":"object","additionalProperties":{"nullable":true}}}},"required":true},"responses":{"201":{"description":"The
+    request was processed successfully and the response contains the <a href=\"https://datatracker.ietf.org/doc/html/rfc9126#name-successful-response\"
+    target=\"_blank\">PAR\nresponse</a>\n","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ParData"}}}},"400":{"description":"The
+    request could not be validated. The <a href=\"https://datatracker.ietf.org/doc/html/rfc9126#section-2.3\"
+    target=\"_blank\">error response</a> contains more details","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"404":{"description":"The
+    PAR endpoint is not configured for the specified authorization server","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"/oauth2/parEndpointCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/token":{"post":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Get tokens","description":"The token endpoint is used by
+    the client to obtain an access token\nand refresh token by presenting its authorization
+    grant or refresh token.\nThe token endpoint is used with every authorization grant
+    except for the\nimplicit grant type (since an access token is issued directly).\n<div
+    class=\"iam-docu\">\n<table>\n<tr><th>Use-Case</th><th>Format</th><th>RFC Reference</th></tr>\n<tr><td>OAuth
+    2.0 / OpenID Connect: Authorization Code Grant</td><td>Access Token Request</td><td>see
+    <a href=\"https://tools.ietf.org/html/rfc6749#section-4.1.3\" target=\"_blank\">RFC
+    6749, Chapter 4.1.3</a></td></tr>\n<tr><td>OAuth 2.0 / OpenID Connect: Authorization
+    Code Grant</td><td>Access Token Refresh</td><td>see <a href=\"https://tools.ietf.org/html/rfc6749#section-6\"
+    target=\"_blank\">RFC 6749, Chapter 6</a></td></tr>\n<tr><td>OAuth 2.0 Client
+    Credentials Grant</td><td>Access Token Request</td><td>see <a href=\"https://tools.ietf.org/html/rfc6749#section-4.4.2\"
+    target=\"_blank\">RFC 6749, Chapter 4.4.2</a></td></tr>\n</table>\n</div>","operationId":"/oauth2/tokenEndpoint","requestBody":{"description":"Refer
+    to the referenced RFCs in the use-case table above to see which form parameters
+    must be provided.","content":{"application/x-www-form-urlencoded":{"schema":{"type":"object","additionalProperties":{"nullable":true}}}}},"responses":{"200":{"description":"The
+    request was processed successfully and the response contains the requested token(s)."},"400":{"description":"An
+    error has occurred and the response body may contain an error object.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"/oauth2/tokenEndpointCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/introspect":{"post":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Introspect token","description":"Introspects the specified
+    token. Authentication must be performed with basic authentication using the explicitly\nconfigured
+    credentials. Refer to the <a href=\"https://tools.ietf.org/html/rfc7662\" target=\"_blank\">RFC
+    7662</a> specification\nfor a more detailed description of the endpoint.\n<div
+    class=\"iam-resource-return\">The metadata of the given token.</div>","operationId":"/oauth2/introspect","requestBody":{"content":{"application/x-www-form-urlencoded":{"schema":{"type":"object","properties":{"token":{"maxLength":10000,"minLength":1,"type":"string","description":"The
+    access or refresh token (mandatory)."},"token_type_hint":{"maxLength":1000,"minLength":0,"type":"string","description":"The
+    token type hint."}}}}}},"responses":{"200":{"description":"Retrieved the token
+    metadata.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2TokenIntrospectionResponseData"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"401":{"description":"Invalid
+    or missing basic authentication credentials.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"/oauth2/introspectCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/revoke":{"post":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Revoke tokens","description":"Revokes the specified token(s).
+    Client credentials may have to be provided as authorization, if configured.\nRefer
+    to the <a href=\"https://tools.ietf.org/html/rfc7009\" target=\"_blank\">RFC 7009</a>
+    specification\nfor a more detailed description of the endpoint.\n<div class=\"iam-resource-return\">response
+    indicating the success.</div>","operationId":"/oauth2/revoke","requestBody":{"content":{"application/x-www-form-urlencoded":{"schema":{"required":["token"],"type":"object","properties":{"token":{"type":"string","description":"The
+    access or refresh token."},"token_type_hint":{"type":"string","description":"The
+    token type hint."}}}}}},"responses":{"200":{"description":"Successfully revoked
+    the token(s) or invalid token submitted."},"400":{"description":"The request was
+    invalid. Includes an error object as specified in <a href=\"https://tools.ietf.org/html/rfc6749#section-5.2\"
+    target=\"_blank\">RFC6749#5.2</a>.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"401":{"description":"The
+    client credentials are invalid.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>-</td>\n<td>No token revocation endpoint
+    configured.</td>\n</tr>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}}},"options":{"operationId":"/oauth2/revokeCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]},"/oauth2/authorization-servers/{authorizationServerId}/check-origin":{"post":{"tags":["/oauth2_OAuth
+    2.0/OIDC"],"summary":"Check RP origin","description":"Checks if the provided RP
+    origin is allowed for this authorization server.\n<div class=\"iam-resource-return\">response
+    indicating the success.</div>","operationId":"/oauth2/checkOrigin","requestBody":{"description":"Contains
+    the origin to be verified.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OpenIdConnectCheckOriginRequest"}}},"required":true},"responses":{"200":{"description":"Result
+    indicating if the provided origin is valid.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/OpenIdConnectOriginCheckDataResourceDocument"}},"application/json":{"schema":{"$ref":"#/components/schemas/OpenIdConnectOriginCheckDataResourceDocument"}}}},"400":{"description":"The
+    request was invalid.","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"404":{"description":"<div
+    class=\"iam-error-code\"><table>\n<tr>\n<td>AUTHORIZATION_SERVER_NOT_FOUND</td>\n<td>The
+    authorization server ID does not exist.</td>\n</tr>\n</table>\n</div>\n","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/OAuth2ErrorResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    OIDC session management is not configured."}},"x-internal":"true"},"options":{"operationId":"/oauth2/checkOriginCorsPreflight","responses":{"200":{"description":"Default
+    response for CORS preflight requests.","headers":{"Access-Control-Allow-Credentials":{"schema":{"type":"boolean"}},"Access-Control-Allow-Methods":{"schema":{"type":"string"}},"Access-Control-Allow-Headers":{"schema":{"type":"string"}},"Access-Control-Allow-Origin":{"schema":{"type":"string"}},"Access-Control-Max-Age":{"schema":{"type":"integer","format":"int32"}}}},"400":{"description":"The
+    request was invalid","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"500":{"description":"The
+    service call did not succeed","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}},"501":{"description":"The
+    active configuration does not support the requested operation","content":{"application/vnd.api+json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}},"application/json":{"schema":{"$ref":"#/components/schemas/ErrorDocumentResponse"}}}}},"x-cors":"true","tags":["/oauth2_other"]},"parameters":[{"name":"authorizationServerId","in":"path","description":"The
+    authorization server ID.","required":true,"schema":{"type":"string"}}]}},"components":{"schemas":{"OpenIdConnectUserInfoResponseDataOverride":{"type":"object","properties":{"sub":{"type":"string","description":"Identifier
+    for the End-User at the Issuer."},"name":{"type":"string","description":"End-User''s
+    full name in displayable form."},"given_name":{"type":"string","description":"Given
+    name(s) or first name(s) of the End-User."},"family_name":{"type":"string","description":"Surname(s)
+    or last name(s) of the End-User."},"email":{"type":"string","description":"End-User''s
+    preferred email address."},"birthdate":{"type":"string","description":"End-User''s
+    birthday, represented as an ISO 8601:2004 YYYY-MM-DD format."},"phone_number":{"type":"string","description":"End-User''s
+    preferred telephone number."}},"additionalProperties":{"nullable":true},"description":"The
+    user info."},"OAuth2DiscoveryAndMetadataResponseOverride":{"type":"object","properties":{"issuer":{"type":"string","description":"URL
+    using the https scheme with no query or fragment component that the OP asserts
+    as its Issuer Identifier."},"authorization_endpoint":{"type":"string","description":"URL
+    of the OP''s OAuth 2.0 Authorization Endpoint."},"token_endpoint":{"type":"string","description":"URL
+    of the OP''s OAuth 2.0 Token Endpoint"},"jwks_uri":{"type":"string","description":"URL
+    of the OP''s JSON Web Key Set document."},"registration_endpoint":{"type":"string","description":"URL
+    of the OP''s Dynamic Client Registration Endpoint."},"scopes_supported":{"type":"array","description":"List
+    of the OAuth 2.0 scope values that this server supports.","items":{"type":"string"}},"response_types_supported":{"type":"array","description":"List
+    of the OAuth 2.0 response_type values that this OP supports.","items":{"type":"string"}},"response_modes_supported":{"type":"array","description":"List
+    of the OAuth 2.0 response_mode values that this OP supports.","items":{"type":"string"}},"grant_types_supported":{"type":"array","description":"List
+    of the OAuth 2.0 Grant Type values that this OP supports.","items":{"type":"string"}},"acr_values_supported":{"type":"array","description":"List
+    of the Authentication Context Class References that this OP supports.","items":{"type":"string"}},"subject_types_supported":{"type":"array","description":"List
+    of the Subject Identifier types that this OP supports.","items":{"type":"string"}},"id_token_signing_alg_values_supported":{"type":"array","description":"List
+    of the JWS signing algorithms supported by the OP for the ID Token to encode the
+    Claims in a JWT.","items":{"type":"string"}},"token_endpoint_auth_methods_supported":{"type":"array","description":"List
+    of Client Authentication methods supported by this Token Endpoint.","items":{"type":"string"}},"claim_types_supported":{"type":"array","description":"List
+    of the Claim Types that the OpenID Provider supports.","items":{"type":"string"}},"claims_supported":{"type":"array","description":"List
+    of the Claim Names of the Claims that the OpenID Provider may be able to supply
+    values for.","items":{"type":"string"}},"ui_locales_supported":{"type":"array","description":"Languages
+    and scripts supported for the user interface, represented as a JSON array of BCP47
+    [RFC5646] language tag values.","items":{"type":"string"}},"request_uri_parameter_supported":{"type":"boolean","description":"Value
+    specifying whether the OP supports use of the request_uri parameter, with true
+    indicating support - If omitted, the default value is true."},"backchannel_logout_supported":{"type":"boolean","description":"Value
+    specifying whether the OP supports back-channel logout, with true indicating support
+    - If omitted, the default value is false."},"backchannel_logout_session_supported":{"type":"boolean","description":"Value
+    specifying whether the OP can pass a sid (session ID) Claim in the Logout Token
+    to identify the RP session with the OP. If supported, the sid Claim is also included
+    in ID Tokens issued by the OP - If omitted, the default value is false."}},"additionalProperties":{"nullable":true},"description":"The
+    response is a set of claims about the authorization server''s configuration according
+    to RFC 8414."},"OAuth2JwkResponseDataOverride":{"type":"object","additionalProperties":{"nullable":true},"description":"Key/value
+    pairs describing the specified resource."},"OAuth2ResourceEndpointResponseDataOverride":{"type":"object","additionalProperties":{"nullable":true}},"OAuth2CustomAttributesDataOverride":{"type":"object","additionalProperties":{"nullable":true},"description":"All
+    custom attributes of an OAuth 2.0 session."},"OAuth2SessionUpdateRequestOverride":{"type":"object","additionalProperties":{"nullable":true},"description":"Attributes
+    of an OAuth 2.0 session to be updated."},"OAuth2ErrorResponse":{"required":["error"],"type":"object","properties":{"error":{"type":"string","description":"A
+    single ASCII error code."},"error_description":{"type":"string","description":"Human-readable
+    ASCII text providing additional information, used to assist the client developer
+    in understanding the error that occurred."},"error_uri":{"type":"string","description":"A
+    URI identifying a human-readable web page with information about the error, used
+    to provide the client developer with additional information about the error."}},"description":"An
+    OAuth2 error response"},"Links":{"type":"object","description":"Represents links.","additionalProperties":{"$ref":"#/components/schemas/Link"}},"Metadata":{"$ref":"#/components/schemas/Meta"},"OAuth2SessionData":{"type":"object","properties":{"customAttributes":{"type":"object","additionalProperties":{"type":"string","description":"All
+    custom attributes of an OAuth 2.0 session."},"description":"All custom attributes
+    of an OAuth 2.0 session."},"clientId":{"type":"string","description":"The OAuth
+    2.0 client ID."},"consentTimestamp":{"type":"string","description":"The timestamp
+    when the user gave (explicitly or implicitly in case of disabled consent screen)
+    his consent to this authorization.","format":"date-time"},"authenticationTimestamp":{"type":"string","description":"The
+    timestamp of the authentication that led to this authorization.","format":"date-time"}},"description":"Attributes
+    of this resource."},"OAuth2SessionDataResourceDocument":{"type":"object","properties":{"data":{"$ref":"#/components/schemas/OAuth2SessionDataResourceObject"},"included":{"uniqueItems":true,"type":"array","description":"To
+    reduce the number of HTTP requests, servers **MAY** allow responses that include
+    related resources along with the requested primary resources. Such responses are
+    called \"compound documents\".","items":{"$ref":"#/components/schemas/ResourceObjectBase"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"}}},"OAuth2SessionDataResourceObject":{"required":["id","type"],"type":"object","properties":{"attributes":{"$ref":"#/components/schemas/OAuth2SessionData"},"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"relationships":{"$ref":"#/components/schemas/Relationships"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["oauth2-session"]}},"description":"A
+    collection of included resources to which the primary data refers."},"Relationships":{"description":"Members
+    of the relationships object (\"relationships\") represent references from the
+    resource object in which it''s defined to other resource objects.","type":"object","additionalProperties":{"$ref":"#/components/schemas/Relationship"}},"OAuth2CustomAttributesDataResourceDocument":{"type":"object","properties":{"data":{"$ref":"#/components/schemas/OAuth2CustomAttributesDataResourceObject"},"included":{"uniqueItems":true,"type":"array","description":"To
+    reduce the number of HTTP requests, servers **MAY** allow responses that include
+    related resources along with the requested primary resources. Such responses are
+    called \"compound documents\".","items":{"$ref":"#/components/schemas/ResourceObjectBase"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"}}},"OAuth2CustomAttributesDataResourceObject":{"required":["id","type"],"type":"object","properties":{"attributes":{"$ref":"#/components/schemas/OAuth2CustomAttributesDataOverride"},"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"relationships":{"$ref":"#/components/schemas/Relationships"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["oauth2-session-custom-attributes"]}},"description":"An
+    included resource to which the primary data refers."},"RequestDocumentOAuth2SessionUpdateRequest":{"required":["data"],"type":"object","properties":{"data":{"$ref":"#/components/schemas/ResourceObjectOAuth2SessionUpdateRequest"}}},"ResourceObjectOAuth2SessionUpdateRequest":{"required":["type"],"type":"object","properties":{"type":{"type":"string"},"id":{"type":"string"},"attributes":{"$ref":"#/components/schemas/OAuth2SessionUpdateRequestOverride"},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"}}},"OAuth2DiscoveryAndMetadataEndpointResponseData":{"$ref":"#/components/schemas/OAuth2DiscoveryAndMetadataResponseOverride"},"OAuth2JwksResponseData":{"required":["keys"],"type":"object","properties":{"keys":{"type":"array","description":"Set
+    of JWKs as defined in <a href=\"https://tools.ietf.org/html/rfc7517\">RFC 7517</a>.","items":{"$ref":"#/components/schemas/OAuth2JwkResponseDataOverride"}}}},"OAuth2ParData":{"type":"object","properties":{"request_uri":{"type":"string","description":"The
+    request URI corresponding to the authorization request posted."},"expires_in":{"type":"integer","description":"A
+    JSON number that represents the lifetime of the request URI in seconds as a positive
+    integer.","format":"int64"}}},"OAuth2ResourceEndpointResponseData":{"$ref":"#/components/schemas/OAuth2ResourceEndpointResponseDataOverride"},"OAuth2SessionDataCollectionDocument":{"type":"object","properties":{"data":{"type":"array","items":{"$ref":"#/components/schemas/OAuth2SessionDataResourceObject"}},"included":{"uniqueItems":true,"type":"array","description":"To
+    reduce the number of HTTP requests, servers **MAY** allow responses that include
+    related resources along with the requested primary resources. Such responses are
+    called \"compound documents\".","items":{"$ref":"#/components/schemas/ResourceObjectBase"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"}}},"OAuth2TokenIntrospectionResponseData":{"required":["active"],"type":"object","properties":{"active":{"type":"boolean","description":"Indicates
+    whether or not the presented token is currently active."},"scope":{"type":"string","description":"Space-separated
+    list of scopes associated with this token."},"sub":{"type":"string","description":"Subject
+    of the token, usually a machine-readable identifier of the resource owner who
+    authorized this token."},"username":{"type":"string","description":"Human-readable
+    identifier for the resource owner who authorized this token.","x-internal":"true"},"exp":{"type":"integer","description":"Timestamp,
+    measured in the number of seconds since January 1 1970 UTC, indicating when this
+    token will expire.","format":"int64"},"iat":{"type":"integer","description":"Timestamp,
+    measured in the number of seconds since January 1 1970 UTC, indicating when this
+    token was originally issued.","format":"int64"},"nbf":{"type":"integer","description":"Timestamp,
+    measured in the number of seconds since January 1 1970 UTC, indicating when this
+    token is not to be used before.","format":"int64","x-internal":"true"},"aud":{"type":"string","description":"Service-specific
+    identifier or list of identifiers representing the intended audience for this
+    token.","x-internal":"true"},"iss":{"type":"string","description":"The issuer
+    of this token.","x-internal":"true"},"jti":{"type":"string","description":"The
+    identifier for the token.","x-internal":"true"},"cnf":{"type":"object","additionalProperties":{"type":"string","description":"The
+    JWT confirmation method. Used with certificate-bound access tokens."},"description":"The
+    JWT confirmation method. Used with certificate-bound access tokens."},"client_id":{"type":"string","description":"Client
+    identifier for the OAuth 2.0 client that requested this token."},"token_type":{"type":"string","description":"Type
+    of the token as defined in Section 5.1 of OAuth 2.0 [RFC6749].","x-internal":"true"}}},"OpenIdConnectOriginCheckData":{"type":"object","properties":{"allowed":{"type":"boolean","description":"Whether
+    the origin is allowed or not for this authorization server."}},"description":"Attributes
+    of this resource."},"OpenIdConnectOriginCheckDataResourceDocument":{"type":"object","properties":{"data":{"$ref":"#/components/schemas/OpenIdConnectOriginCheckDataResourceObject"},"included":{"uniqueItems":true,"type":"array","description":"To
+    reduce the number of HTTP requests, servers **MAY** allow responses that include
+    related resources along with the requested primary resources. Such responses are
+    called \"compound documents\".","items":{"$ref":"#/components/schemas/ResourceObjectBase"}},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"}}},"OpenIdConnectOriginCheckDataResourceObject":{"required":["id","type"],"type":"object","properties":{"attributes":{"$ref":"#/components/schemas/OpenIdConnectOriginCheckData"},"id":{"type":"string","description":"Identifies
+    the instance of this resource; type and id together make a resource unique.\nWhile
+    the server always returns a valid ID value, it MAY accept a client-generated ID
+    in a request to create\na resource."},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"},"relationships":{"$ref":"#/components/schemas/Relationships"},"type":{"type":"string","description":"Identifies
+    the type of this resource; type and id together make a resource unique.","enum":["oidc-origin-check"]}},"description":"An
+    included resource to which the primary data refers."},"OpenIdConnectCheckOriginRequest":{"required":["clientId","origin"],"type":"object","properties":{"origin":{"maxLength":100000,"minLength":1,"type":"string","description":"Origin
+    to check."},"clientId":{"maxLength":10000,"minLength":1,"type":"string","description":"The
+    ID of the registered client on this authorization server."}}},"OpenIdConnectUserInfoResponseData":{"$ref":"#/components/schemas/OpenIdConnectUserInfoResponseDataOverride"},"Meta":{"description":"Non-standard
+    meta-information that can not be represented as an attribute or relationship.","type":"object","additionalProperties":{"nullable":true}},"Link":{"description":"A
+    link **MUST** be represented as either: a string containing the link''s URL or
+    a link object.","oneOf":[{"description":"A string containing the link''s URL.","type":"string","format":"uri-reference"},{"type":"object","required":["href"],"properties":{"href":{"description":"A
+    string containing the link''s URL.","type":"string","format":"uri-reference"},"meta":{"$ref":"#/components/schemas/Meta"}}}]},"ResourceIdentifierRef":{"description":"An
+    object that identifies an individual resource","type":"object","nullable":true,"required":["id","type"],"properties":{"type":{"description":"The
+    type of the resource","type":"string"},"id":{"description":"The unique identifier
+    of the resource","type":"string"},"meta":{"$ref":"#/components/schemas/Meta"}}},"LinkageToOne":{"oneOf":[{"$ref":"#/components/schemas/ResourceIdentifierRef"}]},"LinkageToMany":{"type":"array","items":{"$ref":"#/components/schemas/ResourceIdentifierRef"},"minItems":0,"uniqueItems":true},"Linkage":{"oneOf":[{"$ref":"#/components/schemas/LinkageToOne"},{"$ref":"#/components/schemas/LinkageToMany"}]},"Relationship":{"type":"object","properties":{"links":{"$ref":"#/components/schemas/Links"},"data":{"$ref":"#/components/schemas/Linkage"},"meta":{"$ref":"#/components/schemas/Meta"}}},"ResourceObjectBase":{"type":"object","required":["type"],"properties":{"type":{"type":"string"},"id":{"type":"string"},"attributes":{"type":"object"},"relationships":{"$ref":"#/components/schemas/Relationships"},"links":{"$ref":"#/components/schemas/Links"},"meta":{"$ref":"#/components/schemas/Meta"}}},"Pagination":{"type":"object","properties":{"first":{"$ref":"#/components/schemas/Link"},"last":{"$ref":"#/components/schemas/Link"},"prev":{"$ref":"#/components/schemas/Link"},"next":{"$ref":"#/components/schemas/Link"}}},"Jsonapi":{"description":"An
+    object describing the server''s implementation.","type":"object","properties":{"version":{"description":"A
+    string indicating the highest JSON:API version supported.","type":"string"},"ext":{"description":"An
+    array of URIs for all applied extensions.","type":"array","items":{"type":"string","format":"uri-reference"}},"profile":{"description":"An
+    array of URIs for all applied profiles.","type":"array","items":{"type":"string","format":"uri-reference"}},"meta":{"$ref":"#/components/schemas/Meta"}},"additionalProperties":false},"ResponseDocumentBase":{"type":"object","properties":{"meta":{"$ref":"#/components/schemas/Meta"},"included":{"description":"To
+    reduce the number of HTTP requests, servers **MAY** allow responses that include
+    related resources along with the requested primary resources. Such responses are
+    called \"compound documents\".","type":"array","items":{"$ref":"#/components/schemas/ResourceObjectBase"},"uniqueItems":true},"links":{"description":"Link
+    members related to the primary data.","allOf":[{"$ref":"#/components/schemas/Links"},{"$ref":"#/components/schemas/Pagination"}]},"jsonapi":{"$ref":"#/components/schemas/Jsonapi"}}},"JsonApiError":{"type":"object","description":"A
+    list containing the specific errors.","properties":{"id":{"description":"A unique
+    identifier for this particular occurrence of the problem.","type":"string"},"links":{"$ref":"#/components/schemas/Links"},"status":{"description":"The
+    HTTP status code applicable to this problem, expressed as a string value.","type":"number"},"code":{"description":"An
+    application-specific error code, expressed as a string value.","type":"string"},"title":{"description":"A
+    short, human-readable summary of the problem. It **SHOULD NOT** change from occurrence
+    to occurrence of the problem, except for purposes of localization.","type":"string"},"detail":{"description":"A
+    human-readable explanation specific to this occurrence of the problem.","type":"string"},"source":{"type":"object","properties":{"pointer":{"description":"A
+    JSON Pointer [RFC6901] to the associated entity in the request document [e.g.
+    \"/data\" for a primary data object, or \"/data/attributes/title\" for a specific
+    attribute].","type":"string"},"parameter":{"description":"A string indicating
+    which query parameter caused the error.","type":"string"},"header":{"description":"A
+    string indicating the name of a single request header which caused the error.","type":"string"}}},"meta":{"$ref":"#/components/schemas/Meta"}},"additionalProperties":false},"ErrorDocumentResponse":{"type":"object","additionalProperties":false,"allOf":[{"$ref":"#/components/schemas/ResponseDocumentBase"},{"type":"object","required":["errors"],"properties":{"errors":{"type":"array","items":{"$ref":"#/components/schemas/JsonApiError"},"uniqueItems":true}}}]}}},"x-tagGroups":[{"name":"OAuth
+    2.0","tags":["/oauth2_OAuth 2.0/OIDC","/oauth2_Signing Keys","/oauth2_other"]}]}'
+kind: ConfigMap
+metadata:
+  name: {{ $moduleName }}-openapi-oauth2
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "airlock-iam.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $moduleType }}
+  annotations:
+    {{- include "airlock-iam.annotations" . | nindent 4 }}
+{{-   end }}
+{{- end }}

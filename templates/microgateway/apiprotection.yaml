@@ -25,11 +25,12 @@ spec:
 {{-       end }}
 
 {{-       if eq $app "loginapp" }}
+{{-         range list "public" "protected" "oauth2" }}
 ---
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: APIProtection
 metadata:
-  name: {{ $moduleName }}-rest
+  name: {{ $moduleName }}-rest-{{ . }}
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
@@ -38,9 +39,10 @@ metadata:
     {{- include "airlock-iam.annotations" $ | nindent 4 }}
 spec:
   policies:
-    - name: {{ $moduleName }}-rest
+    - name: {{ $moduleName }}-rest-{{ . }}
       openAPIRef:
-        name: {{ $moduleName }}
+        name: {{ $moduleName }}-{{ . }}
+{{-         end }}
 {{-       end }}
 
 {{-       if eq $app "transaction-approval" }}

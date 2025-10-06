@@ -41,10 +41,5 @@ spec:
                   matcher:
                     exact: "X-Iam-Sso-Ticket"
             name: "SSO Ticket header"
-          - headers:
-              - name:
-                  matcher:
-                    exact: "X-URL"
-            name: "Forwarded Request URL"
 {{-   end }}
 {{- end }}

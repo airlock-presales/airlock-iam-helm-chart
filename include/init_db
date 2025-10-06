@@ -1,4 +1,9 @@
 #! /bin/bash
+# init_db
+# - runs sequentially for every pod (statefulset)
+# - creates or updates schema on first pod containing loginapp
+# - creates adminaccount on first pod containing adminapp
+# - for all others, waits for database to be initialised and ready
 
 ## Uses the following command line tools:
 ## - mariadb / mysql / psql - depending on database type (INIT_TYPE)
@@ -11,9 +16,14 @@ if [[ -r "${INIT_ENV_PATH:-.}"/env.init ]]; then
     source "${INIT_ENV_PATH:-.}"/env.init
 fi
 
+function log ()
+{
+    echo "$(date +"%Y-%m-%d %H:%M:%S") $@"
+}
+
 function die ()
 {
-    echo $@
+    log $@
     # do not exit to indicate problem
     while true
     do
@@ -23,11 +33,11 @@ function die ()
 
 # sanity checks
 # - not checking INSTANCE_DIR, INIT_DB_MIRROR
-for f in INIT_TYPE INIT_INSTANCE INIT_DL INIT_DL_VERSION INIT_DB_SCHEMA INIT_DB_HOST INIT_DB_DATABASE INIT_DB_USERNAME INIT_DB_PASSWORD INIT_DB_VERSION INIT_ADMIN_CREATE INIT_ADMIN_USERNAME INIT_ADMIN_PWD_HASH INIT_ADMIN_CHANGE
+for f in INIT_TYPE INIT_INSTANCE INIT_DL INIT_DL_VERSION INIT_DB_SCHEMA_MANAGE INIT_DB_SCHEMA_UPGRADE INIT_DB_HOST INIT_DB_DATABASE INIT_DB_USERNAME INIT_DB_PASSWORD INIT_DB_VERSION INIT_ADMIN_CREATE INIT_ADMIN_CHANGE INIT_ADMIN_USERNAME INIT_ADMIN_PWD_HASH
 do
   [[ -z "${!f}" ]] && die "${f} not set"
 done
-echo "Variables checked"
+log "Variables checked"
 
 instance_dir="${INSTANCE_DIR:-/home/airlock/iam/instances}/${INIT_INSTANCE}"
 instance_libs="${instance_dir}/libs"
@@ -72,6 +82,11 @@ cmd_sql() {
 
 
 # ###########
+# Todo - support an option to serialise all pods
+# ###########
+
+
+# ###########
 # Download connector
 # ###########
 
@@ -94,14 +109,14 @@ if [[ "${INIT_DL}" == "true" ]]; then
                 curl -s -L "${url}" --output "${instance_libs}/${url##*/}"
             fi
             ;;
-        mysql)
-            die "Automated download of Java Connector for MySQL is not supported"
+        *)
+            die "Automated download of Java Connector for ${INIT_TYPE} is not supported"
             ;;
     esac
     if [[ -n "${mirror}" ]]; then
-        echo "Connector version ${INIT_DL_VERSION} downloaded from ${mirror}"
+        log "Connector version ${INIT_DL_VERSION} downloaded from ${mirror}"
     else
-        echo "Connector version ${INIT_DL_VERSION} already exists."
+        log "Connector version ${INIT_DL_VERSION} already exists."
     fi
 fi
 
@@ -128,177 +143,161 @@ do
             ;;
     esac
     [[ ${state} -eq 0 ]] && break
-    echo "Waiting for ${INIT_TYPE}"
+    log "Waiting for ${INIT_TYPE}"
     sleep 2
 done
-echo "Database engine on ${INIT_DB_HOST} ready"
+log "Database engine on ${INIT_DB_HOST} ready"
 
 
 # ###########
 # Create database
 # ###########
 
-if [[ "${INIT_DB_SCHEMA}" == "init" ]]; then
-    # create database
-    created=0
-    case "${INIT_TYPE}" in
-        mariadb)
-            r="$(cmd_mariadb "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${INIT_DB_DATABASE}'")" || die "Failed to check for database"
-            if [[ -z "$r" ]]; then
-                cmd_mariadb "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
-                created=1
-            fi
-            ;;
-        postgresql)
-            psql -h ${INIT_DB_HOST} -U ${INIT_DB_USERNAME} -lqt | cut -d \| -f 1 | grep -qw "${INIT_DB_DATABASE}" || die "Failed to check for database"
-            if [[ $? -ne 0 ]]; then
-                cmd_pg "CREATE DATABASE ${INIT_DB_DATABASE}" || die "Failed to create database"
-                created=1
-            fi
-            ;;
-        mysql)
-            r="$(cmd_mysql "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${INIT_DB_DATABASE}'")" || die "Failed to check for database"
-            if [[ -z "$r" ]]; then
-                cmd_mysql "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
-                created=1
-            fi
-            ;;
-    esac
-
-    # report
-    if [[ ${created} -eq 1 ]]; then
-        echo "Database ${INIT_DB_DATABASE} created on ${INIT_DB_HOST}"
-    else
-        echo "Database ${INIT_DB_DATABASE} already existing on ${INIT_DB_HOST}"
-    fi
-
-    # download db script
-    url="https://docs.airlock.com/iam/${schema_version}/sql-scripts/schema/${INIT_TYPE}/create-medusa-schema.sql"
-    curl -s -L "${url}" --output "/var/tmp/create-medusa-schema.sql" || die "Failed to download schema creation script"
-    echo "Schema ${schema_version} for ${INIT_TYPE} downloaded"
-
-    # create tables
-    created=0
-    case "${INIT_TYPE}" in
-        mariadb)
-            r="$(cmd_mariadb "SELECT table_name FROM information_schema.tables WHERE table_schema = '${INIT_DB_DATABASE}' AND table_name = 'medusa_user' LIMIT 1")" || die "Failed to check for database"
-            if [[ -z "$r" ]]; then
-                cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
-                created=1
-            fi
-            ;;
-        postgresql)
-            r="$(cmd_sql "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_type = 'BASE_TABLE' AND table_schema = 'public' AND table_catalog='${INIT_DB_DATABASE}' AND table_name = 'medusa_user');")" || die "Failed to check for database"
-            if [[ "$r" == "f" ]]; then
-                psql -h ${INIT_DB_HOST} -U ${INIT_DB_USERNAME} -d "${INIT_DB_DATABASE}" -f "/var/tmp/create-medusa-schema.sql" || die "Failed to define database"
-                created=1
-            fi
-            ;;
-        mysql)
-            r="$(cmd_mysql "SELECT table_name FROM information_schema.tables WHERE table_schema = '${INIT_DB_DATABASE}' AND table_name = 'medusa_user' LIMIT 1")" || die "Failed to check for database"
-            if [[ -z "$r" ]]; then
-                cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
-                created=1
-            fi
-            ;;
-    esac
-
-    # add metadata table and version number
-    if [[ ${created} -eq 1 ]]; then
-        if [[ "${INIT_TYPE}" == "postgresql" ]]; then
-            cs=""
-        else
-            cs="CHARACTER SET utf8mb4 COLLATE utf8mb4_general_nopad_ci"
-        fi
-        cmd_sql "CREATE TABLE metadata(name VARCHAR(32) NOT NULL, value VARCHAR(32)) ${cs};"
-        cmd_sql "INSERT INTO metadata(name,value) VALUES ('schema_version', '${schema_version}');"
-        echo "Database ${INIT_DB_DATABASE}, version ${schema_version}, initialised on ${INIT_DB_HOST}"
-    else
-        echo "Database ${INIT_DB_DATABASE}, table 'medusa_user' already existing - doing nothing"
-    fi
-fi
-
-
-# ###########
-# Upgrade database
-# ###########
-
-if [[ "${INIT_DB_SCHEMA}" == "upgrade" ]]; then
-    # target version
-    v_tgt="$(echo ${INIT_DB_VERSION} | sed -e 's,\([0-9]*\.[0-9]*\).*,\1,')"
-
-    # get current version
-    v_org="$(cmd_sql "SELECT value FROM metadata WHERE name='schema_version'")"
-    [[ -z "${v_org}" ]] && die "Database ${INIT_DB_DATABASE} not correctly created"
-
-    if [[ "${v_org}" != "${v_tgt}" ]]; then
-        # get upgrade step scripts
-        lst=()
-        v_cur="${v_org}"
-        while [[ "${v_tgt}" != "${v_cur}" ]]
-        do
-            v_next="${v_cur%.*}.$((${v_cur#*.} +1))"
-            try=1
-            while true
-            do
-                url="https://docs.airlock.com/iam/${v_tgt}/sql-scripts/changelog/${INIT_TYPE}/iam-schema-migration-${v_cur/./_}-${v_next/./_}.sql"
-                r="$(curl -s -L "${url}" --output "/var/tmp/${url##*/}" -w '%{http_code}')"
-                [[ "$r" == "200" ]] && break
-                rm "/var/tmp/${url##*/}"
-                [[ ${try} -ge 2 ]] && die "Missing schema upgrade step after ${v_cur}, tried ${v_cur%.*}.$((${v_cur#*.} +1)) and $((${v_cur%.*} +1)).0"
-                v_next="$((${v_cur%.*} +1)).0"
-                try=$((${try} +1))
-            done
-            echo "Found upgrade step: ${v_cur} -> ${v_next}"
-            v_cur="${v_next}"
-        done
+if [[ "${INIT_DB_SCHEMA_MANAGE}" == "true" ]]; then
+    # must be loginapp
+    if [[ "${HOSTNAME##*-}" == "0" ]]; then
+        # must be first instance
+        created=0
+        case "${INIT_TYPE}" in
+            mariadb)
+                r="$(cmd_mariadb "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${INIT_DB_DATABASE}'")" || die "Failed to check for database"
+                if [[ -z "$r" ]]; then
+                    cmd_mariadb "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
+                    created=1
+                fi
+                ;;
+            postgresql)
+                psql -h ${INIT_DB_HOST} -U ${INIT_DB_USERNAME} -lqt | cut -d \| -f 1 | grep -qw "${INIT_DB_DATABASE}" || die "Failed to check for database"
+                if [[ $? -ne 0 ]]; then
+                    cmd_pg "CREATE DATABASE ${INIT_DB_DATABASE}" || die "Failed to create database"
+                    created=1
+                fi
+                ;;
+            mysql)
+                r="$(cmd_mysql "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${INIT_DB_DATABASE}'")" || die "Failed to check for database"
+                if [[ -z "$r" ]]; then
+                    cmd_mysql "CREATE DATABASE ${INIT_DB_DATABASE} CHARACTER SET utf8mb4" || die "Failed to create database"
+                    created=1
+                fi
+                ;;
+        esac
     
-        # run upgrade scripts
-        for f in /var/tmp/iam-schema-migration-*
-        do
-            case "${INIT_TYPE}" in
-                mariadb)
-                    cmd_sql "source $f" || die "Failed to upgrade database: script $f"
-                    ;;
-                postgresql)
-                    cmd_sql "\i $f" || die "Failed to upgrade database: script $f"
-                    ;;
-                mysql)
-                    cmd_sql "source $f" || die "Failed to upgrade database: script $f"
-                    ;;
-            esac
-        done
+        # report
+        if [[ ${created} -eq 1 ]]; then
+            log "Database ${INIT_DB_DATABASE} created on ${INIT_DB_HOST}"
+        else
+            log "Database ${INIT_DB_DATABASE} already existing on ${INIT_DB_HOST}"
+        fi
+    
+        # download db script
+        url="https://docs.airlock.com/iam/${schema_version}/sql-scripts/schema/${INIT_TYPE}/create-medusa-schema.sql"
+        curl -s -L "${url}" --output "/var/tmp/create-medusa-schema.sql" || die "Failed to download schema creation script"
+        log "Schema ${schema_version} for ${INIT_TYPE} downloaded"
+    
+        # create tables
+        created=0
+        case "${INIT_TYPE}" in
+            mariadb)
+                r="$(cmd_mariadb "SELECT table_name FROM information_schema.tables WHERE table_schema = '${INIT_DB_DATABASE}' AND table_name = 'medusa_user' LIMIT 1")" || die "Failed to check for database"
+                if [[ -z "$r" ]]; then
+                    cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+                    created=1
+                fi
+                ;;
+            postgresql)
+                r="$(cmd_sql "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_type = 'BASE_TABLE' AND table_schema = 'public' AND table_catalog='${INIT_DB_DATABASE}' AND table_name = 'medusa_user');")" || die "Failed to check for database"
+                if [[ "$r" == "f" ]]; then
+                    psql -h ${INIT_DB_HOST} -U ${INIT_DB_USERNAME} -d "${INIT_DB_DATABASE}" -f "/var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+                    created=1
+                fi
+                ;;
+            mysql)
+                r="$(cmd_mysql "SELECT table_name FROM information_schema.tables WHERE table_schema = '${INIT_DB_DATABASE}' AND table_name = 'medusa_user' LIMIT 1")" || die "Failed to check for database"
+                if [[ -z "$r" ]]; then
+                    cmd_sql "source /var/tmp/create-medusa-schema.sql" || die "Failed to define database"
+                    created=1
+                fi
+                ;;
+        esac
+    
+        # add metadata table and version number
+        if [[ ${created} -eq 1 ]]; then
+            if [[ "${INIT_TYPE}" == "postgresql" ]]; then
+                cs=""
+            else
+                cs="CHARACTER SET utf8mb4 COLLATE utf8mb4_general_nopad_ci"
+            fi
+            cmd_sql "CREATE TABLE metadata(name VARCHAR(32) NOT NULL, value VARCHAR(32)) ${cs};"
+            cmd_sql "INSERT INTO metadata(name,value) VALUES ('schema_version', '${schema_version}');"
+            log "Database ${INIT_DB_DATABASE}, version ${schema_version}, initialised on ${INIT_DB_HOST}"
+        else
+            log "Database ${INIT_DB_DATABASE}, table 'medusa_user' already existing - doing nothing"
+        fi
         
-        # update metadata version number
-        cmd_sql "UPDATE metadata set value='${v_tgt}' WHERE name='schema_version';"
-        echo "Updated database ${INIT_DB_DATABASE} on ${INIT_DB_HOST} to version ${v_tgt}"
-    else
-        echo "Database ${INIT_DB_DATABASE} on ${INIT_DB_HOST} on version ${v_tgt}"
+        # ###########
+        # Upgrade database
+        # ###########
+        
+        if [[ "${INIT_DB_SCHEMA_UPGRADE}" == "true" ]]; then
+            # target version
+            v_tgt="$(echo ${INIT_DB_VERSION} | sed -e 's,\([0-9]*\.[0-9]*\).*,\1,')"
+        
+            # get current version
+            v_org="$(cmd_sql "SELECT value FROM metadata WHERE name='schema_version'")"
+            [[ -z "${v_org}" ]] && die "Database ${INIT_DB_DATABASE} not correctly created"
+        
+            if [[ "${v_org}" != "${v_tgt}" ]]; then
+                # get upgrade step scripts
+                lst=()
+                v_cur="${v_org}"
+                while [[ "${v_tgt}" != "${v_cur}" ]]
+                do
+                    v_next="${v_cur%.*}.$((${v_cur#*.} +1))"
+                    try=1
+                    while true
+                    do
+                        url="https://docs.airlock.com/iam/${v_tgt}/sql-scripts/changelog/${INIT_TYPE}/iam-schema-migration-${v_cur/./_}-${v_next/./_}.sql"
+                        r="$(curl -s -L "${url}" --output "/var/tmp/${url##*/}" -w '%{http_code}')"
+                        [[ "$r" == "200" ]] && break
+                        rm "/var/tmp/${url##*/}"
+                        [[ ${try} -ge 2 ]] && die "Missing schema upgrade step after ${v_cur}, tried ${v_cur%.*}.$((${v_cur#*.} +1)) and $((${v_cur%.*} +1)).0"
+                        v_next="$((${v_cur%.*} +1)).0"
+                        try=$((${try} +1))
+                    done
+                    log "Found upgrade step: ${v_cur} -> ${v_next}"
+                    v_cur="${v_next}"
+                done
+            
+                # run upgrade scripts
+                for f in /var/tmp/iam-schema-migration-*
+                do
+                    case "${INIT_TYPE}" in
+                        mariadb)
+                            cmd_sql "source $f" || die "Failed to upgrade database: script $f"
+                            ;;
+                        postgresql)
+                            cmd_sql "\i $f" || die "Failed to upgrade database: script $f"
+                            ;;
+                        mysql)
+                            cmd_sql "source $f" || die "Failed to upgrade database: script $f"
+                            ;;
+                    esac
+                done
+                
+                # update metadata version number
+                cmd_sql "UPDATE metadata set value='${v_tgt}' WHERE name='schema_version';"
+                log "Updated database ${INIT_DB_DATABASE} on ${INIT_DB_HOST} to version ${v_tgt}"
+            else
+                log "Database ${INIT_DB_DATABASE} on ${INIT_DB_HOST} on version ${v_tgt}"
+            fi
+        fi
     fi
 fi
 
 
 # ###########
-# Create administrator
+# Wait for database to be initialised and ready
 # ###########
-
-if [[ "${INIT_ADMIN_CREATE}" == "true" ]]; then
-    [[ "${INIT_ADMIN_CHANGE}" == "true" ]] && force="1" || force="0"
-    v="$(cmd_sql "SELECT username FROM medusa_admin WHERE username='${INIT_ADMIN_USERNAME}'")"
-    if [[ "${v}" != "${INIT_ADMIN_USERNAME}" ]]; then
-        cmd_sql "INSERT INTO medusa_admin (username, givenname, surname, roles, pwd_hash, pwd_chg_enf) VALUES ('${INIT_ADMIN_USERNAME}', 'IAM', 'Administrator', 'superadmin', '${INIT_ADMIN_PWD_HASH}', ${force});"
-        echo "Administrator created: ${INIT_ADMIN_USERNAME}"
-    else
-        echo "Administrator ${INIT_ADMIN_USERNAME} already exists in database - leaving unchanged"
-    fi
-fi
-
-#
-# ###########
-# Wait for database to be initialised
-# ###########
-
-# needs to be done on all deployments not containing adminapp
 
 while true
 do
@@ -314,8 +313,28 @@ do
             ;;
     esac
     [[ ${v} == "${schema_version}" ]] && break
-    echo "Waiting for database initialisation to be completed"
+    log "Waiting for database initialisation to be completed (current schema version: ${v})"
     sleep 5
 done
-echo "Database ready"
+log "Database ready"
+
+
+# ###########
+# Create administrator
+# ###########
+
+if [[ "${INIT_ADMIN_CREATE}" == "true" ]]; then
+    # must be adminapp
+    if [[ "${HOSTNAME##*-}" == "0" ]]; then
+        # must be first instance
+        [[ "${INIT_ADMIN_CHANGE}" == "true" ]] && force="1" || force="0"
+        v="$(cmd_sql "SELECT username FROM medusa_admin WHERE username='${INIT_ADMIN_USERNAME}'")"
+        if [[ "${v}" != "${INIT_ADMIN_USERNAME}" ]]; then
+            cmd_sql "INSERT INTO medusa_admin (username, givenname, surname, roles, pwd_hash, pwd_chg_enf) VALUES ('${INIT_ADMIN_USERNAME}', 'IAM', 'Administrator', 'superadmin', '${INIT_ADMIN_PWD_HASH}', ${force});"
+            log "Administrator created: ${INIT_ADMIN_USERNAME}"
+        else
+            log "Administrator ${INIT_ADMIN_USERNAME} already exists in database - leaving unchanged"
+        fi
+    fi
+fi
 

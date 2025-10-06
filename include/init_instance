@@ -1,13 +1,21 @@
 #! /bin/bash
+# init_instance
+# - runs sequentially for every pod as each may have its own instance directory (statefulset)
+# - does nothing if instance directory already exists
 
 if [[ -r "${INIT_ENV_PATH:-.}"/env.init ]]; then
     echo "Loading variables from '${INIT_ENV_PATH:-.}/env.init'"
     source "${INIT_ENV_PATH:-.}"/env.init
 fi
 
+function log ()
+{
+    echo "$(date +"%Y-%m-%d %H:%M:%S") $@"
+}
+
 function die ()
 {
-    echo $@
+    log $@
     # do not exit to indicate problem
     while true
     do
@@ -25,7 +33,7 @@ function existsInstance ()
         if [[ "${aspect}" == "properties" ]]; then
             [[ -f "${instance_dir}"/instance.properties ]] || result="no"
         elif [[ "${aspect}" == "config" ]]; then
-            if [[ "${INIT_CONFIG_FORMAT}" == "yaml" ]]; then
+            if [[ "${IAM_CONFIG_FORMAT}" == "yaml" ]]; then
                 [[ -f "${instance_dir}"/iam-config.yaml ]] || result="no"
             else
                 [[ -f "${instance_dir}"/medusa-configuration.xml ]] || result="no"
@@ -43,13 +51,17 @@ function supportsYaml ()
 
 # sanity checks
 # - not checking INSTANCE_DIR
-for f in INIT_INSTANCE INIT_INSTANCE_CREATE INIT_INSTANCE_VERSION
+for f in INIT_INSTANCE INIT_INSTANCE_VERSION IAM_CONFIG_FORMAT IAM_ANALYTICS_MODE
 do
   [[ -z "${!f}" ]] && die "${f} not set"
 done
-echo "Variables checked"
+log "Variables checked"
 
 [[ ${INIT_INSTANCE_VERSION} =~ 8.* ]] || die "IAM versions before 8.0 are a long time out of support"
+while [[ $(echo -n ${INIT_INSTANCE_VERSION} | tr -dc '.' | wc -c) -gt 1 ]]
+do
+  INIT_INSTANCE_VERSION="${INIT_INSTANCE_VERSION%.*}"
+done
 
 instance_dir="${INSTANCE_DIR:-/home/airlock/iam/instances}/${INIT_INSTANCE}"
 
@@ -58,44 +70,26 @@ instance_dir="${INSTANCE_DIR:-/home/airlock/iam/instances}/${INIT_INSTANCE}"
 # Create instance
 # ###########
 
-if [[ "${INIT_INSTANCE_CREATE}" == "true" ]]; then
-    exists="$(existsInstance properties config)"
-    if [[ ${exists} == "no" ]]; then
-        /opt/airlock-iam/bin/iam init -i "${INIT_INSTANCE}" || die "Failed to create instance '${INIT_INSTANCE}'"
-        exists="$(existsInstance properties)"
-        if [[ ${exists} == "yes" ]]; then
-            yaml_ok="$(supportsYaml "${INIT_INSTANCE_VERSION}")"
-            if [[ "${yaml_ok}" == "yes" && "${INIT_CONFIG_FORMAT}" == "yaml" ]]; then
+exists="$(existsInstance properties config)"
+if [[ ${exists} == "no" ]]; then
+    /opt/airlock-iam/bin/iam init -i "${INIT_INSTANCE}" || die "Failed to create instance '${INIT_INSTANCE}'"
+    exists="$(existsInstance properties)"
+    if [[ ${exists} == "yes" ]]; then
+        yaml_ok="$(supportsYaml "${INIT_INSTANCE_VERSION}")"
+        if [[ "${yaml_ok}" == "yes" && "${IAM_CONFIG_FORMAT}" == "yaml" ]]; then
+            if [[ -f "${instance_dir}"/medusa-configuration.xml ]]; then
                 /opt/airlock-iam/bin/iam config convert -i "${INIT_INSTANCE}" || die "Failed to convert instance '${INIT_INSTANCE}' to YAML config format"
                 rm -f "${instance_dir}"/medusa-configuration.xml
             fi
-            exists="$(existsInstance config)"
         fi
-        if [[ ${exists} == "yes" ]]; then
-            echo "Instance ${INIT_INSTANCE} created"
-        else
-            die "Failed to create instance '${INIT_INSTANCE}'"
-        fi
-    else
-        echo "Instance ${INIT_INSTANCE} exists - doing nothing"
+        exists="$(existsInstance config)"
     fi
+    if [[ ${exists} == "yes" ]]; then
+        log "Instance ${INIT_INSTANCE} created"
+    else
+        die "Failed to create instance '${INIT_INSTANCE}'"
+    fi
+else
+    log "Instance ${INIT_INSTANCE} exists - doing nothing"
 fi
-
-
-# ###########
-# Wait for instance to be created
-# ###########
-
-# needs to be done on all deployments not containing adminapp
-
-while true
-do
-    if [[ -d "${instance_dir}" ]]; then
-        echo "Instance ${INIT_INSTANCE} ready"
-        break
-    else
-        echo "Waiting for instance initialisation to be completed"
-        sleep 5
-    fi
-done
 

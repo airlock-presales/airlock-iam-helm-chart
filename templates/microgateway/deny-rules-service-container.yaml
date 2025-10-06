@@ -23,8 +23,6 @@ spec:
       settings:
         level: Strict
         threatHandlingMode: Block
-# SSRF deny rule introduced in Microgateway 4.4
-      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
       overrides:
         - conditions:
             ruleKeys:
@@ -33,19 +31,16 @@ spec:
               - JSON
           settings:
             level: Unfiltered
-      {{- end }}
       exceptions:
       - ruleKeys:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/serviceContainer$"
@@ -54,13 +49,24 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
-          invert: false
+          path:
+            matcher:
+              regex: "^{{ $path }}/serviceContainer$"
+              ignoreCase: false
+      - ruleKeys:
+        - "XSS"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^sso$"
+                ignoreCase: false
+        requestConditions:
           path:
             matcher:
               regex: "^{{ $path }}/serviceContainer$"
@@ -69,33 +75,27 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/serviceContainer$"
               ignoreCase: false
-      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
       - ruleKeys:
         - "SSRF"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/serviceContainer$"
               ignoreCase: false
-      {{- end }}
 {{-   end }}
 {{- end }}

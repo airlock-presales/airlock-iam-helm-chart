@@ -23,8 +23,6 @@ spec:
       settings:
         level: Strict
         threatHandlingMode: Block
-# SSRF deny rule introduced in Microgateway 4.4
-      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
       overrides:
         - conditions:
             ruleKeys:
@@ -33,7 +31,6 @@ spec:
               - JSON
           settings:
             level: Unfiltered
-      {{- end }}
       exceptions:
       - ruleKeys:
         - "SQL"
@@ -44,7 +41,6 @@ spec:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^sso$"
@@ -53,13 +49,11 @@ spec:
         - "SQL"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig$"
@@ -67,7 +61,6 @@ spec:
       - ruleKeys:
         - "SQL"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -99,23 +92,7 @@ spec:
             jsonPath: "$['password','oldPassword','newPassword']"
       - ruleKeys:
         - "XSS"
-        blockedData:
-          parameter:
-            source: Any
-            name:
-              matcher:
-                regex: "^filter$"
-                ignoreCase: false
         requestConditions:
-          invert: false
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/logs/.*$"
-              ignoreCase: false
-      - ruleKeys:
-        - "XSS"
-        requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -124,7 +101,6 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(loginUrl|afterLogoutUrl)$"
@@ -143,7 +119,6 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
@@ -156,13 +131,11 @@ spec:
         - "XSS"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig$"
@@ -175,7 +148,6 @@ spec:
       - ruleKeys:
         - "TEMPLATE"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -187,52 +159,7 @@ spec:
             jsonPath: "$['password','oldPassword','newPassword']"
       - ruleKeys:
         - "HTML"
-        blockedData:
-          json:
-            jsonPath: "$.data.attributes.translations.en"
         requestConditions:
-          invert: false
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/maintenance-messages.*"
-              ignoreCase: false
-      - ruleKeys:
-        - "HTML"
-        blockedData:
-          json:
-            jsonPath: "$.data.attributes.translations.fr"
-        requestConditions:
-          invert: false
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/maintenance-messages.*"
-              ignoreCase: false
-      - ruleKeys:
-        - "HTML"
-        blockedData:
-          json:
-            jsonPath: "$.data.attributes.translations.de"
-        requestConditions:
-          invert: false
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/maintenance-messages.*"
-              ignoreCase: false
-      - ruleKeys:
-        - "HTML"
-        blockedData:
-          json:
-            jsonPath: "$.data.attributes.translations.it"
-        requestConditions:
-          invert: false
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/maintenance-messages.*"
-              ignoreCase: false
-      - ruleKeys:
-        - "HTML"
-        requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -245,7 +172,6 @@ spec:
       - ruleKeys:
         - "UNIXCMD"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -258,7 +184,6 @@ spec:
       - ruleKeys:
         - "WINCMD"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -271,7 +196,6 @@ spec:
       - ruleKeys:
         - "LDAP"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -284,7 +208,6 @@ spec:
       - ruleKeys:
         - "PHP"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -297,7 +220,6 @@ spec:
       - ruleKeys:
         - "OGNL"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -311,7 +233,6 @@ spec:
         - "IDOR"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^sso$"
@@ -319,7 +240,6 @@ spec:
       - ruleKeys:
         - "IDOR"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -332,7 +252,6 @@ spec:
       - ruleKeys:
         - "NOSQL"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -345,7 +264,6 @@ spec:
       - ruleKeys:
         - "SANITY"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -358,7 +276,6 @@ spec:
       - ruleKeys:
         - "ENCODING"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -371,7 +288,6 @@ spec:
       - ruleKeys:
         - "PROTOCOL"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -385,13 +301,11 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig$"
@@ -399,7 +313,6 @@ spec:
       - ruleKeys:
         - "HPP"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -408,7 +321,6 @@ spec:
         - "HPP"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^Location$"
@@ -425,7 +337,6 @@ spec:
       - ruleKeys:
         - "EXPLOIT"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
@@ -438,12 +349,10 @@ spec:
       - ruleKeys:
         - "SCANNING"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig/UIDL/.*$"
               ignoreCase: false
-      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
       - ruleKeys:
         - "SSRF"
         blockedData:
@@ -453,7 +362,6 @@ spec:
         - "SSRF"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^sso$"
@@ -462,13 +370,11 @@ spec:
         - "SSRF"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^v-loc$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/editConfig$"
@@ -477,13 +383,11 @@ spec:
         - "SSRF"
         blockedData:
           parameter:
-            source: Any
             name:
               matcher:
                 regex: "^(loginUrl|afterLogoutUrl)$"
                 ignoreCase: false
         requestConditions:
-          invert: false
           method:
           - "GET"
       - ruleKeys:
@@ -492,7 +396,6 @@ spec:
           json:
             jsonPath: "$.loginUrl"
         requestConditions:
-          invert: false
           method:
           - "GET"
       - ruleKeys:
@@ -501,7 +404,6 @@ spec:
           json:
             jsonPath: "$.afterLogoutUrl"
         requestConditions:
-          invert: false
           method:
           - "GET"
       - ruleKeys:
@@ -512,9 +414,7 @@ spec:
               matcher:
                 regex: "^X-URL$"
         requestConditions:
-          invert: false
           method:
           - "POST"
-      {{- end }}
 {{-   end }}
 {{- end }}

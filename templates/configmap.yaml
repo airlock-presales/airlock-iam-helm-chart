@@ -12,7 +12,7 @@ metadata:
     {{- include "airlock-iam.annotations" $ | nindent 4 }}
 data:
   {{- $files := .Files }}
-  {{- range tuple "include/init_db" "include/init_instance" "include/init_config" }}
+  {{- range tuple "include/init_db" "include/init_instance" "include/upgrade_instance" "include/init_config" }}
   {{ regexSplit "/" . -1 | last }}: |-
     {{- $files.Get . | nindent 4 }} 
   {{- end }}

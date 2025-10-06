@@ -29,6 +29,11 @@ spec:
     filter:
       denyRulesRef:
         name: {{ $moduleName }}
+{{-       if eq $app "loginapp" }}
+    headerRewritesRef:
+      name: {{ $moduleName }}
+{{-       end }}
+
 {{-       if eq $app "adminapp" }}
 ---
 apiVersion: microgateway.airlock.com/v1alpha1
@@ -83,12 +88,14 @@ spec:
       denyRulesRef:
         name: {{ $moduleName }}-config-editor
 {{-       end }}
+
 {{-       if eq $app "loginapp" }}
+{{-         range list "protected" "oauth2" }}
 ---
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: ContentSecurityPolicy
 metadata:
-  name: {{ $moduleName }}-rest-protected
+  name: {{ $moduleName }}-rest-{{ . }}
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
@@ -99,7 +106,7 @@ spec:
   targetRefs:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
-      name: {{ $moduleName }}-rest-protected
+      name: {{ $moduleName }}-rest-{{ . }}
   secured:
     parserRef:
       name: {{ $fullName }}
@@ -107,11 +114,12 @@ spec:
       name: {{ $fullName }}
     filter:
       denyRulesRef:
-        name: {{ $moduleName }}-rest-protected
+        name: {{ $moduleName }}-rest-{{ . }}
     headerRewritesRef:
-      name: {{ $moduleName }}-rest-protected
+      name: {{ $moduleName }}-rest-{{ . }}
     apiProtectionRef:
-      name: {{ $moduleName }}-rest
+      name: {{ $moduleName }}-rest-{{ . }}
+{{-         end }}
 ---
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: ContentSecurityPolicy
@@ -139,8 +147,9 @@ spec:
     headerRewritesRef:
       name: {{ $moduleName }}-rest-public
     apiProtectionRef:
-      name: {{ $moduleName }}-rest
+      name: {{ $moduleName }}-rest-public
 {{-       end }}
+
 {{-       if eq $app "transaction-approval" }}
 ---
 apiVersion: microgateway.airlock.com/v1alpha1
@@ -173,22 +182,4 @@ spec:
 {{-       end }}
 {{-     end }}
 {{-   end }}
-{{/*
----
-apiVersion: microgateway.airlock.com/v1alpha1
-kind: ContentSecurity
-metadata:
-  name: {{ $fullName }}-unspecified-path
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      name: {{ $fullName }}
-  secured:
-    filter:
-      denyRulesRef:
-        name: {{ $fullName }}-unspecified-path
-    headerRewritesRef:
-      name: {{ $fullName }}-unspecified-path
-*/}}
 {{- end }}

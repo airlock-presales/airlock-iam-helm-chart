@@ -23,8 +23,6 @@ spec:
       settings:
         level: Strict
         threatHandlingMode: Block
-# SSRF deny rule introduced in Microgateway 4.4
-      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
       overrides:
         - conditions:
             ruleKeys:
@@ -33,7 +31,6 @@ spec:
               - JSON
           settings:
             level: Unfiltered
-      {{- end }}
       exceptions:
       - ruleKeys:
         - "SQL"
@@ -48,7 +45,6 @@ spec:
               matcher:
                 regex: "^sso$"
                 ignoreCase: false
-            source: Any
       - ruleKeys:
         - "SQL"
         blockedData:
@@ -82,9 +78,7 @@ spec:
               matcher:
                 regex: "^filter$"
                 ignoreCase: false
-            source: Any
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/logs/.*$"
@@ -97,7 +91,6 @@ spec:
               matcher:
                 regex: "^(loginUrl|afterLogoutUrl)$"
                 ignoreCase: false
-            source: Any
       - ruleKeys:
         - "XSS"
         blockedData:
@@ -116,7 +109,6 @@ spec:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
-            source: Any
             value:
               matcher:
                 regex: "^editConfig.*"
@@ -137,7 +129,6 @@ spec:
           json:
             jsonPath: "$.data.attributes.translations.en"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/maintenance-messages.*"
@@ -148,7 +139,6 @@ spec:
           json:
             jsonPath: "$.data.attributes.translations.fr"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/maintenance-messages.*"
@@ -159,7 +149,6 @@ spec:
           json:
             jsonPath: "$.data.attributes.translations.de"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/maintenance-messages.*"
@@ -170,7 +159,6 @@ spec:
           json:
             jsonPath: "$.data.attributes.translations.it"
         requestConditions:
-          invert: false
           path:
             matcher:
               regex: "^{{ $path }}/rest/maintenance-messages.*"
@@ -213,7 +201,6 @@ spec:
               matcher:
                 regex: "^sso$"
                 ignoreCase: false
-            source: Any
       - ruleKeys:
         - "NOSQL"
         blockedData:
@@ -247,7 +234,6 @@ spec:
               matcher:
                 regex: "^Location$"
                 ignoreCase: false
-            source: Any
             value:
               matcher:
                 regex: "^editConfig.*"
@@ -262,7 +248,6 @@ spec:
         blockedData:
           json:
             jsonPath: "$['password','oldPassword','newPassword']"
-      {{- if semverCompare ">=4.4" .Values.ingress.microgateway.version }}
       - ruleKeys:
         - "SSRF"
         blockedData:
@@ -276,7 +261,6 @@ spec:
               matcher:
                 regex: "^sso$"
                 ignoreCase: false
-            source: Any
       - ruleKeys:
         - "SSRF"
         blockedData:
@@ -285,9 +269,7 @@ spec:
               matcher:
                 regex: "^(loginUrl|afterLogoutUrl)$"
                 ignoreCase: false
-            source: Any
         requestConditions:
-          invert: false
           method:
           - "GET"
       - ruleKeys:
@@ -296,7 +278,6 @@ spec:
           json:
             jsonPath: "$.loginUrl"
         requestConditions:
-          invert: false
           method:
           - "GET"
       - ruleKeys:
@@ -305,7 +286,6 @@ spec:
           json:
             jsonPath: "$.afterLogoutUrl"
         requestConditions:
-          invert: false
           method:
           - "GET"
       - ruleKeys:
@@ -316,9 +296,7 @@ spec:
               matcher:
                 regex: "^X-URL$"
         requestConditions:
-          invert: false
           method:
           - "POST"
-      {{- end }}
 {{-   end }}
 {{- end }}

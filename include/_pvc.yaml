@@ -5,7 +5,8 @@
 {{-   $persistenceProp = mergeOverwrite $persistenceProp (get $.Values.persistence $reference) -}}
 {{- end -}}
 {{- range $key, $vol := $persistenceProp -}}
-{{-   if and $vol.enable (eq $vol.type "request") }}
+{{-   if ne $key "config" -}}
+{{-     if and $vol.enable (eq $vol.type "request") }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -23,5 +24,6 @@ spec:
   resources:
     requests:
       storage: {{ $vol.size }}
+{{-     end }}
 {{-   end }}
 {{- end }}

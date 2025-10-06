@@ -9,7 +9,7 @@
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: HeaderRewrites
 metadata:
-  name: {{ $moduleName }}
+  name: {{ $moduleName }}-rest-oauth2
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}

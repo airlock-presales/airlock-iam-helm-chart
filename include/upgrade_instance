@@ -1,0 +1,55 @@
+#! /bin/bash
+# upgrade_instance
+# - runs sequentially for every pod as each may have its own instance directory (statefulset)
+# - does nothing if config is already at correct version
+
+if [[ -r "${INIT_ENV_PATH:-.}"/env.init ]]; then
+    echo "Loading variables from '${INIT_ENV_PATH:-.}/env.init'"
+    source "${INIT_ENV_PATH:-.}"/env.init
+fi
+
+function log ()
+{
+    echo "$(date +"%Y-%m-%d %H:%M:%S") $@"
+}
+
+function die ()
+{
+    log $@
+    # do not exit to indicate problem
+    while true
+    do
+        sleep 10
+    done
+}
+
+# sanity checks
+# - not checking INSTANCE_DIR
+for f in INIT_INSTANCE INIT_INSTANCE_VERSION IAM_CONFIG_FORMAT IAM_ANALYTICS_MODE
+do
+  [[ -z "${!f}" ]] && die "${f} not set"
+done
+[[ "${IAM_CONFIG_FORMAT}" != "yaml" ]] && exit
+
+log "Variables checked"
+
+# Keep only major.minor version
+while [[ $(echo -n ${INIT_INSTANCE_VERSION} | tr -dc '.' | wc -c) -gt 1 ]]
+do
+  INIT_INSTANCE_VERSION="${INIT_INSTANCE_VERSION%.*}"
+done
+
+instance_dir="${INSTANCE_DIR:-/home/airlock/iam/instances}/${INIT_INSTANCE}"
+
+
+# ###########
+# Upgrade instance
+# ###########
+
+currentVersion="$(cat "${instance_dir}"/iam-config.yaml | sed -e '/spec:/q' | awk '/^  iamVersion:/{print $2}' | tr -d "'")"
+if [[ "${currentVersion}" != "${INIT_INSTANCE_VERSION}" ]]; then
+    log "Upgrading instance ${INIT_INSTANCE} from ${currentVersion} to ${INIT_INSTANCE_VERSION}"
+    /opt/airlock-iam/bin/iam upgrade -i "${INIT_INSTANCE}" || die "Failed to upgrade instance '${INIT_INSTANCE}'"
+    log "Upgrade successfull"
+fi
+

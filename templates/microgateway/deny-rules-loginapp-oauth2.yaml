@@ -10,7 +10,7 @@
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: DenyRules
 metadata:
-  name: {{ $moduleName }}-rest-public
+  name: {{ $moduleName }}-rest-oauth2
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
@@ -49,35 +49,51 @@ spec:
           - "POST"
           path:
             matcher:
+              regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "BOT"
+        blockedData:
+          header:
+            name:
+              matcher:
+                regex: "^User-Agent$"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
               regex: "^{{ $path }}/rest/public/tech-client-registration/oauth2/[a-zA-Z0-9._\\-]+/register/?$"
               ignoreCase: false
       - ruleKeys:
-        - "BOT"
+        - "SQL"
         blockedData:
-          header:
+          parameter:
             name:
               matcher:
-                regex: "^User-Agent$"
+                regex: "^(?:state|nonce|id_token_hint|login_hint|code_challenge|redirect_uri)$"
+                ignoreCase: false
         requestConditions:
           method:
-          - "POST"
+          - "GET"
           path:
             matcher:
-              regex: "^{{ $path }}/rest/public/tech-client-registration/dynamic-steps/(?:retrieve|([a-z0-9_\\-]+/(?:activate|deactivate)))/?$"
+              regex: "^{{ $path }}(?:/oauth2/v3/[a-zA-Z0-9._\\-]+/authorize/?|/ui/app/auth/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?)"
               ignoreCase: false
       - ruleKeys:
-        - "BOT"
+        - "SQL"
         blockedData:
-          header:
+          parameter:
             name:
               matcher:
-                regex: "^User-Agent$"
+                regex: "^(?:code|state)$"
+                ignoreCase: false
         requestConditions:
           method:
-          - "POST"
+          - "GET"
           path:
             matcher:
-              regex: "^{{ $path }}/rest/public/tech-client-registration/goto-targets/(?:retrieve|([a-z0-9_\\-]+/goto))/?$"
+              regex: "^{{ $path }}/oauth2-client(?:/.*)?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -99,108 +115,25 @@ spec:
       - ruleKeys:
         - "SQL"
         blockedData:
-          json:
-            value:
+          parameter:
+            name:
               matcher:
-                regex: "^[a-zA-Z0-9_\\-]*$"
+                regex: "^(?:sso|ticket|representation)$"
                 ignoreCase: false
-            jsonPath: "$.publicKeyCredential.id"
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^sessionIdToDelete$"
+                ignoreCase: false
         requestConditions:
           method:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "SQL"
-        blockedData:
-          json:
-            value:
-              matcher:
-                regex: "^[a-zA-Z0-9_\\-]*$"
-                ignoreCase: false
-            jsonPath: "$.publicKeyCredential.response.attestationObject"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "SQL"
-        blockedData:
-          json:
-            value:
-              matcher:
-                regex: "^[a-zA-Z0-9_\\-]*$"
-                ignoreCase: false
-            jsonPath: "$.publicKeyCredential.id"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "SQL"
-        blockedData:
-          json:
-            value:
-              matcher:
-                regex: "^[a-zA-Z0-9_\\-]*$"
-                ignoreCase: false
-            jsonPath: "$.publicKeyCredential.response.userHandle"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "SQL"
-        blockedData:
-          json:
-            value:
-              matcher:
-                regex: "^[a-zA-Z0-9_\\-]*$"
-                ignoreCase: false
-            jsonPath: "$.publicKeyCredential.response.signature"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "SQL"
-        blockedData:
-          json:
-            value:
-              matcher:
-                regex: "^[a-zA-Z0-9_\\-]*$"
-                ignoreCase: false
-            jsonPath: "$.publicKeyCredential.response.authenticatorData"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "SQL"
-        blockedData:
-          json:
-            jsonPath: "$.jwt"
-        requestConditions:
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/(authentication|self-service)/device-token/check/?$"
+              regex: "^{{ $path }}/oauth2-manage/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -208,8 +141,15 @@ spec:
           parameter:
             name:
               matcher:
-                regex: "^(?:sso|ticket|representation)$"
+                regex: "^(?:subject_token|actor_token|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
                 ignoreCase: false
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
+              ignoreCase: false
       - ruleKeys:
         - "SQL"
         blockedData:
@@ -221,70 +161,6 @@ spec:
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "SQL"
-        blockedData:
-          json:
-            value:
-              matcher:
-                regex: "^[a-zA-Z0-9_\\-]*$"
-                ignoreCase: false
-            jsonPath: "$.publicKeyCredential.id"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "SQL"
-        blockedData:
-          json:
-            value:
-              matcher:
-                regex: "^[a-zA-Z0-9_\\-]*$"
-                ignoreCase: false
-            jsonPath: "$.publicKeyCredential.response.userHandle"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "SQL"
-        blockedData:
-          json:
-            value:
-              matcher:
-                regex: "^[a-zA-Z0-9_\\-]*$"
-                ignoreCase: false
-            jsonPath: "$.publicKeyCredential.response.signature"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "SQL"
-        blockedData:
-          json:
-            value:
-              matcher:
-                regex: "^[a-zA-Z0-9_\\-]*$"
-                ignoreCase: false
-            jsonPath: "$.publicKeyCredential.response.authenticatorData"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/(public|protected)/self-service/approval/fido/assertion-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -304,6 +180,19 @@ spec:
       - ruleKeys:
         - "SQL"
         blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(?:code|state)$"
+                ignoreCase: false
+        requestConditions:
+          path:
+            matcher:
+              regex: "^{{ $path }}/ui/app/(.*/)?oauth2/.*"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
           json:
             jsonPath: "$.queryString"
         requestConditions:
@@ -314,18 +203,12 @@ spec:
       - ruleKeys:
         - "SQL"
         blockedData:
-          header:
-            name:
-              matcher:
-                regex: "^X-IAM-SSO-Ticket$"
-            value:
-              matcher:
-                regex: "^[a-zA-Z0-9_.\\-]+$"
-                ignoreCase: false
+          json:
+            jsonPath: "$.queryString"
         requestConditions:
           path:
             matcher:
-              regex: "^{{ $path }}/rest/public/authentication/(?:location|default-application|applications/[a-z0-9_\\-]+)/access/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -361,12 +244,12 @@ spec:
           parameter:
             name:
               matcher:
-                regex: "^filter$"
+                regex: "^error_description$"
                 ignoreCase: false
         requestConditions:
           path:
             matcher:
-              regex: "^{{ $path }}/rest/(?:public|protected)/"
+              regex: "^{{ $path }}/oauth2-client(?:/.*)?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -380,35 +263,13 @@ spec:
         - "XSS"
         blockedData:
           json:
-            jsonPath: "$.location"
-        requestConditions:
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "XSS"
-        blockedData:
-          json:
-            jsonPath: "$.publicKeyCredential.response.clientDataJSON"
+            jsonPath: "$.queryString"
         requestConditions:
           method:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "XSS"
-        blockedData:
-          json:
-            jsonPath: "$.publicKeyCredential.response.clientDataJSON"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "XSS"
@@ -433,19 +294,6 @@ spec:
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "XSS"
-        blockedData:
-          parameter:
-            name:
-              matcher:
-                regex: "^Location$"
-                ignoreCase: false
-        requestConditions:
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/ui/configuration/logout/?$"
               ignoreCase: false
       - ruleKeys:
         - "TEMPLATE"
@@ -540,17 +388,14 @@ spec:
           parameter:
             name:
               matcher:
-                regex: "^(?:sso|ticket|representation)$"
+                regex: "^(?:state|nonce|id_token_hint|login_hint|code_challenge|redirect_uri)$"
                 ignoreCase: false
-      - ruleKeys:
-        - "IDOR"
-        blockedData:
-          json:
-            jsonPath: "$.location"
         requestConditions:
+          method:
+          - "GET"
           path:
             matcher:
-              regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
+              regex: "^{{ $path }}(?:/oauth2/v3/[a-zA-Z0-9._\\-]+/authorize/?|/ui/app/auth/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?)"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -558,13 +403,23 @@ spec:
           parameter:
             name:
               matcher:
-                regex: "^Location$"
+                regex: "^(?:code|state)$"
                 ignoreCase: false
         requestConditions:
+          method:
+          - "GET"
           path:
             matcher:
-              regex: "^{{ $path }}/rest/public/authentication/ui/configuration/logout/?$"
+              regex: "^{{ $path }}/oauth2-client(?:/.*)?$"
               ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(?:sso|ticket|representation)$"
+                ignoreCase: false
       - ruleKeys:
         - "IDOR"
         blockedData:
@@ -574,117 +429,23 @@ spec:
         - "IDOR"
         blockedData:
           json:
+            jsonPath: "$.queryString"
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          json:
             jsonPath: "$.consentToken"
         requestConditions:
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-server/consent/remote/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "IDOR"
-        blockedData:
-          json:
-            jsonPath: "$.publicKeyCredential.id"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "IDOR"
-        blockedData:
-          json:
-            jsonPath: "$.publicKeyCredential.response.attestationObject"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "IDOR"
-        blockedData:
-          json:
-            jsonPath: "$.publicKeyCredential.id"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "IDOR"
-        blockedData:
-          json:
-            jsonPath: "$.publicKeyCredential.response.userHandle"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "IDOR"
-        blockedData:
-          json:
-            jsonPath: "$.publicKeyCredential.response.signature"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "IDOR"
-        blockedData:
-          json:
-            jsonPath: "$.publicKeyCredential.response.authenticatorData"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "IDOR"
-        blockedData:
-          json:
-            jsonPath: "$.jwt"
-        requestConditions:
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/(authentication|self-service)/device-token/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "IDOR"
-        blockedData:
-          json:
-            jsonPath: "$.publicKeyCredential.response.clientDataJSON"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/assertion-response/check/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "IDOR"
-        blockedData:
-          json:
-            jsonPath: "$.publicKeyCredential.response.clientDataJSON"
-        requestConditions:
-          method:
-          - "POST"
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/fido/registration/attestation-response/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "IDOR"
@@ -709,6 +470,21 @@ spec:
           path:
             matcher:
               regex: "^{{ $path }}/rest/public/authentication/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "IDOR"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(?:subject_token|actor_token|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
+                ignoreCase: false
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
               ignoreCase: false
       - ruleKeys:
         - "NOSQL"
@@ -744,6 +520,36 @@ spec:
           parameter:
             name:
               matcher:
+                regex: "^(?:subject_token|actor_token|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
+                ignoreCase: false
+        requestConditions:
+          method:
+          - "POST"
+          path:
+            matcher:
+              regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "HPP"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(?:state|nonce|id_token_hint|login_hint|code_challenge|redirect_uri)$"
+                ignoreCase: false
+        requestConditions:
+          method:
+          - "GET"
+          path:
+            matcher:
+              regex: "^{{ $path }}(?:/oauth2/v3/[a-zA-Z0-9._\\-]+/authorize/?|/ui/app/auth/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?)"
+              ignoreCase: false
+      - ruleKeys:
+        - "HPP"
+        blockedData:
+          parameter:
+            name:
+              matcher:
                 regex: "^Location$"
                 ignoreCase: false
             value:
@@ -758,25 +564,14 @@ spec:
       - ruleKeys:
         - "HPP"
         blockedData:
-          parameter:
-            name:
-              matcher:
-                regex: "^Location$"
-                ignoreCase: false
-        requestConditions:
-          path:
-            matcher:
-              regex: "^{{ $path }}/rest/public/authentication/ui/configuration/logout/?$"
-              ignoreCase: false
-      - ruleKeys:
-        - "HPP"
-        blockedData:
           json:
-            jsonPath: "$.location"
+            jsonPath: "$.queryString"
         requestConditions:
+          method:
+          - "POST"
           path:
             matcher:
-              regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
+              regex: "^{{ $path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
               ignoreCase: false
       - ruleKeys:
         - "HPP"
@@ -834,14 +629,17 @@ spec:
       - ruleKeys:
         - "SSRF"
         blockedData:
-          json:
-            jsonPath: "$.location"
+          parameter:
+            name:
+              matcher:
+                regex: "^resource$"
+                ignoreCase: false
         requestConditions:
           method:
           - "POST"
           path:
             matcher:
-              regex: "^{{ $path }}/rest/public/authentication/location/(access|interpret)/?$"
+              regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
               ignoreCase: false
 {{-   end }}
 {{- end }}

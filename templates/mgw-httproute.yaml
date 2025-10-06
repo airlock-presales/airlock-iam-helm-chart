@@ -13,6 +13,7 @@
 {{-       else if eq $app "loginapp" -}}
 {{-         $lst = append $lst (dict "name" "rest-protected" "path" "/rest/protected/") -}}
 {{-         $lst = append $lst (dict "name" "rest-public" "path" "/rest/public/") -}}
+{{-         $lst = append $lst (dict "name" "rest-oauth2" "path" "/rest/oauth2/") -}}
 {{-       else if eq $app "transactionApproval" -}}
 {{-         $lst = list (dict "name" "" "path" "/rest/") -}}
 {{-       end -}}

@@ -13,7 +13,7 @@ spec:
   {{- if .Values.database.embedded.postgresqlSettings.specAdditional }}
     {{- toYaml .Values.database.embedded.postgresqlSettings.specAdditional | nindent 2 }}
   {{- end }}
-  {{- if eq .Values.database.initialisation.schema.operation "init" }}
+  {{- if .Values.database.schema.manage }}
   bootstrap:
     initdb:
       database: iam
