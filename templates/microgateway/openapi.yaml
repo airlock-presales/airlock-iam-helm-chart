@@ -5,7 +5,7 @@
 {{-       $suffix := $app_values.dedicatedDeployment.suffix | default (include "airlock-iam.mapAppName" $app) -}}
 {{-       $moduleName := print $fullName "-" $suffix | lower -}}
 {{-       $moduleType := include "airlock-iam.mapAppName" $app -}}
-{{-       if ne $app "loginapp" -}}
+{{-       if ne $app "loginapp" }}
 ---
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: OpenAPI
