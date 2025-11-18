@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: "8.5.0"
+appVersion: "8.5.1"
 description: Helm chart for Airlock IAM - provided by Airlock pre-sales team.
 home: https://www.airlock.com/
 keywords:
@@ -14,7 +14,7 @@ maintainers:
 name: iam
 sources:
   - https://github.com/airlock-presales/the-iam-helm-chart
-version: 8.5.0
+version: 8.5.1
 #dependencies:
 #  - name: redis
 #    version: 19.6.4
