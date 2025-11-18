@@ -456,7 +456,7 @@ spec:
             {{-   else if eq $databaseDeployment "postgresql" }}
               value: {{ print "jdbc:postgres://" $.IAM.fullName "-postgresql-rw/" $.Values.postgresql.global.postgresql.auth.database }}
             {{-   end }}
-            - name: IAM_DB_USER
+            - name: IAM_DB_USERNAME
             {{-   if eq $databaseDeployment "external" }}
               {{- if ne $.Values.database.credentials.user.existingSecret "" }}
               valueFrom:
