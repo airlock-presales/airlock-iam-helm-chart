@@ -10,8 +10,8 @@ iam:
   instanceName: 'auth'
 
   ## Create instance if it does not yet exist
-  ## - default is 'false'
-  instanceCreate: false
+  ## - default is 'true'
+  instanceCreate: true
 
   ## Config management
   config:
@@ -127,7 +127,7 @@ iam:
   ## - redirected to from https://<fqdn>/
   ## - valid values: '', loginapp, adminapp
   ## - empty string: no redirect
-  defaultApp: ''
+  defaultApp: 'loginapp'
 
   ## IAM web applications
   ## - for tests, all applications can be part of one deployment
@@ -317,7 +317,7 @@ iam:
     instancePropertiesRef: ''
     persistenceRef: ''
     backendTLS:
-      enable: true
+      enable: false
       verify:
         enable: true
         useWellKnownCACertificates: false
@@ -449,7 +449,7 @@ ingress:
     ## - section names help in the process of attaching an HTTPRoute to a specific listener
     ## - optional but may need to be defined if listener cannot be uniquely determined from the hostname
     ## - requires section names to be defined in the Gateway Listeners
-    sectionName: ''
+    sectionName: 'https'
 
     ## Listener port
     ## - listeners can be defined on different ports
@@ -563,7 +563,7 @@ backendCertificate:
       password:
         ## Password to access PKCS12 private key
         ## - ignored if existingSecret is set
-        value: ''
+        value: 'password'
 
         ## Name of existing secret containing password
         ## - overrides password setting
@@ -600,7 +600,7 @@ persistence:
       ## Volume access restrictions
       ## - valid values: ReadWriteOnce, ReadWriteMany, ReadWriteOncePod, ReadOnlyMany
       ## - for types 'request,existing,remote'
-      accessMode: 'ReadWriteMany'
+      accessMode: 'ReadWriteOnce'
 
       ## Name of existing PVC
       ## - for type 'existing'
@@ -742,7 +742,7 @@ database:
     size: '100Mi'
 
     ## Storageclass for database
-    ## - if undefined, use default storage class, unless database.embedded.postgresql.pvcTemplate is defined
+    ## - if undefined, use default storage class, unless database.embedded.pvcTemplate is defined
     storageClass: ''
 
     ## Template for PersistentVolumeClaim
@@ -873,7 +873,7 @@ database:
     ## - schema initialisation will use root user credentials to connect, see below
     ## - if iam.config.upgrade == true, you probably should set this to true, too
     ##   as database initialisation runs after config upgrade, no changes will be applied if config upgrade fails
-    manage: false
+    manage: true
 
   ## Initialisation
   initialisation:
@@ -883,7 +883,7 @@ database:
     ## - chart can launch a job which downloads connector to instance directory
     connector:
       ## Enable automatic download
-      download: false
+      download: true
 
       ## Select relevant connector
       mariadb:
@@ -908,7 +908,7 @@ database:
     ## - only relevant if schema.manage == true and database does not exist
     administrator:
       ## Automatically create the administrator account for adminapp
-      create: false
+      create: true
 
       ## For default passwords, administrator should be forced to change password at first login
       enforceChange: true
@@ -928,9 +928,9 @@ database:
         ## Hash of administrator password
         ## - depends on Airlock IAM application configuration (which password hash?)
         ## - cannot be calculated by Helm chart
-        ## - define the correct hash value, e.g. 'MedusaPwdHistoryAAAARjE2Mzg0fF1jjOhya0ZuJ5OrHXgSXznOBBLl6eJ70PTdFYerSYPwgrlK1uq6UCzc5cvN8t1xtgc+YBQO8UgWBYhzDgpkQGM='
+        ## - define the correct hash value, e.g. for 'password' use 'MedusaPwdHistoryAAAARjE2Mzg0fF1jjOhya0ZuJ5OrHXgSXznOBBLl6eJ70PTdFYerSYPwgrlK1uq6UCzc5cvN8t1xtgc+YBQO8UgWBYhzDgpkQGM='
         pwd_hash:
-          value: ''
+          value: 'MedusaPwdHistoryAAAARjE2Mzg0fF1jjOhya0ZuJ5OrHXgSXznOBBLl6eJ70PTdFYerSYPwgrlK1uq6UCzc5cvN8t1xtgc+YBQO8UgWBYhzDgpkQGM='
           existingSecret: ''
           key: 'admin_pwdhash'
 
@@ -950,7 +950,7 @@ images:
     ## Name of secret for protected images
     ## - required to pull Airlock IAM from the Airlock-maintained repository at quay.io
     ## - if you don't want to maintain pull secrets, you must provide your own, internal-access-only repository
-    pullSecret: ''
+    pullSecret: 'airlock-iam-registry-quay'
 
   ## Container image for database initialisation
   ## - use official image like mariadb:12-ubi

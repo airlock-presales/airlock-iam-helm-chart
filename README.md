@@ -43,6 +43,47 @@ The Kubernetes cluster must comply with the following requirements:
   * Ingress
   * Project Contour HttpProxy
 
+# Quick start
+
+## Assumptions
+
+* Default storage class has been defined.
+
+  You can check with the following command
+```
+    kubectl get storageclass | grep '(default)'
+```
+* MariaDB Operator has been installed
+
+  For instructions, see [here](#embedded-mariadb)
+* Pull secret for Airlock IAM images has been created
+
+  For instructions, see [here](#pull-secret)
+
+  Make sure it is in namespace <code>iam</code> and named <code>airlock-iam-registry-quay</code>.
+
+* ConfigMap with the Airlock IAM license has been created
+```
+    kubectl -n iam create configmap airlock-iam-license --from-file=license.txt=\<filename\>
+```
+* Airlock Microgateway 4.7 has been installed and a Gateway is available as <code>airlock-gateway/airlock-gateway</code> (this matches the setup of the [Microgateway Running Example](https://github.com/airlock/microgateway-running-example)).
+
+## Deploy with default values
+
+* Set the FQDN for your Airlock IAM deployment.
+```
+    export IAM_HOSTNAME=iam.example.com
+```
+
+* Install the Helm chart.
+```
+    helm install airlock-iam . --namespace iam --create-namespace --set ingress.dns.hostname=${IAM_HOSTNAME}
+```
+
+## Access Airlock IAM
+
+* Direct your web browser to: https://${IAM_HOSTNAME}/auth-admin/
+
 # Designing an Airlock IAM deployment
 
 ## Deployment layout
@@ -174,8 +215,12 @@ By the way, starting with Airlock IAM 8.5, the built-in Start Config already con
 
 ## Preparations
 
-* Airlock IAM images are hosted on Quay.io but are not publicly accessible. Create the necessary pull secret using these [instructions](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/). Make sure the referenced user account has been authorised to pull Airlock images - open a ticket on [Airlock Jira](https://jira.airlock.com) to get this done.
-* Create a ConfigMap or Secret with the license:
+* <a name="pull-secret"></a>Airlock IAM images are hosted on Quay.io but are not publicly accessible. Create the necessary pull secret using these [instructions](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/). 
+
+  Make sure it is in the correct namespace, e.g. iam
+
+  The referenced user account must have been authorised to pull Airlock images - open a ticket on [Airlock Jira](https://jira.airlock.com) to get this done.
+* <a name="license"></a>Create a ConfigMap or Secret with the license:
 ```
     kubectl create secret generic \<name\> --from-file=license.txt=\<filename\>
     kubectl create configmap \<name\> --from-file=license.txt=\<filename\>
@@ -186,8 +231,8 @@ By the way, starting with Airlock IAM 8.5, the built-in Start Config already con
     vi custom.yaml
 ```
   * Set <code>iam.license.type</code> to the resource kind used for the license.
-  * You must setup the correct settings for section 'ingress:'
-  * You very probably should check the settings for sections 'persistence:' and 'database:'
+  * You must setup the correct settings for section <code>ingress:</code>
+  * You very probably should check the settings for sections <code>persistence:</code> and <code>database:</code>
 
 ## Embedded database
 
@@ -195,7 +240,7 @@ In your <code>custom.yaml</code>, you have the option to concurrently deploy a d
 
 Due to the Bitnami situation embedding can no longer rely on sub-charts. Instead, the requested database is deployed using its appropriate operator which must be installed and setup beforehand.
 
-* MariaDB
+* <a name="embedded-mariadb"></a>MariaDB
   * Setup [MariaDB Community Operator](https://github.com/mariadb-operator/mariadb-operator)
   * Installation [documentation](https://github.com/mariadb-operator/mariadb-operator/blob/main/docs/helm.md)
   * As of 2025-09-11, the following worked
