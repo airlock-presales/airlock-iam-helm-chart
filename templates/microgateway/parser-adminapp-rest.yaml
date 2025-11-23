@@ -40,6 +40,25 @@ spec:
                 exact: "application/json"
           action:
             skip: {}
+        - requestConditions:
+            path:
+              matcher:
+                suffix: /rest/administrators/uzu-admin/password/generate
+                ignoreCase: false
+            invert: false
+            header:
+              name:
+                matcher:
+                  exact: "Content-Length"
+              value:
+                matcher:
+                  exact: "0"
+                  ignoreCase: false
+            mediaType:
+              matcher:
+                exact: "application/json"
+          action:
+            skip: {}
 {{-   end }}
 {{- end }}
 
