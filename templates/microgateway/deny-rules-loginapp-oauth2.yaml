@@ -23,14 +23,6 @@ spec:
       settings:
         level: Strict
         threatHandlingMode: Block
-      overrides:
-        - conditions:
-            ruleKeys:
-              - SSRF
-            types:
-              - JSON
-          settings:
-            level: Unfiltered
       exceptions:
       - ruleKeys:
         - "SCANNING"
@@ -141,7 +133,7 @@ spec:
           parameter:
             name:
               matcher:
-                regex: "^(?:subject_token|actor_token|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
+                regex: "^(?:subject_token|actor_token|resource|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
                 ignoreCase: false
         requestConditions:
           method:
@@ -209,6 +201,36 @@ spec:
           path:
             matcher:
               regex: "^{{ $path }}/rest/protected/self-service/oauth2/client/authorization/check/?$"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^consent_token$"
+                ignoreCase: false
+        requestConditions:
+          method:
+          - "GET"
+          path:
+            matcher:
+              regex: "^{{ $path }}/oauth2-confirm/?"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^consent_token$"
+                ignoreCase: false
+        requestConditions:
+          method:
+          - "GET"
+          path:
+            matcher:
+              regex: "^{{ $path }}/ui/app/auth/oauth2/consent/confirm/?"
               ignoreCase: false
       - ruleKeys:
         - "SQL"
@@ -477,7 +499,7 @@ spec:
           parameter:
             name:
               matcher:
-                regex: "^(?:subject_token|actor_token|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
+                regex: "^(?:subject_token|actor_token|resource|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
                 ignoreCase: false
         requestConditions:
           method:
@@ -520,7 +542,7 @@ spec:
           parameter:
             name:
               matcher:
-                regex: "^(?:subject_token|actor_token|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
+                regex: "^(?:subject_token|actor_token|resource|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
                 ignoreCase: false
         requestConditions:
           method:
@@ -624,15 +646,22 @@ spec:
           parameter:
             name:
               matcher:
-                regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
+                regex: "^(?:state|nonce|id_token_hint|login_hint|code_challenge|redirect_uri)$"
                 ignoreCase: false
+        requestConditions:
+          method:
+          - "GET"
+          path:
+            matcher:
+              regex: "^{{ $path }}(?:/oauth2/v3/[a-zA-Z0-9._\\-]+/authorize/?|/ui/app/auth/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/authorize/?)"
+              ignoreCase: false
       - ruleKeys:
         - "SSRF"
         blockedData:
           parameter:
             name:
               matcher:
-                regex: "^resource$"
+                regex: "^(?:subject_token|actor_token|resource|redirect_uri|code_challenge|code_verifier|token|client_assertion)$"
                 ignoreCase: false
         requestConditions:
           method:
@@ -641,5 +670,13 @@ spec:
             matcher:
               regex: "^{{ $path }}/rest/oauth2/authorization-servers/[a-zA-Z0-9._\\-]+/(?:token|introspect|revoke|par)/?$"
               ignoreCase: false
+      - ruleKeys:
+        - "SSRF"
+        blockedData:
+          parameter:
+            name:
+              matcher:
+                regex: "^(?:Signature|SAMLRequest|SAMLResponse|RelayState|SAMLart|SigAlg)$"
+                ignoreCase: false
 {{-   end }}
 {{- end }}

@@ -245,6 +245,8 @@ spec:
               value: {{ ternary "true" "false" (and $.Values.database.initialisation.connector.download $persistenceProp.config.enable) | quote }}
             - name: INIT_DL_VERSION
               value: {{ (ternary $.Values.database.initialisation.connector.mariadb.version $.Values.database.initialisation.connector.postgresql.version (eq $databaseType "mariadb")) | quote }}
+            - name: INIT_DL_MIRROR
+              value: {{ (ternary $.Values.database.initialisation.connector.mariadb.mirrorHost $.Values.database.initialisation.connector.postgresql.mirrorHost (eq $databaseType "mariadb")) | quote }}
             - name: INIT_DB_SCHEMA_MANAGE
               value: "{{ ternary "true" "false" (and $.Values.database.schema.manage (contains "loginapp" $.IAM.module)) }}"
             - name: INIT_DB_SCHEMA_UPGRADE

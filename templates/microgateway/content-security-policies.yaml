@@ -53,7 +53,7 @@ spec:
       name: {{ $moduleName }}-rest
   secured:
     parserRef:
-      name: {{ $moduleName }}-rest
+      name: {{ $fullName }}
     limitsRef:
       name: {{ $fullName }}
     filter:
@@ -138,7 +138,7 @@ spec:
       name: {{ $moduleName }}-rest-public
   secured:
     parserRef:
-      name: {{ $moduleName }}-rest-public
+      name: {{ $fullName }}
     limitsRef:
       name: {{ $fullName }}
     filter:

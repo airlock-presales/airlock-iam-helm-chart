@@ -29,8 +29,8 @@ Each release version of this Helm chart is tagged according to following strateg
 * Minor version of Airlock IAM it supports
 * Release counter of chart
 
-Current version: 8.5.0
-* Supported IAM versions: 8.5.0, 8.5.1 etc.
+Current version: 8.6.0
+* Supported IAM versions: 8.6.0, 8.6.1 etc.
 
 ## Cluster requirements
 

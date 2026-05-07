@@ -23,14 +23,6 @@ spec:
       settings:
         level: Strict
         threatHandlingMode: Block
-      overrides:
-        - conditions:
-            ruleKeys:
-              - SSRF
-            types:
-              - JSON
-          settings:
-            level: Unfiltered
       exceptions:
       - ruleKeys:
         - "SCANNING"

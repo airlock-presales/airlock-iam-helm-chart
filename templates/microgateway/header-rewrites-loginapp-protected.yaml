@@ -41,5 +41,9 @@ spec:
                   matcher:
                     exact: "X-Iam-Sso-Ticket"
             name: "SSO Ticket header"
+  response:
+    add:
+      builtIn:
+        csp: true
 {{-   end }}
 {{- end }}

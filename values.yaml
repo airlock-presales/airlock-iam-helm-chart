@@ -889,7 +889,7 @@ database:
       mariadb:
         ## Version of connector to download
         ## - needs to be specified
-        version: '3.5.5'
+        version: '3.5.8'
 
         ## Package mirror to download from
         ## - default is 'MvA Internet Services GmbH, Zurich'
@@ -898,10 +898,10 @@ database:
       postgresql:
         ## Version of connector to download
         ## - needs to be specified
-        version: '42.7.7'
+        version: '42.7.9'
 
         ## Package mirror to download from
-        ## - default is 'MvA Internet Services GmbH, Zurich'
+        ## - default is 'PostgreSQL Global Development Group'
         mirrorHost: 'https://jdbc.postgresql.org'
 
     ## Adminapp administrator

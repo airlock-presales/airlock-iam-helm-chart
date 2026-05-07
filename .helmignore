@@ -25,6 +25,8 @@ manifests/
 media/
 samples/
 work/
+LICENSE
+README.md
 csp.yaml
 hdr-rw.yaml
 tlspolicy.yaml
