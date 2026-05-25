@@ -67,6 +67,10 @@ spec:
                     values:
                       - {{ $fullName }}
               topologyKey: "kubernetes.io/hostname"
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsUser: 1000
       serviceAccountName: {{ $.IAM.fullName }}
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
