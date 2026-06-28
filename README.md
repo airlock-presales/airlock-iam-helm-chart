@@ -182,7 +182,7 @@ The chart sets the following environment variables:
 
 * IAM_DB_DRIVER_CLASS
 * IAM_DB_URL
-* IAM_DB_USERNAME
+* IAM_DB_USER
 * IAM_DB_PASSWORD
 
 To ensure Airlock IAM respects these variables, search for the key sqlDataSource in the configuration file <code>iam-config.yaml</code> and adapt according to the following:
@@ -207,7 +207,7 @@ To ensure Airlock IAM respects these variables, search for the key sqlDataSource
         user:
         - value: airlock_iam
           var:
-            name: IAM_DB_USERNAME
+            name: IAM_DB_USER
 
 By the way, starting with Airlock IAM 8.5, the built-in Start Config already contains these settings.
 
