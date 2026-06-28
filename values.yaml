@@ -893,7 +893,7 @@ database:
 
         ## Package mirror to download from
         ## - default is 'MvA Internet Services GmbH, Zurich'
-        mirrorHost: 'https://mirror.mva-n.net'
+        mirrorHost: 'dlm.mariadb.com'
 
       postgresql:
         ## Version of connector to download
@@ -902,7 +902,7 @@ database:
 
         ## Package mirror to download from
         ## - default is 'PostgreSQL Global Development Group'
-        mirrorHost: 'https://jdbc.postgresql.org'
+        mirrorHost: 'jdbc.postgresql.org'
 
     ## Adminapp administrator
     ## - only relevant if schema.manage == true and database does not exist
