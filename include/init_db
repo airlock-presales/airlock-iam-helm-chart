@@ -205,7 +205,7 @@ if [[ "${INIT_DB_SCHEMA_MANAGE}" == "true" ]]; then
                 fi
                 ;;
             postgresql)
-                r="$(cmd_sql "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_type = 'BASE_TABLE' AND table_schema = 'public' AND table_catalog='${INIT_DB_DATABASE}' AND table_name = 'medusa_user');")" || die "Failed to check for database"
+                r="$(cmd_sql "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = 'public' AND table_catalog='${INIT_DB_DATABASE}' AND table_name = 'medusa_user');")" || die "Failed to check for database"
                 if [[ "$r" == "f" ]]; then
                     psql -h ${INIT_DB_HOST} -U ${INIT_DB_USERNAME} -d "${INIT_DB_DATABASE}" -f "/var/tmp/create-medusa-schema.sql" || die "Failed to define database"
                     created=1
