@@ -1,6 +1,5 @@
 {{- if eq .Values.ingress.type "microgateway" -}}
 {{-   $fullName := include "airlock-iam.fullname" . -}}
-{{-   if semverCompare ">=4.7" .Values.ingress.microgateway.version }}
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: EnvoyHTTPFilter
 metadata:
@@ -57,5 +56,4 @@ spec:
                   response_handle:logDebug("Response cookies after appending secure flag: " .. response_handle:headers():get(SET_COOKIE_KEY))
               end
           end
-{{-   end }}
 {{- end }}

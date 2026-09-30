@@ -6,11 +6,12 @@
 {{-   $moduleName := print $fullName "-" $suffix | lower -}}
 {{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
 {{-   if $app_values.enable }}
+{{-     range list "" "-config-editor" "-rest" }}
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: HeaderRewrites
 metadata:
-  name: {{ $moduleName }}-config-editor
-  namespace: {{ .Release.Namespace }}
+  name: {{ $moduleName }}{{ . }}
+  namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "airlock-iam.labels" $ | nindent 4 }}
     app.kubernetes.io/component: {{ $moduleType }}
@@ -21,5 +22,6 @@ spec:
     add:
       builtIn:
         csp: false
+{{-     end }}
 {{-   end }}
 {{- end }}

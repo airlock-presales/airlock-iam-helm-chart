@@ -49,6 +49,5 @@ spec:
       builtIn:
         auth:
           negotiate: false
-
 {{-   end }}
 {{- end }}

@@ -1,5 +1,4 @@
 {{- $fullName := ternary $.IAM.fullName (print $.IAM.fullName "-" $.IAM.suffix) (eq $.Values.iam.appDeploymentStrategy "single") -}}
-
 apiVersion: v1
 kind: Service
 metadata:

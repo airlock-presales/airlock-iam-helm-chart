@@ -562,6 +562,15 @@ spec:
               ignoreCase: false
       - ruleKeys:
         - "SQL"
+        requestConditions:
+          method:
+          - "GET"
+          path:
+            matcher:
+              regex: "^{{ $path }}/ui/[A-Za-z0-9-_]+\\.js"
+              ignoreCase: false
+      - ruleKeys:
+        - "SQL"
         blockedData:
           header:
             name:
