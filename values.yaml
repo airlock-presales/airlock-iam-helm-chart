@@ -430,7 +430,7 @@ ingress:
     ## Version of the Microgateway
     ## - selects correct protection templates
     ## - valid values depend on selected Airlock IAM version (Chart.AppVersion or images.iam.tag)
-    version: '5.2'
+    version: '5.1'
 
   ## Kubernetes Gateway API
   ## - used for type: microgateway, gatewayAPI
