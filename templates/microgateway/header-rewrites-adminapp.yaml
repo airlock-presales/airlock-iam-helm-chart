@@ -7,6 +7,7 @@
 {{-   $moduleType := include "airlock-iam.mapAppName" $app -}}
 {{-   if $app_values.enable }}
 {{-     range list "" "-config-editor" "-rest" }}
+---
 apiVersion: microgateway.airlock.com/v1alpha1
 kind: HeaderRewrites
 metadata:
