@@ -47,25 +47,28 @@ spec:
   myCnf: |
     {{- .Values.database.embedded.mariadbSettings.myCnf | nindent 4 }}
   {{- end }}
+  {{- if or (ne .Values.database.embedded.mariadbSettings.resources.requests.cpu "") (ne .Values.database.embedded.mariadbSettings.resources.requests.ram "") }}
   resources:
-    {{- if or (ne .Values.database.embedded.mariadbSettings.resources.requests.cpu "") (ne .Values.database.embedded.mariadbSettings.resources.requests.ram "") }}
     requests:
-      {{- if or (ne .Values.database.embedded.mariadbSettings.resources.requests.cpu "") }}
+    {{- if or (ne .Values.database.embedded.mariadbSettings.resources.requests.cpu "") }}
       cpu: {{ .Values.database.embedded.mariadbSettings.resources.requests.cpu }}
-      {{- end }}
-      {{- if or (ne .Values.database.embedded.mariadbSettings.resources.requests.ram "") }}
+    {{- end }}
+    {{- if or (ne .Values.database.embedded.mariadbSettings.resources.requests.ram "") }}
       memory: {{ .Values.database.embedded.mariadbSettings.resources.requests.ram }}
-      {{- end }}
     {{- end }}
-    {{- if or (ne .Values.database.embedded.mariadbSettings.resources.limits.cpu "") (ne .Values.database.embedded.mariadbSettings.resources.limits.ram "") }}
+  {{- end }}
+  {{- if or (ne .Values.database.embedded.mariadbSettings.resources.limits.cpu "") (ne .Values.database.embedded.mariadbSettings.resources.limits.ram "") }}
+    {{- if and (eq .Values.database.embedded.mariadbSettings.resources.requests.cpu "") (eq .Values.database.embedded.mariadbSettings.resources.requests.ram "") }}
+  resources:
+    {{- end }}
     limits:
-      {{- if or (ne .Values.database.embedded.mariadbSettings.resources.limits.cpu "") }}
+    {{- if or (ne .Values.database.embedded.mariadbSettings.resources.limits.cpu "") }}
       cpu: {{ .Values.database.embedded.mariadbSettings.resources.limits.cpu }}
-      {{- end }}
-      {{- if or (ne .Values.database.embedded.mariadbSettings.resources.limits.ram "") }}
-      memory: {{ .Values.database.embedded.mariadbSettings.resources.limits.ram }}
-      {{- end }}
     {{- end }}
+    {{- if or (ne .Values.database.embedded.mariadbSettings.resources.limits.ram "") }}
+      memory: {{ .Values.database.embedded.mariadbSettings.resources.limits.ram }}
+    {{- end }}
+  {{- end }}
   metrics:
     enabled: {{ .Values.database.embedded.mariadbSettings.metrics }}
 {{-   end }}
