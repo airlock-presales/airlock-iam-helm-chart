@@ -14,4 +14,4 @@ maintainers:
 name: iam
 sources:
   - https://github.com/airlock-presales/the-iam-helm-chart
-version: 8.6.0
+version: 8.6.3

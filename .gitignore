@@ -3,6 +3,7 @@
 /custom.yaml
 /sandboxed.yaml
 *.swp
+*.tgz
 /samples/
 /manifests/
 /work/
